@@ -6,7 +6,8 @@ import os
 import sys
 
 # Добавляем путь к проекту в sys.path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
 
 # Импортируем настройки из config.py
 from app.core.config import settings
@@ -53,6 +54,7 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()
