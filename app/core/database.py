@@ -1,18 +1,24 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from collections.abc import AsyncGenerator
 
-from app.core import settings
+from fastapi import Depends
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+from app.config import config
+from app.models import User
 
-def init_db(app):
+engine = create_async_engine(config.DATABASE_URL, future=True, echo=True)
+SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+Base = declarative_base()
 
-    DATABASE_URL = settings.DATABASE_URL
-    engine = create_engine(DATABASE_URL)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_sessionmaker() as session:
+        yield session
 
 
-    from alembic import command
-    from alembic.config import Config as AlembicConfig
-    alembic_cfg = AlembicConfig("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
-
-    return SessionLocal
+async def get_user_db(session: AsyncSession = Depends(get_async_session)):
+    yield SQLAlchemyUserDatabase(session, User)
