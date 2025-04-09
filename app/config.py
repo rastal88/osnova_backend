@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     DEBUG: bool
     DATABASE_URL: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    ALGORITHM: str
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
     CONFIG_MODE: str
