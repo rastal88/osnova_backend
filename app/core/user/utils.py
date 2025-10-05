@@ -9,7 +9,6 @@ from starlette.responses import Response
 from .schemas import UserCreate
 from app.config import config
 
-from ..roles import Role
 from ...models import User
 from ...models.user import get_user_db
 
@@ -53,5 +52,5 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         print(f"User {user.id} has reset their password.")
 
 
-def get_user_manager(user_db = Depends(get_user_db)):
+async def get_user_manager(user_db = Depends(get_user_db)):
     yield UserManager(user_db)

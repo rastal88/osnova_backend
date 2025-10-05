@@ -3,12 +3,15 @@ import asyncio
 from app.core.database import get_async_session
 from app.core.user.utils import get_user_manager
 
-
 app = typer.Typer()
 
+#TODO: don't work
+
 @app.command()
-def createsuperuser(email: str, password: str):
-    """Создает суперпользователя в системе."""
+def createsuperuser(
+    email: str = typer.Option(..., help="Email суперпользователя"),
+    password: str = typer.Option(..., help="Пароль суперпользователя")
+):
     async def _create():
         async for session in get_async_session():
             user_manager = await get_user_manager(session)
@@ -17,6 +20,8 @@ def createsuperuser(email: str, password: str):
 
     asyncio.run(_create())
 
-
 if __name__ == "__main__":
+    import sys
+
+    print(sys.argv)
     app()

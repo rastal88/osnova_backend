@@ -1,3 +1,4 @@
+import uuid
 import redis.asyncio
 
 from fastapi_users import FastAPIUsers
@@ -15,12 +16,12 @@ def get_redis_strategy() -> RedisStrategy:
     return RedisStrategy(redis, lifetime_seconds=3600)
 
 auth_backend = AuthenticationBackend(
-    name="jwt",
+    name="cookie_redis_strategy",
     transport=cookie_transport,
     get_strategy=get_redis_strategy,
 )
 
-fastapi_users = FastAPIUsers[User, int](
+fastapi_users = FastAPIUsers[User, uuid.UUID](
     get_user_manager,
     [auth_backend],
 )

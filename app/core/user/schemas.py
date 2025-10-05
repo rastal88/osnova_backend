@@ -11,6 +11,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 
 class UserCreate(schemas.BaseUserCreate):
+    role: Role = Role.USER
 
     @field_validator("password")
     def validate_password(cls, v):

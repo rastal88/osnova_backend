@@ -1,32 +1,35 @@
 from fastapi import APIRouter
 
 from app.core.user.strategies import fastapi_users, auth_backend
-from app.core.user.schemas import UserCreate, UserRead
-
+from app.core.user.schemas import UserCreate, UserRead, UserUpdate
 
 auth_router = APIRouter()
 
 auth_router.include_router(
     fastapi_users.get_auth_router(auth_backend),
-    prefix="/sing_in",
-
+    tags=["auth"]
 )
 
 auth_router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/sign-up",
+    tags=["auth"]
+)
 
+auth_router.include_router(
+    fastapi_users.get_reset_password_router(),
+    tags=["auth"]
+)
+
+auth_router.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    tags=["auth"],
+)
+
+auth_router.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/users",
+    tags=["users"]
 )
 
 
-#
-# @auth_router.get("/google/login")
-# async def login_via_google(request: Request):
-#     redirect_uri = "http://localhost:8000/auth/google/callback"
-#     return await oauth.google.authorize_redirect(request, redirect_uri)
-#
-# @auth_router.get("/google/callback")
-# async def auth_via_google(request: Request):
-#     token = await oauth.google.authorize_access_token(request)
-#     user = await oauth.google.parse_id_token(request, token)
-#     return RedirectResponse(url="/")
+current_user = fastapi_users.current_user()
