@@ -19,15 +19,19 @@ A template for speeding up the development of web applications. Backend part
 \c <db_name>
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
-2. Create .env and заполните своими данными по образцу из .env.example 
-3. Обновите базу данных
+2. Create .env and fill in your data according to the sample from .env.example 
+3. Update the database
 
 ```bash
 alembic revision --autogenerate -m "<info_massege>"
 alembic upgrade head
 ```
+4. Create a root
 
-4. 
+```bash
+python manage.py createroot
+```
+
 ### Run 
 ```bash
 python run.py --host <host> --port <port>

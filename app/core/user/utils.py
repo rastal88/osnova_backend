@@ -51,6 +51,35 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_reset_password(self, user: User, request: Optional[Request] = None):
         print(f"User {user.id} has reset their password.")
 
+    async def create_superuser(self, user_data: dict) -> User:
+        """
+        Creates a superuser (root).
+        user_data: {"email": str, "password": str}
+        
+        There can only be one ROOT user in the system.
+        """
+        from .schemas import UserCreate
+        from app.core.roles import Role
+        from sqlalchemy import select
+
+        stmt = select(User).where(User.role == Role.ROOT)
+        result = await self.user_db.session.execute(stmt)
+        existing_root = result.scalars().first()
+        
+        if existing_root:
+            raise ValueError("ROOT user already exists. Only one ROOT user is allowed in the system.")
+
+        user_dict = {
+            **user_data,
+            "is_superuser": True,
+            "is_active": True,
+            "role": Role.ROOT,
+        }
+
+        user_create = UserCreate(**user_dict)
+        user = await self.create(user_create)
+        return user
+
 
 async def get_user_manager(user_db = Depends(get_user_db)):
     yield UserManager(user_db)
