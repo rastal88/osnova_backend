@@ -115,3 +115,5 @@ tasks.txt
 
 # archive with copiled project version
 wbma_python.tar
+# Local file storage (FILES_ENABLED)
+uploads/

@@ -1,0 +1,46 @@
+# Datastore override for the standard and scalable profiles.
+# Adds PostgreSQL + Redis and points the backend at them using in-network
+# service names, overriding any localhost values from the local .env.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
+#                  --profile standard up --build -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["standard", "scalable"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-osnova}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-osnova}
+      POSTGRES_DB: ${POSTGRES_DB:-osnova}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-osnova}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["standard", "scalable"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-osnova}:${POSTGRES_PASSWORD:-osnova}@postgres:5432/${POSTGRES_DB:-osnova}
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
