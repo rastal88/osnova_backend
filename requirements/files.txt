@@ -1,0 +1,3 @@
+# Files module (FILES_ENABLED)
+-r auth.txt
+python-multipart==0.0.20

@@ -1,0 +1,3 @@
+# Redis client (AUTH_STRATEGY=redis, caching)
+-r base.txt
+redis==5.2.1

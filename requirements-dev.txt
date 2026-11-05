@@ -1,3 +1,0 @@
--r requirements.txt
-aiosqlite==0.22.1
-fakeredis==2.40.0

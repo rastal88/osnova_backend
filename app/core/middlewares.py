@@ -1,8 +1,8 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
-import logging
 
 from app.config import config
 
@@ -24,17 +24,8 @@ def add_middlewares(app: FastAPI):
         logger.info(f"Request: {request.method} {request.url}")
         try:
             response = await call_next(request)
-        except SQLAlchemyError as db_err:
-            logger.error(f"Database error: {str(db_err)}")
-            return JSONResponse(
-                status_code=500,
-                content={"detail": "Database internal error occurred."}
-            )
-        except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            return JSONResponse(
-                status_code=500,
-                content={"detail": "Internal server error."}
-            )
+        except Exception:
+            logger.exception("Unhandled error")
+            return JSONResponse(status_code=500, content={"detail": "Internal server error."})
         logger.info(f"Response: {response.status_code}")
         return response

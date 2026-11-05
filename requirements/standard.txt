@@ -1,0 +1,5 @@
+# Everything used by the standard / scalable profiles
+-r auth.txt
+-r files.txt
+-r redis.txt
+-r tasks.txt
