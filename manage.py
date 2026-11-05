@@ -1,17 +1,20 @@
 import asyncio
+
 import typer
-
 from fastapi_users import exceptions as fastapi_users_exceptions
-from app.core.database import get_async_session
-from app.core.user.utils import UserManager, get_user_db
 
+from app.modules.auth.manager import UserManager, get_user_db
+from app.modules.db import get_async_session
 
 app = typer.Typer()
+
 
 @app.command()
 def createroot(
     email: str = typer.Option(..., "--email", prompt=True, help="Email app's root"),
-    password: str = typer.Option(..., "--password", prompt=True, hide_input=True, help="Password app's root"),
+    password: str = typer.Option(
+        ..., "--password", prompt=True, hide_input=True, help="Password app's root"
+    ),
 ):
     """Creates a superuser in the database."""
 
@@ -22,7 +25,7 @@ def createroot(
 
                 try:
                     await manager.get_by_email(email)
-                    typer.echo(f"⚠ A user with this email already exists.")
+                    typer.echo("⚠ A user with this email already exists.")
                     return
                 except fastapi_users_exceptions.UserNotExists:
                     pass
@@ -35,7 +38,7 @@ def createroot(
 
 @app.command()
 def hello(name: str):
-    print(f'Hello {name}')
+    print(f"Hello {name}")
 
 
 if __name__ == "__main__":

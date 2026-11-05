@@ -1,8 +1,8 @@
 import pytest
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
-from app.core.user.utils import UserManager
-from app.models.user import User
+from app.modules.auth.manager import UserManager
+from app.modules.auth.models import User
 
 
 async def _register(client, email: str, password: str):
@@ -67,9 +67,7 @@ async def test_root_can_access_admin(auth_client):
 
     async with session_factory() as session:
         manager = UserManager(SQLAlchemyUserDatabase(session, User))
-        await manager.create_superuser(
-            {"email": "root@example.com", "password": "password123"}
-        )
+        await manager.create_superuser({"email": "root@example.com", "password": "password123"})
         await session.commit()
 
     login = await _login(client, "root@example.com", "password123")
@@ -91,3 +89,18 @@ async def test_unauthenticated_admin_is_401(auth_client):
 
     response = await client.get("/api/v1/admin_flow/users")
     assert response.status_code == 401
+
+
+@pytest.mark.anyio
+async def test_user_flow_open_to_any_signed_in_role(auth_client):
+    client, session_factory = auth_client
+
+    async with session_factory() as session:
+        manager = UserManager(SQLAlchemyUserDatabase(session, User))
+        await manager.create_superuser({"email": "root@example.com", "password": "password123"})
+        await session.commit()
+
+    await _login(client, "root@example.com", "password123")
+    response = await client.get("/api/v1/user_flow/main")
+    assert response.status_code == 200, response.text
+    assert response.json()["role"] == "root"

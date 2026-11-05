@@ -1,15 +1,19 @@
 import asyncio
 import sys
 from logging.config import fileConfig
+from pathlib import Path
+
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
-from alembic import context
 
-from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from app.models import *
 from app.config import config
+
+# Import every model module so Alembic sees its tables.
+from app.modules.auth import models as _auth_models  # noqa: F401
+from app.modules.db import Base
 
 al_config = context.config
 if al_config.config_file_name is not None:
@@ -27,11 +31,13 @@ def do_run_migrations(connection):
     with context.begin_transaction():
         context.run_migrations()
 
+
 async def run_migrations_online():
     connectable = create_async_engine(config.DATABASE_URL, poolclass=pool.NullPool)
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
+
 
 if context.is_offline_mode():
     context.configure(

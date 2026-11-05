@@ -1,0 +1,5 @@
+# Auth module (AUTH_ENABLED) — also used by admin and user_flow
+-r db.txt
+fastapi-users[sqlalchemy]==14.0.1
+python-multipart==0.0.20
+typer==0.20.0
