@@ -10,8 +10,10 @@ WORKDIR /app
 
 RUN groupadd --system app && useradd --system --gid app --create-home app
 
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Install only the modules this image needs: base (minimal) or standard.
+ARG REQUIREMENTS=base
+COPY requirements/ requirements/
+RUN pip install --upgrade pip && pip install -r requirements/${REQUIREMENTS}.txt
 
 COPY . .
 RUN chmod +x /app/docker-entrypoint.sh \
