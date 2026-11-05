@@ -180,21 +180,24 @@ backend, load balancing, масштабирование воркеров, CDN, o
 ```
 osnova_backend/
 ├── app/
-│   ├── core/            # ядро: конфигурация, БД, middleware, capabilities,
-│   │   │                # bootstrap, роли, права, Celery
-│   │   └── user/        # аутентификация и пользователи (fastapi-users)
-│   ├── user_flow/       # прикладные пользовательские эндпоинты
-│   ├── admin_flow/      # административные эндпоинты
-│   ├── file_flow/       # файловое хранилище (опционально)
-│   ├── workers/         # фоновые задачи Celery (опционально)
-│   ├── models/          # SQLAlchemy-модели
+│   ├── core/            # ядро (всегда): middleware, capabilities, bootstrap,
+│   │                    # health, реестр модулей (modules.py)
+│   ├── modules/         # опциональные модули — каждый в своей папке
+│   │   ├── db/          # SQLAlchemy (async), сессии          ← DATABASE_URL
+│   │   ├── auth/        # fastapi-users, роли, модель User    ← AUTH_ENABLED
+│   │   ├── admin/       # эндпоинты администратора            ← ADMIN_ENABLED
+│   │   ├── files/       # загрузка/скачивание файлов          ← FILES_ENABLED
+│   │   └── tasks/       # Celery                              ← BACKGROUND_TASKS_ENABLED
+│   ├── user_flow/       # пример прикладного домена (клиентская часть)
 │   ├── config.py        # настройки (pydantic-settings)
-│   └── __init__.py      # фабрика приложения, lifespan
+│   └── __init__.py      # фабрика приложения
 ├── migrations/          # Alembic-миграции
+├── requirements/        # зависимости по модулям: base, db, auth, files, tasks, redis,
+│                        # standard (всё), dev (всё + тесты и линтер)
 ├── tests/               # тесты
 ├── alembic.ini
-├── requirements.txt
-├── Dockerfile           # образ backend
+├── pyproject.toml       # настройки ruff и pytest
+├── Dockerfile           # образ backend (ARG REQUIREMENTS=base|standard)
 ├── docker-compose.yml   # базовый (minimal-safe) compose
 ├── docker-compose.datastores.yml  # override: postgres + redis (standard/scalable)
 ├── Makefile             # up-minimal / up-standard / up-scalable
@@ -215,8 +218,10 @@ osnova_backend/
 ```bash
 git clone <repo-url>
 cd osnova_backend
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+python3.13 -m venv venv && source venv/bin/activate
+pip install -r requirements/dev.txt     # все модули + инструменты разработки
+# или только то, что нужно, например minimal:
+# pip install -r requirements/base.txt
 ```
 
 ### Настройка базы
@@ -232,8 +237,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 cp .env.example .env   # заполните значения
 ```
 
-Для профиля `minimal` база данных не обязательна — оставьте `DATABASE_URL` пустым,
-и приложение запустится без подключения к БД.
+У всех переменных есть значения по умолчанию, поэтому пустой `.env` запускает профиль
+`minimal`: без БД, Redis и без загрузки кода опциональных модулей.
+
+Если включённому модулю не хватает зависимости (например, `AUTH_ENABLED=true` без
+`DATABASE_URL`), приложение не стартует и пишет, чего не хватает.
 
 ### Миграции и первый root
 
@@ -247,7 +255,7 @@ python manage.py createroot
 ### Запуск
 
 ```bash
-python run.py                  # host/port берутся из .env (APP_HOST / APP_PORT)
+make dev                       # = python run.py, host/port из .env (APP_HOST / APP_PORT)
 # или
 ./run.sh -h 0.0.0.0 -p 8000    # с явным указанием host/port
 ```
@@ -339,18 +347,20 @@ docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
 |---|---|
 | `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Идентификация и профиль приложения |
 | `APP_HOST`, `APP_PORT`, `DEBUG` | Хост, порт, режим отладки |
-| `DATABASE_URL` | Подключение к БД |
-| `SECRET_KEY`, `ALGORITHM` | Безопасность JWT |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Время жизни токена |
+| `DATABASE_URL`, `DB_ECHO` | Подключение к БД (включает модуль `db`), логирование SQL |
+| `SECRET_KEY`, `ALGORITHM` | Подпись токенов (обязателен `SECRET_KEY` при `AUTH_ENABLED`) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Время жизни сессии и cookie |
+| `AUTH_STRATEGY` | `jwt` (по умолчанию, без Redis) или `redis` (нужен `REDIS_URL`) |
 | `COOKIE_SECURE` | Флаг `Secure` у auth-cookie (включать только при HTTPS) |
 | `CORS_ORIGINS` | Разрешённые origin'ы через запятую (для локальной разработки) |
-| `REDIS_URL`, `CELERY_*` | Redis и Celery |
-| `AUTH_ENABLED` | Аутентификация и регистрация |
-| `ADMIN_ENABLED` | Административная панель |
-| `FILES_ENABLED` | Файловое хранилище |
-| `NOTIFICATIONS_ENABLED` | Уведомления |
-| `BACKGROUND_TASKS_ENABLED` | Фоновые задачи (Celery/Redis) |
-| `OAUTH2_*` | OAuth2-провайдер |
+| `REDIS_URL` | Redis (сессии при `AUTH_STRATEGY=redis`) |
+| `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (обязателен брокер при `BACKGROUND_TASKS_ENABLED`) |
+| `FILES_DIR`, `FILES_MAX_SIZE_MB` | Папка и лимит размера для модуля файлов |
+| `AUTH_ENABLED` | Аутентификация и регистрация (нужен модуль `db`) |
+| `ADMIN_ENABLED` | Административная панель (нужен `AUTH_ENABLED`) |
+| `FILES_ENABLED` | Файловое хранилище (нужен `AUTH_ENABLED`) |
+| `NOTIFICATIONS_ENABLED` | Уведомления (пока только флаг для фронтенда) |
+| `BACKGROUND_TASKS_ENABLED` | Фоновые задачи (Celery) |
 
 ---
 
@@ -363,23 +373,30 @@ docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
 | GET | `/bootstrap` | Профиль и capabilities | всегда |
 | GET | `/health` | Health-check (liveness) | всегда |
 | — | `/auth/*` | Регистрация, вход, сброс пароля, пользователи | `AUTH_ENABLED` |
-| — | `/user_flow/*` | Прикладные пользовательские эндпоинты | всегда |
+| — | `/user_flow/*` | Прикладные эндпоинты для любого вошедшего пользователя | `AUTH_ENABLED` |
 | — | `/admin_flow/*` | Административные эндпоинты | `ADMIN_ENABLED` |
-| POST/GET | `/file_flow/*` | Загрузка/скачивание файлов | `FILES_ENABLED` |
+| POST/GET | `/file_flow/*` | Загрузка (только вошедшим) и скачивание файлов | `FILES_ENABLED` |
 
 ---
 
 ## Разработка
 
-- **Модульный монолит.** Новый домен — отдельный пакет `app/<domain>_flow/` с роутером,
-  подключаемым в `app/__init__.py`.
+- **Модуль = папка.** Каждая возможность — пакет в `app/modules/<name>/` с функцией
+  `register(app)`. Реестр `app/core/modules.py` импортирует пакет **только если он
+  включён** и проверяет зависимости между модулями. Код модуля не импортируется
+  снаружи, кроме других модулей, которые от него зависят (`requires`).
+- **Удаление модуля из проекта:** удалить его папку, запись в `MODULES`
+  (`app/core/modules.py`) и файл `requirements/<name>.txt`.
+- **Новый домен приложения** — пакет `app/<domain>_flow/` по образцу `app/user_flow/`
+  и запись в `MODULES`.
 - **Добавление capability** (чек-лист):
-  1. Добавить флаг в `app/config.py` и `.env.example`.
-  2. Добавить поле в `Capabilities` (`app/core/capabilities.py`).
-  3. Отдать флаг в `app/core/bootstrap.py`.
-  4. Ветвить подключение роутера в `app/__init__.py`.
+  1. Флаг в `app/config.py` и `.env.example`.
+  2. Пакет `app/modules/<name>/` с `register(app)` и запись в `MODULES`.
+  3. Зависимости в `requirements/<name>.txt` (+ подключить в `standard.txt`).
+  4. Поле в `Capabilities` (`app/core/capabilities.py`) и в `app/core/bootstrap.py`.
   5. Учесть флаг в UI/роутинге на фронтенде.
-- **Тесты:** `pip install -r requirements-dev.txt && pytest tests/`
+- **Команды:** `make install`, `make dev`, `make test`, `make lint`, `make format`
+  (`make help` — список).
 - **Миграции:** `alembic revision --autogenerate -m "<message>"`
 
 ---
