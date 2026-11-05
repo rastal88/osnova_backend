@@ -1,5 +1,8 @@
 # Osnova
 
+[![CI](https://github.com/rastal88/osnova_backend/actions/workflows/ci.yml/badge.svg)](https://github.com/rastal88/osnova_backend/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Универсальный full-stack шаблон для быстрой разработки и запуска web-приложений на Python и React.**
 
 Osnova предоставляет готовую архитектуру и набор стандартных решений, покрывающих типовые
@@ -15,7 +18,7 @@ Osnova предоставляет готовую архитектуру и на�
 | Репозиторий | Назначение | Стек |
 |---|---|---|
 | **osnova_backend** (этот репозиторий) | API, бизнес-логика, данные | Python · FastAPI · SQLAlchemy · PostgreSQL |
-| [**osnova_frontend**](https://github.com/<org>/osnova_frontend) | Web-интерфейс (SPA) | React · TypeScript · Vite |
+| [**osnova_frontend**](https://github.com/rastal88/osnova_frontend) | Web-интерфейс (SPA) | React · TypeScript · Vite |
 
 ---
 
@@ -157,7 +160,7 @@ backend, load balancing, масштабирование воркеров, CDN, o
 - Celery + Redis — фоновые задачи (опционально)
 - Pydantic v2 / pydantic-settings — конфигурация и валидация
 
-**Frontend** — см. [osnova_frontend](https://github.com/<org>/osnova_frontend)
+**Frontend** — см. [osnova_frontend](https://github.com/rastal88/osnova_frontend)
 
 - React 19, TypeScript, Vite
 - Zustand — управление состоянием
@@ -400,3 +403,13 @@ docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
 - **Миграции:** `alembic revision --autogenerate -m "<message>"`
 
 ---
+
+## Связанные проекты
+
+- [osnova_frontend](https://github.com/rastal88/osnova_frontend) — SPA-интерфейс.
+
+## Roadmap, участие, лицензия
+
+- План и статус: [ROADMAP.md](ROADMAP.md), изменения: [CHANGELOG.md](CHANGELOG.md).
+- Как участвовать: [CONTRIBUTING.md](CONTRIBUTING.md), безопасность: [SECURITY.md](SECURITY.md).
+- Лицензия: [MIT](LICENSE).

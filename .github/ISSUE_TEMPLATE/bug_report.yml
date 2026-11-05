@@ -1,0 +1,28 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, what you expected and what you got.
+    validations:
+      required: true
+  - type: dropdown
+    id: profile
+    attributes:
+      label: Profile
+      options: [minimal, standard, scalable]
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Enabled capabilities / relevant settings
+      description: Flags from .env (never paste secrets).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      render: shell
