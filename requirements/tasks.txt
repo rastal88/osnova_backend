@@ -1,0 +1,5 @@
+# Background tasks module (BACKGROUND_TASKS_ENABLED)
+-r base.txt
+celery[redis]==5.4.0
+# Pinned: newer kombu needs redis-py>=6.1, see requirements/redis.txt
+kombu==5.4.2

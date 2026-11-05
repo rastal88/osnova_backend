@@ -107,7 +107,7 @@ venv_moex/
 media/
 migrate.sh
 runserver.sh
-tasks.txt
+/tasks.txt
 
 
 # DejaVu Sans font for create pdf files
