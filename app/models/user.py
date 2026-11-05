@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Depends
@@ -17,7 +17,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     __tablename__ = "users"
 
     role: Mapped[Role] = mapped_column(SQLEnum(Role), default=Role.USER)
-    date_created: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, default=datetime.utcnow)
+    date_created: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+    )
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 

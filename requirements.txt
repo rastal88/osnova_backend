@@ -36,7 +36,7 @@ MarkupSafe==3.0.2
 mdurl==0.1.2
 passlib==1.7.4
 prompt_toolkit==3.0.50
-psycopg2==2.9.10
+psycopg2-binary==2.9.10
 pwdlib==0.2.1
 pyasn1==0.4.8
 pycparser==2.22
@@ -45,6 +45,7 @@ pydantic-settings==2.8.1
 pydantic_core==2.27.2
 Pygments==2.19.1
 PyJWT==2.10.1
+pytest==9.1.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-jose==3.4.0

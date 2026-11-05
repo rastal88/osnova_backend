@@ -1,0 +1,52 @@
+name: osnova
+
+# Base compose file — safe for the minimal profile.
+#   docker compose -f docker-compose.yml --profile minimal up --build -d
+#
+# For standard/scalable add the datastore override (see Makefile):
+#   docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
+#                  --profile standard up --build -d
+#
+# Requires both repositories checked out side by side:
+#   osnova_backend/   <- this file lives here
+#   osnova_frontend/
+
+services:
+  backend:
+    build:
+      context: .
+    profiles: ["minimal", "standard", "scalable"]
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      # Explicitly empty so the minimal profile never tries to reach a database,
+      # regardless of what the local .env contains. The datastore override
+      # (standard/scalable) replaces these with in-network service URLs.
+      DATABASE_URL: ""
+      REDIS_URL: ""
+    volumes:
+      - uploads_data:/app/uploads
+    # No published host port: the API is reached through the frontend proxy
+    # (same origin, no CORS), and this keeps the service horizontally scalable.
+    expose:
+      - "8000"
+
+  frontend:
+    build:
+      context: ../osnova_frontend
+      args:
+        VITE_BASE_URL: /api/v1
+    profiles: ["minimal", "standard", "scalable"]
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
+volumes:
+  uploads_data:
