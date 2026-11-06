@@ -39,11 +39,11 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [ ] 16. Submit states (sending / success / error / retry) and a consent checkbox *(fe)*
 
 ### D. Look and data *(fe)*
-- [~] 17. Light/dark theme (done) and brand colours in one place
-- [ ] 18. Landing blocks as examples: hero, services, gallery, pricing, FAQ, reviews, CTA
-- [ ] 19. Tables with filters, search, pagination
-- [ ] 20. Locale-aware formatting of dates, numbers and currency
-- [ ] 21. Image optimisation
+- [x] 17. Light/dark theme and brand colours in one place (`src/config/brand.ts`)
+- [x] 18. Landing blocks as examples: hero, services, gallery, pricing, FAQ, reviews, CTA
+- [x] 19. Tables with filters, search, pagination
+- [x] 20. Locale-aware formatting of dates, numbers and currency
+- [x] 21. Image optimisation
 
 ### E. Backend *(be)*
 - [x] 22. `/health`
@@ -79,6 +79,7 @@ real-time, CMS.
 - Forms work with a stub in minimal; real delivery arrives with the admin.
 - Forms are described once on the backend (`app/forms.py`): the same description drives server validation and the frontend form.
 - `/bootstrap` is the base for languages and capability flags.
+- Examples (contact form, data and tables, landing) live in `src/examples` of the frontend and are removed by deleting that folder.
 - i18n: react-i18next. Link previews / SEO: build-time prerender. Languages: `en` (default), `ru`.
 
 ## Standard profile (`v0.2.0`, MVP)
