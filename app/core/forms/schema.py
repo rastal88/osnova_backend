@@ -127,37 +127,68 @@ def _field_definition(item: FormField) -> tuple[Any, Any]:
     return Annotated[value_type | None, _blank(False)], None
 
 
+class FormFieldOption(BaseModel):
+    value: str
+    label: str
+
+
+class FormFieldDescription(BaseModel):
+    name: str
+    type: FieldType
+    label: str
+    required: bool
+    min_length: int | None
+    max_length: int | None
+    pattern: str | None
+    options: list[FormFieldOption]
+
+
+class FormDescription(BaseModel):
+    name: str
+    title: str
+    submit: str
+    # Name of the hidden anti-spam field the frontend renders
+    honeypot: str
+    fields: list[FormFieldDescription]
+
+
+class FormSubmitResponse(BaseModel):
+    message: str
+
+
 @cache
 def build_model(form: Form) -> type[BaseModel]:
     fields = {item.name: _field_definition(item) for item in form.fields}
     return create_model(f"{form.name.title()}Form", **fields)
 
 
-def describe(form: Form) -> dict:
+def describe(form: Form) -> FormDescription:
     """The form as the frontend sees it, in the request language."""
 
     def text(key: str) -> str:
         return translate(f"forms.{form.name}.{key}")
 
-    return {
-        "name": form.name,
-        "title": text("title"),
-        "submit": text("submit"),
-        "honeypot": HONEYPOT_FIELD,
-        "fields": [
-            {
-                "name": item.name,
-                "type": item.type,
-                "label": text(item.name),
-                "required": item.required or item.type == "consent",
-                "min_length": item.min_length,
-                "max_length": _max_length(item),
-                "pattern": item.pattern or TYPE_PATTERNS.get(item.type, (None,))[0],
-                "options": [
-                    {"value": option, "label": text(f"{item.name}.{option}")}
-                    for option in item.options
-                ],
-            }
-            for item in form.fields
-        ],
-    }
+    return FormDescription.model_validate(
+        {
+            "name": form.name,
+            "title": text("title"),
+            "submit": text("submit"),
+            "honeypot": HONEYPOT_FIELD,
+            "fields": [
+                {
+                    "name": item.name,
+                    "type": item.type,
+                    "label": text(item.name),
+                    "required": item.required or item.type == "consent",
+                    "min_length": item.min_length,
+                    "max_length": _max_length(item),
+                    "pattern": item.pattern or TYPE_PATTERNS.get(item.type, (None,))[0],
+                    "options": [
+                        {"value": option, "label": text(f"{item.name}.{option}")}
+                        for option in item.options
+                    ],
+                }
+                for item in form.fields
+            ],
+        }
+    )

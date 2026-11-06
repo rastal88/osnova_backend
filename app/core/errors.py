@@ -13,7 +13,9 @@ otherwise the code comes from the status.
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
 from app.core.i18n import has_translation, translate
@@ -30,6 +32,19 @@ STATUS_CODES: dict[int, str] = {
     429: "too_many_requests",
     500: "internal_error",
 }
+
+
+class FieldError(BaseModel):
+    field: str
+    code: str
+    message: str
+
+
+class ErrorResponse(BaseModel):
+    code: str
+    message: str
+    fields: list[FieldError] | None = None
+    request_id: str | None = None
 
 
 class AppError(Exception):
@@ -99,3 +114,43 @@ def add_exception_handlers(app: FastAPI):
     app.add_exception_handler(AppError, app_error_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
+
+FOREIGN_ERROR_SCHEMAS = ("HTTPValidationError", "ValidationError", "ErrorModel")
+
+
+def use_error_schema(app: FastAPI):
+    """Describe error responses in OpenAPI with ErrorResponse.
+
+    FastAPI documents 422 with its own HTTPValidationError and fastapi-users its
+    errors with ErrorModel ({"detail": ...}); both are answered in our format.
+    """
+
+    def openapi() -> dict:
+        if app.openapi_schema:
+            return app.openapi_schema
+        schema = get_openapi(
+            title=app.title, version=app.version, routes=app.routes, description=app.description
+        )
+        components = schema.setdefault("components", {}).setdefault("schemas", {})
+        error_schema = ErrorResponse.model_json_schema(ref_template="#/components/schemas/{model}")
+        components.update(error_schema.pop("$defs", {}))
+        components["ErrorResponse"] = error_schema
+        replaced = {f"#/components/schemas/{name}" for name in FOREIGN_ERROR_SCHEMAS}
+        for name in FOREIGN_ERROR_SCHEMAS:
+            components.pop(name, None)
+
+        for path in schema.get("paths", {}).values():
+            for operation in path.values():
+                for response in operation.get("responses", {}).values():
+                    content = response.get("content", {}).get("application/json", {})
+                    if content.get("schema", {}).get("$ref") in replaced:
+                        response["content"] = {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+                            }
+                        }
+        app.openapi_schema = schema
+        return schema
+
+    app.openapi = openapi

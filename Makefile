@@ -4,7 +4,7 @@ PYTHON ?= venv/bin/python
 BASE := -f docker-compose.yml
 DATA := -f docker-compose.yml -f docker-compose.datastores.yml
 
-.PHONY: help install dev test lint format up-minimal up-standard up-scalable down down-volumes logs ps build
+.PHONY: help install dev test lint format openapi up-minimal up-standard up-scalable down down-volumes logs ps build
 
 help:  ## Show available commands
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-14s %s\n", $$1, $$2}'
@@ -26,6 +26,9 @@ lint:  ## Check code style
 format:  ## Fix code style
 	$(PYTHON) -m ruff check . --fix
 	$(PYTHON) -m ruff format .
+
+openapi:  ## Write openapi.json for the frontend client
+	$(PYTHON) -m scripts.openapi
 
 up-minimal:  ## Docker: backend + frontend, no datastores
 	$(COMPOSE) $(BASE) --profile minimal up --build -d

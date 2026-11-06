@@ -7,6 +7,9 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `openapi.json`: schema of the full API for the frontend client, written by `make openapi`;
+  a test fails when it is out of date. Core endpoints (`/bootstrap`, `/health`, `/forms`)
+  have response models, and error responses are documented as `ErrorResponse`.
 - Request id: taken from `X-Request-ID` or generated, added to every log line and returned
   in the `X-Request-ID` header; 500 responses include it as `request_id`. One log line per
   request with method, path, status and duration.
