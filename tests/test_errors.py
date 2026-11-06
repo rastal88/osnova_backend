@@ -121,4 +121,5 @@ async def test_unhandled_error_is_hidden():
     assert response.json() == {
         "code": "internal_error",
         "message": "Что-то пошло не так. Попробуйте позже.",
+        "request_id": response.headers["X-Request-ID"],
     }
