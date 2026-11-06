@@ -161,3 +161,48 @@ def test_custom_pattern_and_optional_checkbox():
         model.model_validate({"code": "abc"})
     assert info.value.errors()[0]["type"] == "string_pattern_mismatch"
     assert translate("validation.string_pattern_mismatch") == "Invalid format."
+
+
+def test_form_cannot_use_honeypot_name():
+    with pytest.raises(ValueError):
+        Form("bad", fields=(FormField("website"),))
+
+
+@pytest.mark.anyio
+async def test_describe_names_honeypot(client):
+    response = await client.get("/api/v1/forms/contact")
+    assert response.json()["honeypot"] == "website"
+
+
+@pytest.mark.anyio
+async def test_filled_honeypot_is_dropped(client, caplog):
+    caplog.set_level("INFO")
+    response = await client.post("/api/v1/forms/contact", json={**VALID, "website": "spam.example"})
+
+    assert response.status_code == 200
+    assert response.json() == {"message": translate("forms.contact.success", "en")}
+    assert not [r for r in caplog.records if r.name == "app.core.forms.delivery"]
+
+
+@pytest.mark.anyio
+async def test_empty_honeypot_is_delivered(client, caplog):
+    caplog.set_level("INFO", logger="app.core.forms.delivery")
+    response = await client.post("/api/v1/forms/contact", json={**VALID, "website": ""})
+
+    assert response.status_code == 200
+    assert [r for r in caplog.records if r.name == "app.core.forms.delivery"]
+
+
+@pytest.mark.anyio
+async def test_submissions_are_rate_limited(client):
+    for _ in range(5):
+        response = await client.post("/api/v1/forms/contact", json={})
+        assert response.status_code == 422
+
+    response = await client.post("/api/v1/forms/contact", json=VALID, headers=RU)
+    assert response.status_code == 429
+    assert response.json() == {
+        "code": "too_many_requests",
+        "message": "Слишком много запросов. Попробуйте позже.",
+    }
+    assert 1 <= int(response.headers["Retry-After"]) <= 60

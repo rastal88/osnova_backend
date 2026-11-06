@@ -96,3 +96,11 @@ async def login(client, email: str, password: str = "password123"):
         "/api/v1/auth/login",
         data={"username": email, "password": password},
     )
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    from app.core.forms.routes import limiter
+
+    if limiter is not None:
+        limiter.hits.clear()

@@ -5,7 +5,7 @@ Every error response looks like {"code": "not_found", "message": "Not found."}:
 Validation errors add `fields`: [{"field": "email", "code": "missing", "message": ...}].
 Unexpected errors (500) add `request_id`, the same as in the logs and X-Request-ID.
 
-Raise AppError(status, code, **params) with a code from the "errors" section
+Raise AppError(status, code, headers=None, **params) with a code from the "errors" section
 of app/core/locales/*.json. HTTPException is converted too: a detail that is a
 known code (like the UPPER_SNAKE codes of fastapi-users) is used as the code,
 otherwise the code comes from the status.
@@ -33,10 +33,13 @@ STATUS_CODES: dict[int, str] = {
 
 
 class AppError(Exception):
-    def __init__(self, status_code: int, code: str, **params):
+    def __init__(
+        self, status_code: int, code: str, headers: dict[str, str] | None = None, **params
+    ):
         super().__init__(code)
         self.status_code = status_code
         self.code = code
+        self.headers = headers
         self.params = params
 
 
@@ -77,7 +80,7 @@ def _field_error(error: dict) -> dict:
 
 
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-    return error_response(exc.status_code, exc.code, **exc.params)
+    return error_response(exc.status_code, exc.code, headers=exc.headers, **exc.params)
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
