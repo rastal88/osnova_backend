@@ -7,6 +7,10 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Forms: fields described once in `app/forms.py`; `GET /api/v1/forms/{name}` returns the
+  translated description for the frontend, `POST /api/v1/forms/{name}` validates it with
+  per-field errors and delivers it via a stub (`FORMS_DELIVERY=log|file`, `FORMS_FILE`).
+  Example `contact` form with a required consent checkbox.
 - Interface languages: `LANGUAGES` (enabled, default `en,ru`) and `DEFAULT_LANGUAGE` (`en`),
   validated on startup and returned in `/bootstrap` as `i18n`.
 - Backend messages in `app/core/locales/*.json`; the language comes from `Accept-Language`

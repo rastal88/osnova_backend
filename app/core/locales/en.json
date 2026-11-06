@@ -24,7 +24,8 @@
     "verify_user_bad_token": "The confirmation link is invalid or has expired.",
     "verify_user_already_verified": "This email is already confirmed.",
     "update_user_email_already_exists": "A user with this email already exists.",
-    "update_user_invalid_password": "The password does not meet the requirements."
+    "update_user_invalid_password": "The password does not meet the requirements.",
+    "form_not_found": "Form not found."
   },
   "validation": {
     "missing": "This field is required.",
@@ -35,6 +36,27 @@
     "float_parsing": "Must be a number.",
     "bool_parsing": "Must be true or false.",
     "greater_than_equal": "Must be at least {ge}.",
-    "less_than_equal": "Must be at most {le}."
+    "less_than_equal": "Must be at most {le}.",
+    "string_pattern_mismatch": "Invalid format.",
+    "email_invalid": "Enter a valid email address.",
+    "phone_invalid": "Enter a valid phone number.",
+    "literal_error": "Choose one of the options.",
+    "must_be_checked": "Please check this box to continue.",
+    "string_type": "Must be text.",
+    "bool_type": "Must be true or false."
+  },
+  "forms": {
+    "contact.title": "Contact us",
+    "contact.submit": "Send",
+    "contact.success": "Thank you! We will get back to you soon.",
+    "contact.name": "Name",
+    "contact.email": "Email",
+    "contact.phone": "Phone",
+    "contact.topic": "Topic",
+    "contact.topic.question": "Question",
+    "contact.topic.order": "Order",
+    "contact.topic.other": "Other",
+    "contact.message": "Message",
+    "contact.consent": "I agree to the processing of my personal data"
   }
 }

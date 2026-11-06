@@ -24,7 +24,8 @@
     "verify_user_bad_token": "Ссылка подтверждения недействительна или устарела.",
     "verify_user_already_verified": "Этот email уже подтверждён.",
     "update_user_email_already_exists": "Пользователь с таким email уже существует.",
-    "update_user_invalid_password": "Пароль не соответствует требованиям."
+    "update_user_invalid_password": "Пароль не соответствует требованиям.",
+    "form_not_found": "Форма не найдена."
   },
   "validation": {
     "missing": "Обязательное поле.",
@@ -35,6 +36,27 @@
     "float_parsing": "Должно быть числом.",
     "bool_parsing": "Должно быть true или false.",
     "greater_than_equal": "Должно быть не меньше {ge}.",
-    "less_than_equal": "Должно быть не больше {le}."
+    "less_than_equal": "Должно быть не больше {le}.",
+    "string_pattern_mismatch": "Неверный формат.",
+    "email_invalid": "Введите корректный email.",
+    "phone_invalid": "Введите корректный номер телефона.",
+    "literal_error": "Выберите один из вариантов.",
+    "must_be_checked": "Отметьте, чтобы продолжить.",
+    "string_type": "Должно быть текстом.",
+    "bool_type": "Должно быть true или false."
+  },
+  "forms": {
+    "contact.title": "Связаться с нами",
+    "contact.submit": "Отправить",
+    "contact.success": "Спасибо! Мы скоро свяжемся с вами.",
+    "contact.name": "Имя",
+    "contact.email": "Email",
+    "contact.phone": "Телефон",
+    "contact.topic": "Тема",
+    "contact.topic.question": "Вопрос",
+    "contact.topic.order": "Заказ",
+    "contact.topic.other": "Другое",
+    "contact.message": "Сообщение",
+    "contact.consent": "Я согласен на обработку персональных данных"
   }
 }

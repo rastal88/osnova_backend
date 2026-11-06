@@ -17,7 +17,7 @@ RUN pip install --upgrade pip && pip install -r requirements/${REQUIREMENTS}.txt
 
 COPY . .
 RUN chmod +x /app/docker-entrypoint.sh \
-    && mkdir -p /app/uploads \
+    && mkdir -p /app/uploads /app/data \
     && chown -R app:app /app
 
 USER app
