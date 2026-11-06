@@ -42,6 +42,12 @@ services:
       context: ../osnova_frontend
       args:
         VITE_BASE_URL: /api/v1
+        # The backend is not running during the build: prerender takes languages
+        # from the same .env as the backend
+        VITE_SITE_URL: ${SITE_URL:-}
+        VITE_LANGUAGES: ${LANGUAGES:-en,ru}
+        VITE_DEFAULT_LANGUAGE: ${DEFAULT_LANGUAGE:-en}
+        VITE_APP_NAME: ${APP_NAME:-Osnova Application}
     profiles: ["minimal", "standard", "scalable"]
     restart: unless-stopped
     depends_on:
