@@ -15,3 +15,10 @@ async def test_bootstrap(client):
     data = response.json()
     assert data["profile"] == "standard"
     assert data["features"]["authentication"] is True
+    assert data["i18n"] == {
+        "languages": [
+            {"code": "en", "name": "English"},
+            {"code": "ru", "name": "Русский"},
+        ],
+        "default": "en",
+    }

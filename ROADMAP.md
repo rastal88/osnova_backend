@@ -25,7 +25,7 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 
 ### B. Languages and SEO
 - [ ] 6. UI and content translations in files (react-i18next) *(fe)*
-- [ ] 7. Languages configured on the backend: available, enabled, default (`en`) — sent in `/bootstrap` *(be, fe)*
+- [~] 7. Languages configured on the backend: available, enabled, default (`en`) — sent in `/bootstrap` *(be, fe)* (backend done)
 - [ ] 8. Language switcher that remembers the choice *(fe)*
 - [ ] 9. Backend messages (errors, notifications) translated to the user's language *(be)*
 - [ ] 10. Language URLs (`/en`, `/ru`) and hreflang *(fe)*
@@ -47,7 +47,7 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 
 ### E. Backend *(be)*
 - [x] 22. `/health`
-- [~] 23. `/bootstrap` — version and capabilities (languages pending, see 7)
+- [x] 23. `/bootstrap` — version, capabilities and languages
 - [ ] 24. Unified error format: code + message in the user's language
 - [~] 25. OpenAPI + generated frontend client kept in sync (config exists, not checked in CI)
 - [ ] 26. Single form receiver with validation; stub delivery (log/file) without admin
