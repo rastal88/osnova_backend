@@ -34,9 +34,9 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 13. `sitemap.xml` and `robots.txt` *(fe)*
 
 ### C. Forms
-- [~] 14. Form generated from a field description *(be, fe)* — description served by `GET /forms/{name}`
-- [~] 15. Client and server validation with clear per-field errors *(fe, be)* — server side done
-- [ ] 16. Submit states (sending / success / error / retry) and a consent checkbox *(fe)*
+- [x] 14. Form generated from a field description *(be, fe)* — description served by `GET /forms/{name}`
+- [x] 15. Client and server validation with clear per-field errors *(fe, be)*
+- [x] 16. Submit states (sending / success / error / retry) and a consent checkbox *(fe)*
 
 ### D. Look and data *(fe)*
 - [x] 17. Light/dark theme and brand colours in one place (`src/config/brand.ts`)
@@ -49,10 +49,10 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 22. `/health`
 - [x] 23. `/bootstrap` — version, capabilities and languages
 - [x] 24. Unified error format: code + message in the user's language
-- [~] 25. OpenAPI + generated frontend client kept in sync (config exists, not checked in CI)
+- [x] 25. OpenAPI + generated frontend types kept in sync: `make openapi` writes `openapi.json`, CI checks both sides
 - [x] 26. Single form receiver with validation; stub delivery (log/file) without admin
-- [ ] 27. Server-side form protection: rate limits and anti-spam
-- [ ] 28. Logs with a request id
+- [x] 27. Server-side form protection: rate limits (`FORMS_RATE_LIMIT`, in-memory) and a honeypot field
+- [x] 28. Logs with a request id (`X-Request-ID`)
 - [x] 29. CORS for local development
 
 ### F. Legal *(fe)*
@@ -77,6 +77,8 @@ real-time, CMS.
 - Menu and breadcrumbs are basic but free: pages are not tied to the menu.
 - The backend is the source of truth for languages (list, enabled, default) and translates its own messages; later managed from the admin.
 - Forms work with a stub in minimal; real delivery arrives with the admin.
+- Form rate limits are counted in process memory; a shared store (Redis) comes with the scalable profile.
+- The frontend commits only generated API *types* (no generated runtime client); requests go through `src/api/*`.
 - Forms are described once on the backend (`app/forms.py`): the same description drives server validation and the frontend form.
 - `/bootstrap` is the base for languages and capability flags.
 - Examples (contact form, data and tables, landing) live in `src/examples` of the frontend and are removed by deleting that folder.
