@@ -7,6 +7,8 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Interface languages: `LANGUAGES` (enabled, default `en,ru`) and `DEFAULT_LANGUAGE` (`en`),
+  validated on startup and returned in `/bootstrap` as `i18n`.
 - Capabilities (`*_ENABLED` flags) and `GET /api/v1/bootstrap`, `GET /api/v1/health`.
 - Module registry: optional capabilities in `app/modules/*` are imported only when enabled,
   with dependency checks between modules.

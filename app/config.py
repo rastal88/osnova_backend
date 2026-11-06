@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     NOTIFICATIONS_ENABLED: bool = False
     BACKGROUND_TASKS_ENABLED: bool = False
 
+    # Interface languages: comma-separated codes from app/core/languages.py
+    LANGUAGES: str = "en,ru"
+    DEFAULT_LANGUAGE: str = "en"
+
     CORS_ORIGINS: str = "http://localhost:5173"
 
     # Database module: enabled when DATABASE_URL is set
