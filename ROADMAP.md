@@ -56,8 +56,8 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 29. CORS for local development
 
 ### F. Legal *(fe)*
-- [ ] 30. Privacy policy, terms, cookie policy — placeholders filled by the owner
-- [ ] 31. Cookie banner (when analytics is used)
+- [x] 30. Privacy policy, terms, cookie policy — placeholders filled by the owner (`src/config/legal.ts`)
+- [x] 31. Cookie banner (when analytics is used): `VITE_ANALYTICS_SCRIPT` loads only after consent
 
 ### G. Infrastructure
 - [~] 32. One-command development start (`make dev` on the backend; frontend separately)
@@ -82,6 +82,7 @@ real-time, CMS.
 - Forms are described once on the backend (`app/forms.py`): the same description drives server validation and the frontend form.
 - `/bootstrap` is the base for languages and capability flags.
 - Examples (contact form, data and tables, landing) live in `src/examples` of the frontend and are removed by deleting that folder.
+- Legal texts are placeholders with a visible "template" notice until the owner fills `src/config/legal.ts`; analytics is off by default and never loads without consent.
 - i18n: react-i18next. Link previews / SEO: build-time prerender. Languages: `en` (default), `ru`.
 
 ## Standard profile (`v0.2.0`, MVP)
