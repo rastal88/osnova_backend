@@ -7,15 +7,15 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Forms: fields described once in `app/forms.py`; `GET /api/v1/forms/{name}` returns the
+  translated description for the frontend, `POST /api/v1/forms/{name}` validates it with
+  per-field errors and delivers it via a stub (`FORMS_DELIVERY=log|file`, `FORMS_FILE`).
+  Example `contact` form with a required consent checkbox.
 - Form protection: `FORMS_RATE_LIMIT` (default `5/minute` per client IP and form, 429 with
   `Retry-After`) and a honeypot field (`honeypot` in the form description) whose filled
   submissions are answered as usual but not delivered. Docker Compose sets
   `FORWARDED_ALLOW_IPS` so the client IP is taken from the frontend proxy.
 - `AppError` accepts response `headers`.
-- Forms: fields described once in `app/forms.py`; `GET /api/v1/forms/{name}` returns the
-  translated description for the frontend, `POST /api/v1/forms/{name}` validates it with
-  per-field errors and delivers it via a stub (`FORMS_DELIVERY=log|file`, `FORMS_FILE`).
-  Example `contact` form with a required consent checkbox.
 - Interface languages: `LANGUAGES` (enabled, default `en,ru`) and `DEFAULT_LANGUAGE` (`en`),
   validated on startup and returned in `/bootstrap` as `i18n`.
 - Backend messages in `app/core/locales/*.json`; the language comes from `Accept-Language`
