@@ -356,6 +356,7 @@ docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
 | `AUTH_STRATEGY` | `jwt` (по умолчанию, без Redis) или `redis` (нужен `REDIS_URL`) |
 | `COOKIE_SECURE` | Флаг `Secure` у auth-cookie (включать только при HTTPS) |
 | `CORS_ORIGINS` | Разрешённые origin'ы через запятую (для локальной разработки) |
+| `FORMS_DELIVERY`, `FORMS_FILE` | Form submissions: `log` (application log) or `file` (also JSON lines in `FORMS_FILE`) |
 | `REDIS_URL` | Redis (сессии при `AUTH_STRATEGY=redis`) |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (обязателен брокер при `BACKGROUND_TASKS_ENABLED`) |
 | `FILES_DIR`, `FILES_MAX_SIZE_MB` | Папка и лимит размера для модуля файлов |
@@ -375,6 +376,8 @@ docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
 |---|---|---|---|
 | GET | `/bootstrap` | Профиль и capabilities | всегда |
 | GET | `/health` | Health-check (liveness) | всегда |
+| GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules); forms live in `app/forms.py` | всегда |
+| POST | `/forms/{name}` | Validates and delivers a form; `422` with per-field errors | всегда |
 | — | `/auth/*` | Регистрация, вход, сброс пароля, пользователи | `AUTH_ENABLED` |
 | — | `/user_flow/*` | Прикладные эндпоинты для любого вошедшего пользователя | `AUTH_ENABLED` |
 | — | `/admin_flow/*` | Административные эндпоинты | `ADMIN_ENABLED` |

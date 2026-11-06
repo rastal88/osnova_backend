@@ -17,6 +17,7 @@ env/
 
 tests/
 uploads/
+data/
 *.md
 requirements-dev.txt
 docker-compose.yml

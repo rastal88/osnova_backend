@@ -32,6 +32,7 @@ services:
       REDIS_URL: ""
     volumes:
       - uploads_data:/app/uploads
+      - forms_data:/app/data
     # No published host port: the API is reached through the frontend proxy
     # (same origin, no CORS), and this keeps the service horizontally scalable.
     expose:
@@ -58,3 +59,4 @@ services:
 
 volumes:
   uploads_data:
+  forms_data:

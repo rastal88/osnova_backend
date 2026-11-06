@@ -117,3 +117,5 @@ runserver.sh
 wbma_python.tar
 # Local file storage (FILES_ENABLED)
 uploads/
+# Form submissions (FORMS_DELIVERY=file)
+data/

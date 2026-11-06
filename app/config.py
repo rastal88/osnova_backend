@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://localhost:5173"
 
+    # Forms (app/forms.py): "log" writes submissions to the log, "file" also to FORMS_FILE
+    FORMS_DELIVERY: Literal["log", "file"] = "log"
+    FORMS_FILE: str = "data/forms.jsonl"
+
     # Database module: enabled when DATABASE_URL is set
     DATABASE_URL: str | None = None
     DB_ECHO: bool = False

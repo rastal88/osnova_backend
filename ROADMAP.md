@@ -34,8 +34,8 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 13. `sitemap.xml` and `robots.txt` *(fe)*
 
 ### C. Forms
-- [ ] 14. Form generated from a field description *(fe)*
-- [ ] 15. Client and server validation with clear per-field errors *(fe, be)*
+- [~] 14. Form generated from a field description *(be, fe)* — description served by `GET /forms/{name}`
+- [~] 15. Client and server validation with clear per-field errors *(fe, be)* — server side done
 - [ ] 16. Submit states (sending / success / error / retry) and a consent checkbox *(fe)*
 
 ### D. Look and data *(fe)*
@@ -50,7 +50,7 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 23. `/bootstrap` — version, capabilities and languages
 - [x] 24. Unified error format: code + message in the user's language
 - [~] 25. OpenAPI + generated frontend client kept in sync (config exists, not checked in CI)
-- [ ] 26. Single form receiver with validation; stub delivery (log/file) without admin
+- [x] 26. Single form receiver with validation; stub delivery (log/file) without admin
 - [ ] 27. Server-side form protection: rate limits and anti-spam
 - [ ] 28. Logs with a request id
 - [x] 29. CORS for local development
@@ -77,6 +77,7 @@ real-time, CMS.
 - Menu and breadcrumbs are basic but free: pages are not tied to the menu.
 - The backend is the source of truth for languages (list, enabled, default) and translates its own messages; later managed from the admin.
 - Forms work with a stub in minimal; real delivery arrives with the admin.
+- Forms are described once on the backend (`app/forms.py`): the same description drives server validation and the frontend form.
 - `/bootstrap` is the base for languages and capability flags.
 - i18n: react-i18next. Link previews / SEO: build-time prerender. Languages: `en` (default), `ru`.
 
