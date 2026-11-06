@@ -24,9 +24,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         user: UserCreate | User,
     ) -> None:
         if len(password) < 8:
-            raise InvalidPasswordException(reason="Password should be at least 8 characters")
+            raise InvalidPasswordException(reason="password_too_short")
         if user.email in password:
-            raise InvalidPasswordException(reason="Password should not contain e-mail")
+            raise InvalidPasswordException(reason="password_contains_email")
 
     async def on_after_register(self, user: User, request: Request | None = None):
         logger.info("User %s has registered.", user.id)

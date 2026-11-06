@@ -9,6 +9,10 @@ All notable changes are documented here. The format follows
 ### Added
 - Interface languages: `LANGUAGES` (enabled, default `en,ru`) and `DEFAULT_LANGUAGE` (`en`),
   validated on startup and returned in `/bootstrap` as `i18n`.
+- Backend messages in `app/core/locales/*.json`; the language comes from `Accept-Language`
+  and is returned in `Content-Language`.
+- Unified error format `{code, message}` (plus `fields` for validation errors) in the
+  request language; `AppError` for raising errors by code.
 - Capabilities (`*_ENABLED` flags) and `GET /api/v1/bootstrap`, `GET /api/v1/health`.
 - Module registry: optional capabilities in `app/modules/*` are imported only when enabled,
   with dependency checks between modules.
@@ -19,6 +23,7 @@ All notable changes are documented here. The format follows
 - CI: ruff, tests, minimal-install check, Docker builds. Open-source repository files.
 
 ### Changed
+- Error responses no longer use `detail`; auth and files errors return stable codes.
 - Every setting has a default; an empty `.env` runs the minimal profile.
 - `user_flow` is registered only with auth and is open to every signed-in role.
 - Database schema is created only by Alembic migrations.

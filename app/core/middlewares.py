@@ -2,9 +2,10 @@ import logging
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.config import config
+from app.core.errors import error_response
+from app.core.i18n import LanguageMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,9 @@ def add_middlewares(app: FastAPI):
             response = await call_next(request)
         except Exception:
             logger.exception("Unhandled error")
-            return JSONResponse(status_code=500, content={"detail": "Internal server error."})
+            return error_response(500, "internal_error")
         logger.info(f"Response: {response.status_code}")
         return response
+
+    # Outermost, so every response (errors included) is in the request language
+    app.add_middleware(LanguageMiddleware)

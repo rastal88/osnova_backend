@@ -1,0 +1,40 @@
+{
+  "errors": {
+    "bad_request": "The request is invalid.",
+    "unauthorized": "Please sign in.",
+    "forbidden": "You do not have access to this action.",
+    "not_found": "Not found.",
+    "method_not_allowed": "This method is not allowed.",
+    "conflict": "The request conflicts with the current state.",
+    "payload_too_large": "The request is too large.",
+    "validation_error": "Please check the highlighted fields.",
+    "too_many_requests": "Too many requests. Please try again later.",
+    "internal_error": "Something went wrong. Please try again later.",
+    "http_error": "The request failed.",
+    "file_not_found": "File not found.",
+    "file_too_large": "The file is too large. The limit is {max_mb} MB.",
+    "register_user_already_exists": "A user with this email already exists.",
+    "register_invalid_password": "The password does not meet the requirements.",
+    "password_too_short": "The password must be at least 8 characters.",
+    "password_contains_email": "The password must not contain your email.",
+    "login_bad_credentials": "Wrong email or password.",
+    "login_user_not_verified": "Please confirm your email first.",
+    "reset_password_bad_token": "The reset link is invalid or has expired.",
+    "reset_password_invalid_password": "The password does not meet the requirements.",
+    "verify_user_bad_token": "The confirmation link is invalid or has expired.",
+    "verify_user_already_verified": "This email is already confirmed.",
+    "update_user_email_already_exists": "A user with this email already exists.",
+    "update_user_invalid_password": "The password does not meet the requirements."
+  },
+  "validation": {
+    "missing": "This field is required.",
+    "string_too_short": "Must be at least {min_length} characters.",
+    "string_too_long": "Must be at most {max_length} characters.",
+    "value_error": "Invalid value.",
+    "int_parsing": "Must be a whole number.",
+    "float_parsing": "Must be a number.",
+    "bool_parsing": "Must be true or false.",
+    "greater_than_equal": "Must be at least {ge}.",
+    "less_than_equal": "Must be at most {le}."
+  }
+}
