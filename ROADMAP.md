@@ -24,14 +24,14 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 5. Optional breadcrumbs
 
 ### B. Languages and SEO
-- [ ] 6. UI and content translations in files (react-i18next) *(fe)*
-- [~] 7. Languages configured on the backend: available, enabled, default (`en`) — sent in `/bootstrap` *(be, fe)* (backend done)
-- [ ] 8. Language switcher that remembers the choice *(fe)*
+- [x] 6. UI and content translations in files (react-i18next) *(fe)*
+- [x] 7. Languages configured on the backend: available, enabled, default (`en`) — sent in `/bootstrap` *(be, fe)*
+- [x] 8. Language switcher that remembers the choice *(fe)*
 - [x] 9. Backend messages (errors, notifications) translated to the user's language *(be)*
-- [ ] 10. Language URLs (`/en`, `/ru`) and hreflang *(fe)*
-- [~] 11. Per-page SEO: title, description, canonical *(fe)*
-- [~] 12. Link previews for Telegram and social networks — via build-time prerender *(fe)*
-- [ ] 13. `sitemap.xml` and `robots.txt` *(fe)*
+- [x] 10. Language URLs (`/en`, `/ru`) and hreflang *(fe)*
+- [x] 11. Per-page SEO: title, description, canonical *(fe)*
+- [x] 12. Link previews for Telegram and social networks — via build-time prerender of `<head>` *(fe)*
+- [x] 13. `sitemap.xml` and `robots.txt` *(fe)*
 
 ### C. Forms
 - [ ] 14. Form generated from a field description *(fe)*

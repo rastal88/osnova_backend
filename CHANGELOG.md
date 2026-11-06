@@ -21,6 +21,8 @@ All notable changes are documented here. The format follows
 - `AUTH_STRATEGY`: JWT sessions by default, Redis optional.
 - Files module: authenticated upload, server-generated names, `FILES_MAX_SIZE_MB` limit.
 - CI: ruff, tests, minimal-install check, Docker builds. Open-source repository files.
+- Docker Compose passes `SITE_URL`, `LANGUAGES`, `DEFAULT_LANGUAGE` and `APP_NAME` to the
+  frontend build for prerendered SEO pages.
 
 ### Changed
 - Error responses no longer use `detail`; auth and files errors return stable codes.
