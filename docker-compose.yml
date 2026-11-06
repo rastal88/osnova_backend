@@ -25,6 +25,9 @@ services:
     environment:
       APP_HOST: 0.0.0.0
       APP_PORT: 8000
+      # Trust X-Forwarded-For from the frontend proxy, so rate limits see the
+      # client IP. Safe while the backend has no published port (see below).
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-*}
       # Explicitly empty so the minimal profile never tries to reach a database,
       # regardless of what the local .env contains. The datastore override
       # (standard/scalable) replaces these with in-network service URLs.

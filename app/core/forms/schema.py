@@ -7,6 +7,9 @@ renders and uses for client-side rules.
 Texts are translated from the "forms" section of app/core/locales/*.json:
 "<form>.title", "<form>.submit", "<form>.success", "<form>.<field>" and,
 for select options, "<form>.<field>.<option>".
+
+Every form also gets a honeypot: a field named HONEYPOT_FIELD that the frontend
+renders hidden. People leave it empty; a bot that fills it is dropped.
 """
 
 import re
@@ -24,6 +27,9 @@ FieldType = Literal["text", "textarea", "email", "tel", "select", "checkbox", "c
 # Simple on purpose: both run in Python and in the browser (sent as `pattern`)
 EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 PHONE_PATTERN = r"^\+?[0-9 ()\-]{5,20}$"
+
+# A name bots like to fill; forms cannot use it for a real field
+HONEYPOT_FIELD = "website"
 
 DEFAULT_MAX_LENGTH: dict[str, int] = {"text": 200, "textarea": 5000, "email": 254, "tel": 20}
 TYPE_PATTERNS: dict[str, tuple[str, str]] = {
@@ -51,6 +57,10 @@ class FormField:
 class Form:
     name: str
     fields: tuple[FormField, ...] = field(default_factory=tuple)
+
+    def __post_init__(self):
+        if any(item.name == HONEYPOT_FIELD for item in self.fields):
+            raise ValueError(f"Form '{self.name}' cannot have a field named '{HONEYPOT_FIELD}'")
 
 
 def _blank(required: bool):
@@ -133,6 +143,7 @@ def describe(form: Form) -> dict:
         "name": form.name,
         "title": text("title"),
         "submit": text("submit"),
+        "honeypot": HONEYPOT_FIELD,
         "fields": [
             {
                 "name": item.name,

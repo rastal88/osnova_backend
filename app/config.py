@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     # Forms (app/forms.py): "log" writes submissions to the log, "file" also to FORMS_FILE
     FORMS_DELIVERY: Literal["log", "file"] = "log"
     FORMS_FILE: str = "data/forms.jsonl"
+    # Submissions per client IP and form, e.g. "5/minute" (empty: no limit)
+    FORMS_RATE_LIMIT: str = "5/minute"
 
     # Database module: enabled when DATABASE_URL is set
     DATABASE_URL: str | None = None
