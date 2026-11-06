@@ -1,3 +1,7 @@
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 
 
@@ -22,3 +26,14 @@ async def test_bootstrap(client):
         ],
         "default": "en",
     }
+
+
+def test_openapi_json_is_up_to_date():
+    # Separate process: the export enables every module through the environment
+    result = subprocess.run(
+        [sys.executable, "-m", "scripts.openapi", "--check"],
+        cwd=Path(__file__).resolve().parent.parent,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr

@@ -9,7 +9,14 @@ from pydantic import ValidationError
 from app.config import config
 from app.core.errors import AppError
 from app.core.forms.delivery import deliver
-from app.core.forms.schema import HONEYPOT_FIELD, Form, build_model, describe
+from app.core.forms.schema import (
+    HONEYPOT_FIELD,
+    Form,
+    FormDescription,
+    FormSubmitResponse,
+    build_model,
+    describe,
+)
 from app.core.i18n import current_language, translate
 from app.core.rate_limit import RateLimiter, parse_limit
 from app.forms import FORMS
@@ -43,15 +50,17 @@ def _check_rate_limit(form: Form, request: Request):
 
 
 @forms_router.get("/{name}")
-async def get_form(name: str):
+async def get_form(name: str) -> FormDescription:
     return describe(_get_form(name))
 
 
 @forms_router.post("/{name}")
-async def submit_form(request: Request, name: str, payload: dict[str, Any] = Body(...)):
+async def submit_form(
+    request: Request, name: str, payload: dict[str, Any] = Body(...)
+) -> FormSubmitResponse:
     form = _get_form(name)
     _check_rate_limit(form, request)
-    success = {"message": translate(f"forms.{form.name}.success")}
+    success = FormSubmitResponse(message=translate(f"forms.{form.name}.success"))
 
     if payload.pop(HONEYPOT_FIELD, None):
         # Answer as usual, so the bot does not learn it was caught
