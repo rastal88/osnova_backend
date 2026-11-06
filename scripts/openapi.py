@@ -43,7 +43,11 @@ def main() -> int:
     schema = render()
     if "--check" in sys.argv:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != schema:
-            print("openapi.json is out of date: run `make openapi` (after `make install` if requirements changed)", file=sys.stderr)
+            print(
+                "openapi.json is out of date: run `make openapi`"
+                " (after `make install` if requirements changed)",
+                file=sys.stderr,
+            )
             return 1
         print("openapi.json is up to date")
         return 0
