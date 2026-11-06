@@ -1,0 +1,40 @@
+{
+  "errors": {
+    "bad_request": "Некорректный запрос.",
+    "unauthorized": "Пожалуйста, войдите в систему.",
+    "forbidden": "У вас нет доступа к этому действию.",
+    "not_found": "Не найдено.",
+    "method_not_allowed": "Этот метод не поддерживается.",
+    "conflict": "Запрос конфликтует с текущим состоянием.",
+    "payload_too_large": "Слишком большой запрос.",
+    "validation_error": "Проверьте выделенные поля.",
+    "too_many_requests": "Слишком много запросов. Попробуйте позже.",
+    "internal_error": "Что-то пошло не так. Попробуйте позже.",
+    "http_error": "Не удалось выполнить запрос.",
+    "file_not_found": "Файл не найден.",
+    "file_too_large": "Файл слишком большой. Максимум {max_mb} МБ.",
+    "register_user_already_exists": "Пользователь с таким email уже существует.",
+    "register_invalid_password": "Пароль не соответствует требованиям.",
+    "password_too_short": "Пароль должен быть не короче 8 символов.",
+    "password_contains_email": "Пароль не должен содержать ваш email.",
+    "login_bad_credentials": "Неверный email или пароль.",
+    "login_user_not_verified": "Сначала подтвердите email.",
+    "reset_password_bad_token": "Ссылка для сброса пароля недействительна или устарела.",
+    "reset_password_invalid_password": "Пароль не соответствует требованиям.",
+    "verify_user_bad_token": "Ссылка подтверждения недействительна или устарела.",
+    "verify_user_already_verified": "Этот email уже подтверждён.",
+    "update_user_email_already_exists": "Пользователь с таким email уже существует.",
+    "update_user_invalid_password": "Пароль не соответствует требованиям."
+  },
+  "validation": {
+    "missing": "Обязательное поле.",
+    "string_too_short": "Минимум символов: {min_length}.",
+    "string_too_long": "Максимум символов: {max_length}.",
+    "value_error": "Некорректное значение.",
+    "int_parsing": "Должно быть целым числом.",
+    "float_parsing": "Должно быть числом.",
+    "bool_parsing": "Должно быть true или false.",
+    "greater_than_equal": "Должно быть не меньше {ge}.",
+    "less_than_equal": "Должно быть не больше {le}."
+  }
+}

@@ -2,10 +2,11 @@ import re
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import FileResponse
 
 from app.config import config
+from app.core.errors import AppError
 from app.modules.auth.dependencies import current_user
 from app.modules.auth.models import User
 
@@ -37,7 +38,7 @@ async def upload_file(
             if size > MAX_SIZE:
                 buffer.close()
                 target.unlink(missing_ok=True)
-                raise HTTPException(status_code=413, detail="File is too large")
+                raise AppError(413, "file_too_large", max_mb=config.FILES_MAX_SIZE_MB)
             buffer.write(chunk)
 
     return {
@@ -51,5 +52,5 @@ async def upload_file(
 async def download_file(stored_name: str):
     path = UPLOAD_DIR / stored_name
     if not STORED_NAME.fullmatch(stored_name) or not path.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
+        raise AppError(404, "file_not_found")
     return FileResponse(path)

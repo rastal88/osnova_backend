@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi_users import schemas
-from pydantic import field_validator
+from pydantic import Field
 
 from app.modules.auth.roles import Role
 
@@ -11,12 +11,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 
 class UserCreate(schemas.BaseUserCreate):
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters")
-        return v
+    password: str = Field(min_length=8)
 
 
 class UserUpdate(schemas.BaseUserUpdate):
