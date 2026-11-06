@@ -3,6 +3,7 @@
 Every error response looks like {"code": "not_found", "message": "Not found."}:
 `code` is stable for the frontend, `message` is in the request language.
 Validation errors add `fields`: [{"field": "email", "code": "missing", "message": ...}].
+Unexpected errors (500) add `request_id`, the same as in the logs and X-Request-ID.
 
 Raise AppError(status, code, **params) with a code from the "errors" section
 of app/core/locales/*.json. HTTPException is converted too: a detail that is a
@@ -44,11 +45,14 @@ def error_response(
     code: str,
     fields: list[dict] | None = None,
     headers: dict[str, str] | None = None,
+    request_id: str | None = None,
     **params,
 ) -> JSONResponse:
     content: dict = {"code": code, "message": translate(f"errors.{code}", **params)}
     if fields is not None:
         content["fields"] = fields
+    if request_id is not None:
+        content["request_id"] = request_id
     return JSONResponse(status_code=status_code, content=content, headers=headers)
 
 

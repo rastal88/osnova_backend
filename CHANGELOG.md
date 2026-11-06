@@ -7,6 +7,9 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Request id: taken from `X-Request-ID` or generated, added to every log line and returned
+  in the `X-Request-ID` header; 500 responses include it as `request_id`. One log line per
+  request with method, path, status and duration.
 - Forms: fields described once in `app/forms.py`; `GET /api/v1/forms/{name}` returns the
   translated description for the frontend, `POST /api/v1/forms/{name}` validates it with
   per-field errors and delivers it via a stub (`FORMS_DELIVERY=log|file`, `FORMS_FILE`).
@@ -29,6 +32,7 @@ All notable changes are documented here. The format follows
   frontend build for prerendered SEO pages.
 
 ### Changed
+- Request logs no longer include the query string.
 - Error responses no longer use `detail`; auth and files errors return stable codes.
 - Every setting has a default; an empty `.env` runs the minimal profile.
 - `user_flow` is registered only with auth and is open to every signed-in role.
