@@ -10,7 +10,7 @@ os.environ.update(
         "APP_PROFILE": "standard",
         "DEBUG": "true",
         "DATABASE_URL": "postgresql+asyncpg://user:pass@localhost/db",
-        "SECRET_KEY": "test-secret-key",
+        "SECRET_KEY": "test-secret-key-at-least-32-bytes-long",
         "AUTH_STRATEGY": "jwt",
         "AUTH_ENABLED": "true",
         "ADMIN_ENABLED": "true",

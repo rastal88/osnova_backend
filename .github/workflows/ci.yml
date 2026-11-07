@@ -45,7 +45,7 @@ jobs:
         run: pip install -r requirements/base.txt
 
       - name: App starts without optional modules
-        run: python -c "from app import app; print(sorted(r.path for r in app.routes))"
+        run: python -c "from app import app; print(sorted(app.openapi()['paths']))"
 
   docker:
     name: Docker image
