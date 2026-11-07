@@ -25,7 +25,7 @@ from fastapi.testclient import TestClient
 from app import app
 with TestClient(app) as client:
     status = client.get("/api/v1/health").status_code
-paths = sorted({{route.path for route in app.routes}})
+paths = sorted(app.openapi()["paths"])
 loaded = [m for m in {HEAVY!r} if m in sys.modules]
 print(json.dumps({{"status": status, "paths": paths, "loaded": loaded}}))
 """

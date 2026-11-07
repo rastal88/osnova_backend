@@ -6,7 +6,8 @@ from fastapi_users import exceptions as fastapi_users_exceptions
 from app.modules.auth.manager import UserManager, get_user_db
 from app.modules.db import get_async_session
 
-app = typer.Typer()
+# No local variables in tracebacks: they would print the password
+app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
 @app.command()

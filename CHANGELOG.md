@@ -60,5 +60,10 @@ All notable changes are documented here. The format follows
 - Unused OAuth placeholder and `OAUTH2_*` settings (OAuth returns in the standard stage).
 
 ### Security
+- Dependencies with known vulnerabilities updated: FastAPI 0.162 with Starlette 1.10 (now
+  pinned), Uvicorn 0.54, fastapi-users 15.0.5, PyJWT 2.15.1 (now pinned), python-multipart
+  0.0.33. `openapi.json` regenerated.
+- `manage.py` no longer prints local variables in error tracebacks, which exposed the
+  password given to `createroot`.
 - Fixed path traversal in file download/upload.
 - Password reset tokens are no longer logged outside `DEBUG`.
