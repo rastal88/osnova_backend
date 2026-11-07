@@ -65,7 +65,7 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 34. Basic tests (backend: pytest; frontend: Vitest unit tests)
 - [x] 35. CI (backend: lint, tests incl. `openapi.json`, minimal install, Docker; frontend: lint, types, tests, API types, build)
 - [x] 36. Production Docker
-- [~] 37. README and example settings in English (backend done; frontend README and DEVELOPMENT.md next)
+- [x] 37. README, developer guide and example settings in English, checked against the code
 
 ### Not in minimal (later, as separate capabilities)
 JSON-LD, charts, gallery/lightbox, toasts, contacts/social/map, analytics, lead
@@ -83,6 +83,7 @@ real-time, CMS.
 - `/bootstrap` is the base for languages and capability flags.
 - Examples (contact form, data and tables, landing) live in `src/examples` of the frontend and are removed by deleting that folder.
 - Legal texts are placeholders with a visible "template" notice until the owner fills `src/config/legal.ts`; analytics is off by default and never loads without consent.
+- Frontend tooling: Biome only (lint + format), Vitest unit tests for pure logic; end-to-end tests are not part of minimal.
 - i18n: react-i18next. Link previews / SEO: build-time prerender. Languages: `en` (default), `ru`.
 
 ## Standard profile (`v0.2.0`, MVP)
@@ -102,5 +103,5 @@ Goal: a working *foundation* for every tool, not a full integration.
 - [ ] Scalable profile: documented differences, health/readiness checks
 
 ## Later
-- All documentation, instructions and code comments in English
+- All documentation, instructions and code comments in English (READMEs done; left: `migrations/README` and comments in old migrations)
 - `osnova strip --profile minimal`: physically remove unused modules from a project
