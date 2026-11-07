@@ -52,6 +52,8 @@ services:
         VITE_LANGUAGES: ${LANGUAGES:-en,ru}
         VITE_DEFAULT_LANGUAGE: ${DEFAULT_LANGUAGE:-en}
         VITE_APP_NAME: ${APP_NAME:-Osnova Application}
+        # Empty: no analytics and no cookie banner
+        VITE_ANALYTICS_SCRIPT: ${ANALYTICS_SCRIPT:-}
     profiles: ["minimal", "standard", "scalable"]
     restart: unless-stopped
     depends_on:

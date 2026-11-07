@@ -52,6 +52,10 @@ All notable changes are documented here. The format follows
 - `user_flow` is registered only with auth and is open to every signed-in role.
 - Database schema is created only by Alembic migrations.
 
+### Fixed
+- Docker Compose passes `ANALYTICS_SCRIPT` from `.env` to the frontend build, so analytics
+  and the cookie banner can be turned on in Docker.
+
 ### Removed
 - Unused OAuth placeholder and `OAUTH2_*` settings (OAuth returns in the standard stage).
 

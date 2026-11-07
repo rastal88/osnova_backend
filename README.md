@@ -272,7 +272,8 @@ listed with comments in [`.env.example`](.env.example).
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
 
 Docker Compose only: `FRONTEND_PORT`, `SITE_URL` (public origin for canonical links,
-link previews and `sitemap.xml`), `POSTGRES_*`, `RUN_MIGRATIONS`, `FORWARDED_ALLOW_IPS`.
+link previews and `sitemap.xml`), `ANALYTICS_SCRIPT` (frontend analytics, loaded only after
+cookie consent), `POSTGRES_*`, `RUN_MIGRATIONS`, `FORWARDED_ALLOW_IPS`.
 
 ---
 
