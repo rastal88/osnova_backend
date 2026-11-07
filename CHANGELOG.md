@@ -6,6 +6,10 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-07
+
+First release: the `minimal` profile.
+
 ### Added
 - `make dev-all`: runs the API and the frontend dev server from `../osnova_frontend`
   (`FRONTEND=...` for another path, installs its packages on first run); Ctrl+C stops both.
@@ -67,3 +71,6 @@ All notable changes are documented here. The format follows
   password given to `createroot`.
 - Fixed path traversal in file download/upload.
 - Password reset tokens are no longer logged outside `DEBUG`.
+
+[Unreleased]: https://github.com/rastal88/osnova_backend/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/rastal88/osnova_backend/releases/tag/v0.1.0

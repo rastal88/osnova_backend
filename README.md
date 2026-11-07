@@ -185,7 +185,7 @@ osnova_backend/
 
 ## Quick start
 
-Requirements: Python 3.13; Node.js 20 for the frontend; PostgreSQL only for modules that
+Requirements: Python 3.13; Node.js 24 for the frontend; PostgreSQL only for modules that
 need a database.
 
 ```bash
