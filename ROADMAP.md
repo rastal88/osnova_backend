@@ -14,10 +14,10 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] Per-module dependencies (`requirements/*.txt`), minimal image without optional packages
 - [x] Open-source repository layout (license, contributing, templates)
 
-## Minimal profile (`v0.1.0`)
+## Minimal profile (`v0.1.0`, released 2026-11-07)
 
 ### A. Layout and navigation *(fe)*
-- [~] 1. App shell: header, footer, mobile menu; menu can be disabled and placed top/left/right (configurable *style* still missing)
+- [x] 1. App shell: header, collapsible side menu (left by default; right, top or off), footer, mobile menu
 - [x] 2. Page frame: title, actions, shared states (loading, empty, error, forbidden)
 - [x] 3. 404 and generic error pages
 - [x] 4. Navigation from one config: active item, redirects
