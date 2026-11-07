@@ -3,422 +3,333 @@
 [![CI](https://github.com/rastal88/osnova_backend/actions/workflows/ci.yml/badge.svg)](https://github.com/rastal88/osnova_backend/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Универсальный full-stack шаблон для быстрой разработки и запуска web-приложений на Python и React.**
+**A modular full-stack template for web applications on Python (FastAPI) and React.**
 
-Osnova предоставляет готовую архитектуру и набор стандартных решений, покрывающих типовые
-задачи разработки, развёртывания и эксплуатации web-приложения — от небольших
-информационных сайтов и простых API до полноценных нагруженных систем.
+Osnova gives a new project a ready architecture and the usual building blocks: languages,
+forms, error handling, logging, Docker, CI. Optional capabilities (users, admin, files,
+background tasks) are switched on by configuration.
 
-> **Главный принцип:** Osnova ускоряет разработку нового проекта, не ограничивая его
-> дальнейшее развитие. Приложение, начатое как `minimal`, может постепенно перейти к
-> `standard` и `scalable` без переписывания фундаментальной архитектуры.
+> **Main idea:** start small and grow without rewriting. A project started as `minimal`
+> can move to `standard` and `scalable` by changing configuration and infrastructure,
+> not the architecture.
 
-Состоит из двух независимых репозиториев, взаимодействующих исключительно через API:
+Two independent repositories that talk only through the API:
 
-| Репозиторий | Назначение | Стек |
+| Repository | Purpose | Stack |
 |---|---|---|
-| **osnova_backend** (этот репозиторий) | API, бизнес-логика, данные | Python · FastAPI · SQLAlchemy · PostgreSQL |
-| [**osnova_frontend**](https://github.com/rastal88/osnova_frontend) | Web-интерфейс (SPA) | React · TypeScript · Vite |
+| **osnova_backend** (this one) | API, business logic, data | Python · FastAPI · SQLAlchemy · PostgreSQL |
+| [**osnova_frontend**](https://github.com/rastal88/osnova_frontend) | Web interface (SPA) | React · TypeScript · Vite |
+
+Status: the `minimal` profile is ready; `standard` is in progress. See [ROADMAP.md](ROADMAP.md).
 
 ---
 
-## Содержание
+## Contents
 
-- [Основные принципы](#основные-принципы)
-- [Профили приложения](#профили-приложения)
-- [Архитектура и capabilities](#архитектура-и-capabilities)
-- [Технологический стек](#технологический-стек)
-- [Структура проекта](#структура-проекта)
-- [Быстрый старт](#быстрый-старт)
-- [Развёртывание (Docker)](#развёртывание-docker)
-- [Конфигурация](#конфигурация)
+- [Principles](#principles)
+- [Profiles](#profiles)
+- [Capabilities](#capabilities)
+- [Stack](#stack)
+- [Project layout](#project-layout)
+- [Quick start](#quick-start)
+- [Docker](#docker)
+- [Configuration](#configuration)
 - [API](#api)
-- [Разработка](#разработка)
-- [Связанные проекты](#связанные-проекты)
+- [Development](#development)
 
 ---
 
-## Основные принципы
+## Principles
 
-- **Универсальность** — шаблон не привязан к конкретному типу приложения.
-- **Модульность** — функциональность подключается по необходимости.
-- **Единая архитектура** — разные уровни приложения не требуют разных кодовых баз.
-- **Масштабируемость** — приложение растёт без архитектурного переписывания.
-- **Конфигурируемость** — окружение и возможности управляются конфигурацией.
-- **Разделение ответственности** — frontend, backend и инфраструктура независимы.
-- **Простота запуска** — новый проект быстро разворачивается из шаблона.
-- **Production-ready** — архитектура изначально учитывает разработку, тестирование,
-  развёртывание и эксплуатацию.
-- **Modular monolith** — приложение начинается как модульный монолит; микросервисы
-  не являются обязательной частью.
+- **Modular monolith.** One application; each optional capability is a module in its own
+  folder, loaded only when enabled. Microservices are not required.
+- **Configuration over code.** Capabilities, languages and infrastructure are chosen in `.env`.
+- **The backend is the source of truth.** The frontend builds its routes and UI from
+  `GET /api/v1/bootstrap`.
+- **Pay only for what you use.** A disabled module is not imported, and its dependencies
+  (`requirements/<module>.txt`) need not be installed.
+- **Production-ready from the start.** Docker images, health checks, request ids, CI.
 
 ---
 
-## Профили приложения
+## Profiles
 
-Один и тот же код поддерживает три профиля. Переход между ними не требует переписывания —
-меняется только конфигурация и подключаемая инфраструктура.
+The same code runs in three profiles; moving between them changes configuration and the
+services around the app.
 
 ### Minimal
 
 ```
-Frontend ──▶ FastAPI ──▶ PostgreSQL (optional)
+Frontend ──▶ FastAPI
 ```
 
-Для сайтов, информационных приложений, небольших сервисов, простых API и внутренних
-инструментов. Не требует Redis, воркеров и другой дополнительной инфраструктуры.
+Sites, landing pages, small services and simple APIs. No database, Redis or workers; only
+`requirements/base.txt` is installed. Included: languages (`en`, `ru`), forms with
+validation, rate limit and honeypot, unified errors, request ids, OpenAPI for the frontend.
 
 ### Standard
 
 ```
                  ┌───── PostgreSQL
 Frontend ──▶ FastAPI
-                 ├───── Workers
                  ├───── Redis
-                 └───── Storage
+                 └───── Celery workers
 ```
 
-Основной production-профиль для большинства полноценных приложений. Может включать
-пользователей, authentication, authorization, Admin, фоновые задачи, email, файловое
-хранилище, кеширование, notifications.
+The main profile for full applications: users and roles, admin, files, background tasks.
+The goal is a working *foundation* for each tool, not a complete integration.
 
 ### Scalable
 
 ```
-                Load Balancer
+                Frontend (nginx)
                  /          \
-            FastAPI        FastAPI
+            FastAPI        FastAPI    (replicas)
                  \          /
-                  PostgreSQL
-                      │
-                    Redis
-                      │
-                   Workers
+             PostgreSQL · Redis
 ```
 
-Для приложений, которым нужно горизонтальное масштабирование: несколько экземпляров
-backend, load balancing, масштабирование воркеров, CDN, object storage, расширенное
-кеширование, мониторинг. При этом приложение не превращается в микросервисы.
+`standard` with several backend replicas: the backend publishes no host port and the
+frontend nginx spreads requests over the replicas through Docker DNS. A load balancer,
+CDN and monitoring are not part of the template yet.
 
 ---
 
-## Архитектура и capabilities
+## Capabilities
 
-Ядро конфигурируемости — механизм **capabilities**. Возможности приложения управляются
-флагами окружения, агрегируются на бэкенде и передаются на фронтенд.
+Each capability is an environment flag. The backend collects them and sends them to the
+frontend in `/bootstrap`:
 
 ```
-   .env (флаги)          capabilities.py          bootstrap.py             Frontend
-   
- AUTH_ENABLED        ──▶  Capabilities     ──▶   GET /api/v1/bootstrap ──▶ BootstrapStore
- ADMIN_ENABLED            dataclass              { profile, features }      ▼
- FILES_ENABLED                                                             UI + routing
- NOTIFICATIONS_ENABLED
- BACKGROUND_TASKS_ENABLED
+.env flags                 app/core/capabilities.py     GET /api/v1/bootstrap      Frontend
+AUTH_ENABLED          ──▶  Capabilities            ──▶  { application, profile, ──▶ routes + UI
+ADMIN_ENABLED                                             i18n, features }
+FILES_ENABLED
+NOTIFICATIONS_ENABLED
+BACKGROUND_TASKS_ENABLED
 ```
 
-### Правило источника истины
+When a capability is off, the frontend does not create its routes or UI:
 
-> **Backend — единственный источник истины о доступных возможностях.**
-> Frontend строит маршрутизацию и UI из capability-конфигурации, полученной
-> через `GET /api/v1/bootstrap`. Если capability выключена, соответствующие роуты и
-> элементы интерфейса на фронтенде не создаются.
-
-| Capability | `false` — frontend не создаёт |
+| Capability | Off: the frontend has no |
 |---|---|
-| `authentication` | роуты `/login`, `/register`; редиректы в `ProtectedRoute` |
-| `admin` | секцию `/admin` и пункты меню администратора |
-| `files` | компоненты загрузки/скачивания файлов |
-| `notifications` | центр уведомлений |
-| `background_tasks` | (как правило, UI не затрагивает) |
+| `authentication` | `/login`, `/register`, protected routes (every page is public) |
+| `admin` | `/admin` section and its menu items |
+| `files` | upload / download components |
+| `notifications` | notification centre (for now only the flag exists) |
+| `background_tasks` | usually nothing visible |
 
-При `authentication = false` приложение работает как публичный сайт: все страницы
-доступны, точки входа auth отсутствуют.
+Flags by profile:
 
-Соответствие флагов профилям:
-
-| Capability | Minimal | Standard | Scalable |
+| Flag | Minimal | Standard | Scalable |
 |---|:---:|:---:|:---:|
-| `AUTH_ENABLED` | ✕ (optional) | ✓ | ✓ |
+| `AUTH_ENABLED` | ✕ | ✓ | ✓ |
 | `ADMIN_ENABLED` | ✕ | ✓ | ✓ |
-| `FILES_ENABLED` | ✕ | optional | ✓ |
-| `NOTIFICATIONS_ENABLED` | ✕ | ✓ | ✓ |
+| `FILES_ENABLED` | ✕ | optional | optional |
+| `NOTIFICATIONS_ENABLED` | ✕ | optional | optional |
 | `BACKGROUND_TASKS_ENABLED` | ✕ | ✓ | ✓ |
-| Redis / Workers | ✕ | ✓ | ✓ |
-| Load Balancer / CDN | ✕ | ✕ | ✓ |
+| PostgreSQL / Redis | ✕ | ✓ | ✓ |
+| Several backend replicas | ✕ | ✕ | ✓ |
+
+A module that lacks what it needs stops the start with a clear message, e.g.
+`AUTH_ENABLED=true` without `DATABASE_URL`.
 
 ---
 
-## Технологический стек
+## Stack
 
-**Backend**
+**Backend:** Python 3.13, FastAPI, Uvicorn, Pydantic v2 / pydantic-settings. Optional
+modules: SQLAlchemy 2.0 (async) + asyncpg + Alembic, `fastapi-users` (JWT, cookies,
+roles), Redis, Celery. Tools: ruff, pytest.
 
-- Python 3.13, FastAPI, Uvicorn
-- SQLAlchemy 2.0 (async), Alembic, asyncpg
-- PostgreSQL
-- `fastapi-users` — аутентификация, JWT/cookie, роли
-- Celery + Redis — фоновые задачи (опционально)
-- Pydantic v2 / pydantic-settings — конфигурация и валидация
+**Frontend** ([osnova_frontend](https://github.com/rastal88/osnova_frontend)): React 19,
+TypeScript, Vite, Ant Design, Zustand, React Router, Axios, react-i18next. Tools: Biome,
+Vitest.
 
-**Frontend** — см. [osnova_frontend](https://github.com/rastal88/osnova_frontend)
-
-- React 19, TypeScript, Vite
-- Zustand — управление состоянием
-- Ant Design — UI
-- Axios, React Router
-- Biome, Playwright
-
-**Инфраструктура (DevOps)**
-
-- Docker / Docker Compose с профилями `minimal` / `standard` / `scalable`
-- Nginx — раздача SPA и reverse proxy на backend
-- CI/CD — GitHub Actions (тесты backend, сборка frontend)
-- Environment configuration, структурированное логирование, health checks
-- Мониторинг — планируется (см. профиль `scalable`)
+**Infrastructure:** Docker Compose profiles `minimal` / `standard` / `scalable`, nginx for
+the SPA and as the API proxy, GitHub Actions CI.
 
 ---
 
-## Структура проекта
+## Project layout
 
 ```
 osnova_backend/
 ├── app/
-│   ├── core/            # ядро (всегда): middleware, capabilities, bootstrap,
-│   │                    # health, реестр модулей (modules.py)
-│   ├── modules/         # опциональные модули — каждый в своей папке
-│   │   ├── db/          # SQLAlchemy (async), сессии          ← DATABASE_URL
-│   │   ├── auth/        # fastapi-users, роли, модель User    ← AUTH_ENABLED
-│   │   ├── admin/       # эндпоинты администратора            ← ADMIN_ENABLED
-│   │   ├── files/       # загрузка/скачивание файлов          ← FILES_ENABLED
-│   │   └── tasks/       # Celery                              ← BACKGROUND_TASKS_ENABLED
-│   ├── user_flow/       # пример прикладного домена (клиентская часть)
-│   ├── config.py        # настройки (pydantic-settings)
-│   └── __init__.py      # фабрика приложения
-├── migrations/          # Alembic-миграции
-├── requirements/        # зависимости по модулям: base, db, auth, files, tasks, redis,
-│                        # standard (всё), dev (всё + тесты и линтер)
-├── tests/               # тесты
-├── alembic.ini
-├── pyproject.toml       # настройки ruff и pytest
-├── Dockerfile           # образ backend (ARG REQUIREMENTS=base|standard)
-├── docker-compose.yml   # базовый (minimal-safe) compose
-├── docker-compose.datastores.yml  # override: postgres + redis (standard/scalable)
-├── Makefile             # up-minimal / up-standard / up-scalable
-└── manage.py
+│   ├── core/              # always loaded: bootstrap, health, capabilities, languages,
+│   │                      # errors, forms, rate limit, request id, module registry
+│   ├── modules/           # optional modules, one folder each
+│   │   ├── db/            # SQLAlchemy (async) sessions       ← DATABASE_URL
+│   │   ├── auth/          # fastapi-users, roles, User model  ← AUTH_ENABLED
+│   │   ├── admin/         # admin endpoints                   ← ADMIN_ENABLED
+│   │   ├── files/         # file upload / download            ← FILES_ENABLED
+│   │   └── tasks/         # Celery app                        ← BACKGROUND_TASKS_ENABLED
+│   ├── user_flow/         # example application domain (for signed-in users)
+│   ├── forms.py           # the project's forms
+│   ├── config.py          # settings (every value has a default)
+│   └── __init__.py        # application factory
+├── migrations/            # Alembic migrations
+├── requirements/          # per module: base, db, auth, files, tasks, redis;
+│                          # standard (all modules), dev (all + tools)
+├── scripts/openapi.py     # writes openapi.json for the frontend
+├── tests/
+├── openapi.json           # API schema, committed (the frontend generates types from it)
+├── Dockerfile             # backend image (ARG REQUIREMENTS=base|standard)
+├── docker-compose.yml     # base compose, safe for minimal
+├── docker-compose.datastores.yml  # adds PostgreSQL + Redis (standard / scalable)
+├── Makefile               # all commands: make help
+└── manage.py              # CLI: createroot
 ```
 
 ---
 
-## Быстрый старт
+## Quick start
 
-### Требования
-
-- Python 3.13
-- PostgreSQL (опционально для minimal)
-
-### Установка
+Requirements: Python 3.13; Node.js 20 for the frontend; PostgreSQL only for modules that
+need a database.
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/rastal88/osnova_backend.git
+git clone https://github.com/rastal88/osnova_frontend.git   # next to it, for make dev-all
 cd osnova_backend
-python3.13 -m venv venv && source venv/bin/activate
-pip install -r requirements/dev.txt     # все модули + инструменты разработки
-# или только то, что нужно, например minimal:
-# pip install -r requirements/base.txt
+make install              # venv + requirements/dev.txt (all modules + tools)
+cp .env.example .env      # optional: an empty .env runs the minimal profile
+make dev-all              # API + frontend dev server; Ctrl+C stops both
 ```
 
-### Настройка базы
+- Frontend: `http://localhost:5173`
+- API: `http://localhost:8000/api/v1`, docs at `http://localhost:8000/docs`
 
-```sql
-\c <db_name>
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-```
+`make dev` starts only the API (host and port from `APP_HOST` / `APP_PORT`). For the
+minimal profile alone `pip install -r requirements/base.txt` is enough.
 
-### Конфигурация
+### With a database and users
 
 ```bash
-cp .env.example .env   # заполните значения
+# .env: DATABASE_URL=postgresql+asyncpg://osnova:osnova@localhost:5432/osnova
+#       AUTH_ENABLED=true, SECRET_KEY=<long random value>
+alembic upgrade head          # the first migration creates the uuid-ossp extension
+python manage.py createroot   # first user with the root role
 ```
-
-У всех переменных есть значения по умолчанию, поэтому пустой `.env` запускает профиль
-`minimal`: без БД, Redis и без загрузки кода опциональных модулей.
-
-Если включённому модулю не хватает зависимости (например, `AUTH_ENABLED=true` без
-`DATABASE_URL`), приложение не стартует и пишет, чего не хватает.
-
-### Миграции и первый root
-
-> Выполняются только при включённой аутентификации и настроенной БД.
-
-```bash
-alembic upgrade head
-python manage.py createroot
-```
-
-### Запуск
-
-```bash
-make dev                       # = python run.py, host/port из .env (APP_HOST / APP_PORT)
-# или
-./run.sh -h 0.0.0.0 -p 8000    # с явным указанием host/port
-```
-
-API and frontend together (frontend cloned to `../osnova_frontend`, or set `FRONTEND=...`):
-
-```bash
-make dev-all                   # API + Vite dev server; Ctrl+C stops both
-```
-
-Документация API: `http://localhost:8000/docs`
 
 ---
 
-## Развёртывание (Docker)
+## Docker
 
-Деплой построен на **Docker Compose profiles**: одна кодовая база разворачивается в
-одном из трёх профилей без изменения кода.
-
-### Требования
-
-- Docker и Docker Compose v2
-- Оба репозитория рядом: `osnova_backend/` и `osnova_frontend/` в одной директории
-
-### Команды
+Both repositories must sit side by side (`osnova_backend/`, `osnova_frontend/`); one
+`.env` in the backend configures both.
 
 ```bash
-cp .env.example .env          # заполните значения (единственный env-файл)
-make up-minimal               # backend + frontend (без БД/Redis)
-make up-standard              # + postgres + redis
-make up-scalable              # standard + горизонтальное масштабирование
-make logs                     # логи
-make down                     # остановить
+cp .env.example .env
+make up-minimal       # backend + frontend
+make up-standard      # + PostgreSQL + Redis
+make up-scalable      # standard with 3 backend replicas
+make logs             # follow logs
+make down             # stop (make down-volumes also deletes data)
 ```
 
-Эквивалент без `make`:
+Only the frontend is published: `http://localhost:8080` (`FRONTEND_PORT`). nginx proxies
+`/api`, `/docs`, `/redoc` and `/openapi.json` to the backend, so there is one origin and
+no CORS.
 
-```bash
-# minimal
-docker compose -f docker-compose.yml --profile minimal up --build -d
-# standard
-docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
-               --profile standard up --build -d
-```
+How it works:
 
-### Доступ
-
-Наружу публикуется только frontend; API и документация доступны через него (один origin).
-
-| Ресурс | URL |
-|---|---|
-| Frontend | `http://localhost:8080` |
-| Backend API | `http://localhost:8080/api/v1` |
-| Swagger UI | `http://localhost:8080/docs` |
-
-### Как устроено
-
-- **Frontend** собирается из `osnova_frontend` (Node build → nginx) и проксирует `/api`,
-  `/docs`, `/openapi.json`, `/redoc` на сервис `backend`. Один origin — CORS не нужен.
-- **Backend** — многоэтапный образ, non-root, запускается через `uvicorn`. Порт `8000`
-  доступен только внутри compose-сети (не публикуется на хост) — это позволяет
-  масштабировать реплики без конфликта портов.
-- **Профили** включают сервисы: `postgres`, `redis` вынесены в
-  `docker-compose.datastores.yml` и помечены `standard`/`scalable`; `backend` и
-  `frontend` — всеми профилями. При `--profile minimal` образы `postgres` и `redis`
-  не загружаются и не запускаются.
-- **Адреса БД/Redis** не задаются вручную: базовый compose для `minimal` явно
-  выставляет `DATABASE_URL`/`REDIS_URL` пустыми, а для `standard`/`scalable`
-  override-файл подставляет внутренние адреса сервисов (`postgres:5432`,
-  `redis:6379`). Локальные значения `localhost` из `.env` не используются.
-- **Health checks**: backend отдаёт `GET /api/v1/health`; postgres/redis — встроенные.
-- **Переменные**: флаги возможностей и секреты — в `.env` (см. `.env.example`).
-- **Миграции**: при `RUN_MIGRATIONS=true` и заданном `DATABASE_URL` entrypoint выполняет
-  `alembic upgrade head` до старта приложения.
-
-### Особенности профилей
-
-- `minimal` — публичный сайт без БД: отдаётся статика SPA и публичные API. Из
-  инфраструктуры поднимаются только `backend` и `frontend`; обращений к БД/Redis нет.
-- `standard` — в `.env` выставьте `APP_PROFILE=standard` и включите нужные флаги
-  (`AUTH_ENABLED`, `ADMIN_ENABLED`, `BACKGROUND_TASKS_ENABLED`). Учётные данные БД
-  (`POSTGRES_USER/PASSWORD/DB`) опциональны — по умолчанию `osnova/osnova/osnova`.
-- `scalable` — те же образы, масштабирование реплик. Backend не публикует порт на хост,
-  а nginx в frontend балансирует через внутренний DNS Docker:
-  `docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
-  --profile scalable up --scale backend=3`.
+- **Backend image:** `python:3.13-slim`, non-root, `uvicorn`, with a health check.
+  `REQUIREMENTS=base` for minimal,
+  `standard` with the datastore override. Port `8000` is exposed only inside the compose
+  network, so replicas do not clash.
+- **Datastores:** `postgres` and `redis` live in `docker-compose.datastores.yml` and run
+  only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
+  from `.env` are ignored. In `minimal` `DATABASE_URL` and `REDIS_URL` are forced empty.
+- **Migrations:** with `RUN_MIGRATIONS=true` and a database the entrypoint runs
+  `alembic upgrade head` before the app starts.
+- **Health checks:** `GET /api/v1/health` for the backend; built-in ones for postgres and
+  redis.
+- **Standard:** set `APP_PROFILE=standard` and the flags you need in `.env`.
+  `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` default to `osnova`.
 
 ---
 
-## Конфигурация
+## Configuration
 
-Основные переменные окружения (см. `.env.example` и `app/config.py`):
+All settings are in [`app/config.py`](app/config.py), each with a default; every one is
+listed with comments in [`.env.example`](.env.example).
 
-| Переменная | Описание |
+| Variable | Purpose |
 |---|---|
-| `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Идентификация и профиль приложения |
-| `APP_HOST`, `APP_PORT`, `DEBUG` | Хост, порт, режим отладки |
-| `DATABASE_URL`, `DB_ECHO` | Подключение к БД (включает модуль `db`), логирование SQL |
-| `SECRET_KEY`, `ALGORITHM` | Подпись токенов (обязателен `SECRET_KEY` при `AUTH_ENABLED`) |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Время жизни сессии и cookie |
-| `AUTH_STRATEGY` | `jwt` (по умолчанию, без Redis) или `redis` (нужен `REDIS_URL`) |
-| `COOKIE_SECURE` | Флаг `Secure` у auth-cookie (включать только при HTTPS) |
-| `CORS_ORIGINS` | Разрешённые origin'ы через запятую (для локальной разработки) |
-| `FORMS_DELIVERY`, `FORMS_FILE` | Form submissions: `log` (application log) or `file` (also JSON lines in `FORMS_FILE`) |
-| `REDIS_URL` | Redis (сессии при `AUTH_STRATEGY=redis`) |
-| `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (обязателен брокер при `BACKGROUND_TASKS_ENABLED`) |
-| `FILES_DIR`, `FILES_MAX_SIZE_MB` | Папка и лимит размера для модуля файлов |
-| `AUTH_ENABLED` | Аутентификация и регистрация (нужен модуль `db`) |
-| `ADMIN_ENABLED` | Административная панель (нужен `AUTH_ENABLED`) |
-| `FILES_ENABLED` | Файловое хранилище (нужен `AUTH_ENABLED`) |
-| `NOTIFICATIONS_ENABLED` | Уведомления (пока только флаг для фронтенда) |
-| `BACKGROUND_TASKS_ENABLED` | Фоновые задачи (Celery) |
+| `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version, profile (`minimal` / `standard` / `scalable`) |
+| `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address, debug mode |
+| `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
+| `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`) |
+| `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
+| `FORMS_DELIVERY`, `FORMS_FILE` | Form delivery stub: `log`, or `file` (also JSON lines in `FORMS_FILE`) |
+| `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables |
+| `DATABASE_URL`, `DB_ECHO` | Database (turns on the `db` module), SQL logging |
+| `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth) |
+| `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
+| `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
+| `FILES_DIR`, `FILES_MAX_SIZE_MB` | Upload folder and size limit |
+| `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
+
+Docker Compose only: `FRONTEND_PORT`, `SITE_URL` (public origin for canonical links,
+link previews and `sitemap.xml`), `POSTGRES_*`, `RUN_MIGRATIONS`, `FORWARDED_ALLOW_IPS`.
 
 ---
 
 ## API
 
-Базовый префикс — `/api/v1`.
+Prefix `/api/v1`. The full schema is in [`openapi.json`](openapi.json) and at `/docs`.
+Errors share one format: `{ code, message, fields?, request_id? }`, with `message` in the
+user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 
-| Метод | Путь | Описание | Условие |
+| Method | Path | Purpose | When |
 |---|---|---|---|
-| GET | `/bootstrap` | Профиль и capabilities | всегда |
-| GET | `/health` | Health-check (liveness) | всегда |
-| GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules); forms live in `app/forms.py` | всегда |
-| POST | `/forms/{name}` | Validates and delivers a form; `422` with per-field errors | всегда |
-| — | `/auth/*` | Регистрация, вход, сброс пароля, пользователи | `AUTH_ENABLED` |
-| — | `/user_flow/*` | Прикладные эндпоинты для любого вошедшего пользователя | `AUTH_ENABLED` |
-| — | `/admin_flow/*` | Административные эндпоинты | `ADMIN_ENABLED` |
-| POST/GET | `/file_flow/*` | Загрузка (только вошедшим) и скачивание файлов | `FILES_ENABLED` |
+| GET | `/bootstrap` | Version, profile, capabilities, languages | always |
+| GET | `/health` | Liveness check | always |
+| GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules) | always |
+| POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
+| — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
+| GET | `/user_flow/main` | Example endpoint for any signed-in user | `AUTH_ENABLED` |
+| GET | `/admin_flow/*` | Admin endpoints (users list) | `ADMIN_ENABLED` |
+| POST / GET | `/file_flow/upload`, `/file_flow/download/{name}` | Upload (signed-in users) and download | `FILES_ENABLED` |
 
 ---
 
-## Разработка
+## Development
 
-- **Модуль = папка.** Каждая возможность — пакет в `app/modules/<name>/` с функцией
-  `register(app)`. Реестр `app/core/modules.py` импортирует пакет **только если он
-  включён** и проверяет зависимости между модулями. Код модуля не импортируется
-  снаружи, кроме других модулей, которые от него зависят (`requires`).
-- **Удаление модуля из проекта:** удалить его папку, запись в `MODULES`
-  (`app/core/modules.py`) и файл `requirements/<name>.txt`.
-- **Новый домен приложения** — пакет `app/<domain>_flow/` по образцу `app/user_flow/`
-  и запись в `MODULES`.
-- **Добавление capability** (чек-лист):
-  1. Флаг в `app/config.py` и `.env.example`.
-  2. Пакет `app/modules/<name>/` с `register(app)` и запись в `MODULES`.
-  3. Зависимости в `requirements/<name>.txt` (+ подключить в `standard.txt`).
-  4. Поле в `Capabilities` (`app/core/capabilities.py`) и в `app/core/bootstrap.py`.
-  5. Учесть флаг в UI/роутинге на фронтенде.
-- **Команды:** `make install`, `make dev`, `make dev-all`, `make test`, `make lint`, `make format`
-  (`make help` — список).
-- **Миграции:** `alembic revision --autogenerate -m "<message>"`
+| Command | Purpose |
+|---|---|
+| `make install` | venv + all modules and tools |
+| `make dev` / `make dev-all` | API with reload / API + frontend dev server |
+| `make test` | pytest (also checks that `openapi.json` is up to date) |
+| `make lint` / `make format` | ruff check / fix |
+| `make openapi` | write `openapi.json` after API changes, then `npm run generate:client` in the frontend |
+| `make help` | all commands, including Docker ones |
+
+- **Module = folder.** Each capability is a package `app/modules/<name>/` with
+  `register(app)`. The registry `app/core/modules.py` imports it only when it is enabled
+  and checks module dependencies (`requires`). The core never imports modules.
+- **Remove a module:** delete its folder, its entry in `MODULES` and
+  `requirements/<name>.txt`.
+- **New application domain:** a package like `app/user_flow/` and an entry in `MODULES`.
+- **Add a capability:**
+  1. A flag in `app/config.py` and `.env.example`.
+  2. A package `app/modules/<name>/` with `register(app)` and an entry in `MODULES`.
+  3. Dependencies in `requirements/<name>.txt`, included from `standard.txt`.
+  4. A field in `Capabilities` (`app/core/capabilities.py`) and in `app/core/bootstrap.py`.
+  5. Handle the flag in the frontend routes and UI.
+- **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
+- **Add a language:** `AVAILABLE_LANGUAGES` in `app/core/languages.py`, translations in
+  `app/core/locales/`, then list it in `LANGUAGES`.
+- **Migrations:** `alembic revision --autogenerate -m "<message>"`.
+
+CI (GitHub Actions) runs ruff and the tests, starts the app with base requirements only,
+and builds the Docker image with base and with standard requirements.
 
 ---
 
-## Связанные проекты
+## Roadmap, contributing, license
 
-- [osnova_frontend](https://github.com/rastal88/osnova_frontend) — SPA-интерфейс.
-
-## Roadmap, участие, лицензия
-
-- План и статус: [ROADMAP.md](ROADMAP.md), изменения: [CHANGELOG.md](CHANGELOG.md).
-- Как участвовать: [CONTRIBUTING.md](CONTRIBUTING.md), безопасность: [SECURITY.md](SECURITY.md).
-- Лицензия: [MIT](LICENSE).
+- Plan and status: [ROADMAP.md](ROADMAP.md); changes: [CHANGELOG.md](CHANGELOG.md).
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md); security: [SECURITY.md](SECURITY.md).
+- License: [MIT](LICENSE).

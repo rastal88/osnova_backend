@@ -65,7 +65,7 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 34. Basic tests (backend: pytest; frontend: Vitest unit tests)
 - [x] 35. CI (backend: lint, tests incl. `openapi.json`, minimal install, Docker; frontend: lint, types, tests, API types, build)
 - [x] 36. Production Docker
-- [~] 37. README and example settings (to be rewritten in English)
+- [~] 37. README and example settings in English (backend done; frontend README and DEVELOPMENT.md next)
 
 ### Not in minimal (later, as separate capabilities)
 JSON-LD, charts, gallery/lightbox, toasts, contacts/social/map, analytics, lead
