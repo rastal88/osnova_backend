@@ -11,6 +11,7 @@ Thanks for helping with Osnova! The project has two repositories:
 make install          # venv + requirements/dev.txt
 cp .env.example .env
 make dev              # API on http://localhost:8000, docs at /docs
+make dev-all          # API + frontend dev server (../osnova_frontend), Ctrl+C stops both
 ```
 
 Full stack in Docker (both repositories side by side): `make up-minimal` or `make up-standard`.

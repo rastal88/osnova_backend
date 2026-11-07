@@ -263,6 +263,12 @@ make dev                       # = python run.py, host/port из .env (APP_HOST 
 ./run.sh -h 0.0.0.0 -p 8000    # с явным указанием host/port
 ```
 
+API and frontend together (frontend cloned to `../osnova_frontend`, or set `FRONTEND=...`):
+
+```bash
+make dev-all                   # API + Vite dev server; Ctrl+C stops both
+```
+
 Документация API: `http://localhost:8000/docs`
 
 ---
@@ -401,7 +407,7 @@ docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
   3. Зависимости в `requirements/<name>.txt` (+ подключить в `standard.txt`).
   4. Поле в `Capabilities` (`app/core/capabilities.py`) и в `app/core/bootstrap.py`.
   5. Учесть флаг в UI/роутинге на фронтенде.
-- **Команды:** `make install`, `make dev`, `make test`, `make lint`, `make format`
+- **Команды:** `make install`, `make dev`, `make dev-all`, `make test`, `make lint`, `make format`
   (`make help` — список).
 - **Миграции:** `alembic revision --autogenerate -m "<message>"`
 
