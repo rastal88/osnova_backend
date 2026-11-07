@@ -43,6 +43,9 @@ All notable changes are documented here. The format follows
   frontend build for prerendered SEO pages.
 
 ### Changed
+- README rewritten in English and checked against the code: current status per profile,
+  quick start with `make dev-all`, full settings and API tables; removed claims the code
+  does not back (manual `uuid-ossp` step, multi-stage image, load balancer / CDN).
 - Request logs no longer include the query string.
 - Error responses no longer use `detail`; auth and files errors return stable codes.
 - Every setting has a default; an empty `.env` runs the minimal profile.
