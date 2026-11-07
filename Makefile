@@ -1,10 +1,11 @@
 COMPOSE ?= docker compose
 PYTHON ?= venv/bin/python
+FRONTEND ?= ../osnova_frontend
 
 BASE := -f docker-compose.yml
 DATA := -f docker-compose.yml -f docker-compose.datastores.yml
 
-.PHONY: help install dev test lint format openapi up-minimal up-standard up-scalable down down-volumes logs ps build
+.PHONY: help install dev dev-all test lint format openapi up-minimal up-standard up-scalable down down-volumes logs ps build
 
 help:  ## Show available commands
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-14s %s\n", $$1, $$2}'
@@ -15,6 +16,14 @@ install:  ## Create venv and install all modules + dev tools
 
 dev:  ## Run the API locally with auto-reload
 	$(PYTHON) run.py
+
+dev-all:  ## Run the API and the frontend dev server (../osnova_frontend), Ctrl+C stops both
+	@test -d $(FRONTEND) || { echo "Frontend not found at $(FRONTEND): clone osnova_frontend there or set FRONTEND=..."; exit 1; }
+	@test -d $(FRONTEND)/node_modules || npm --prefix $(FRONTEND) install
+	@trap 'trap - INT TERM; kill 0' INT TERM; \
+	$(PYTHON) run.py & \
+	npm --prefix $(FRONTEND) run dev & \
+	wait
 
 test:  ## Run tests
 	$(PYTHON) -m pytest

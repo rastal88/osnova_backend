@@ -60,10 +60,10 @@ Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova
 - [x] 31. Cookie banner (when analytics is used): `VITE_ANALYTICS_SCRIPT` loads only after consent
 
 ### G. Infrastructure
-- [~] 32. One-command development start (`make dev` on the backend; frontend separately)
-- [~] 33. Linter, formatter, type checks (backend: ruff; frontend: one tool still to choose)
-- [~] 34. Basic tests (backend yes, frontend none)
-- [~] 35. CI (backend: lint, tests, minimal install, Docker; frontend: build only)
+- [x] 32. One-command development start: `make dev-all` (API + frontend dev server)
+- [x] 33. Linter, formatter, type checks (backend: ruff; frontend: Biome + `tsc`)
+- [x] 34. Basic tests (backend: pytest; frontend: Vitest unit tests)
+- [x] 35. CI (backend: lint, tests incl. `openapi.json`, minimal install, Docker; frontend: lint, types, tests, API types, build)
 - [x] 36. Production Docker
 - [~] 37. README and example settings (to be rewritten in English)
 

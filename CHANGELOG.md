@@ -7,6 +7,8 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `make dev-all`: runs the API and the frontend dev server from `../osnova_frontend`
+  (`FRONTEND=...` for another path, installs its packages on first run); Ctrl+C stops both.
 - `openapi.json`: schema of the full API for the frontend client, written by `make openapi`;
   a test fails when it is out of date. Core endpoints (`/bootstrap`, `/health`, `/forms`)
   have response models, and error responses are documented as `ErrorResponse`. `pydantic`
