@@ -13,7 +13,23 @@ used. With it, values are stored in the database and loaded into ``settings``
 app/core/settings/schema.py.
 """
 
-from app.core.settings.base import OptionalEmail, OptionalPhone, SettingsGroup
+from app.core.settings.base import (
+    Email,
+    OptionalEmail,
+    OptionalPhone,
+    Secret,
+    SettingsGroup,
+    secret_fields,
+)
 from app.core.settings.store import SettingsStore, settings
 
-__all__ = ["OptionalEmail", "OptionalPhone", "SettingsGroup", "SettingsStore", "settings"]
+__all__ = [
+    "Email",
+    "OptionalEmail",
+    "OptionalPhone",
+    "Secret",
+    "SettingsGroup",
+    "SettingsStore",
+    "secret_fields",
+    "settings",
+]

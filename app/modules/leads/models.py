@@ -25,3 +25,7 @@ class Lead(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None), index=True
     )
+    # Delivery to each channel: {entity id: {channel, type, status, error, at}}
+    deliveries: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), default=dict
+    )

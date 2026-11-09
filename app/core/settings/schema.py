@@ -39,7 +39,13 @@ def _constraint(info: FieldInfo, kind: type) -> int | None:
     return None
 
 
-def _describe_field(group: type[SettingsGroup], name: str, info: FieldInfo) -> dict:
+def describe_field(
+    name: str,
+    info: FieldInfo,
+    key: str,
+    option_labels: dict[str, str] | None = None,
+) -> dict:
+    """One model field as a form field; texts from "<key>.<name>" (and ".<option>")."""
     annotation = info.annotation
     options: tuple[str, ...] = ()
     field_type: FieldType
@@ -54,11 +60,11 @@ def _describe_field(group: type[SettingsGroup], name: str, info: FieldInfo) -> d
         field_type = extra.get("input", "text")  # type: ignore[assignment]
 
     min_length = _constraint(info, MinLen)
-    labels = group.option_labels(name) or {}
+    labels = option_labels or {}
     return {
         "name": name,
         "type": field_type,
-        "label": translate(f"settings.{group.group}.{name}"),
+        "label": translate(f"{key}.{name}"),
         "required": bool(min_length) or field_type in ("select", "multiselect"),
         "min_length": min_length,
         "max_length": _constraint(info, MaxLen),
@@ -66,7 +72,7 @@ def _describe_field(group: type[SettingsGroup], name: str, info: FieldInfo) -> d
         "options": [
             {
                 "value": option,
-                "label": labels.get(option) or translate(f"settings.{group.group}.{name}.{option}"),
+                "label": labels.get(option) or translate(f"{key}.{name}.{option}"),
             }
             for option in options
         ],
@@ -80,7 +86,8 @@ def describe_group(group: type[SettingsGroup], value: SettingsGroup) -> Settings
             "name": group.group,
             "title": translate(f"settings.{group.group}.title"),
             "fields": [
-                _describe_field(group, name, info) for name, info in group.model_fields.items()
+                describe_field(name, info, f"settings.{group.group}", group.option_labels(name))
+                for name, info in group.model_fields.items()
             ],
             "values": value.model_dump(mode="json"),
         }

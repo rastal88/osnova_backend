@@ -7,6 +7,21 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Configurable entities: an entity type is a Pydantic model registered with `@entity_type`
+  (`app/core/entities.py`); all live in one table `entities` (migration `0004`). The
+  `entities` module serves `/admin/entities` (list, create, update, delete; types with form
+  descriptions at `/admin/entities/types`). Admins read, root changes; `Secret` fields
+  (password inputs) come back as `********`, and sending that back keeps the stored value.
+- Lead delivery channels (entities of the group `lead_channels`): email (`to`), Telegram
+  (`bot_token`, `chat_id`) and webhook (`url`, optional `secret` → `X-Osnova-Signature:
+  sha256=<HMAC>`). Each new lead goes to the enabled channels: via the Celery task
+  `leads.deliver` with retries (1–16 minutes) when background tasks are on — in the web
+  process if the queue is down — otherwise in the web process after the response. The text
+  uses the lead's language and the form's labels. A refusal (4xx) is not retried.
+- `Lead.deliveries`: the result per channel (status, error, time), in `/admin/leads`.
+- `POST /admin/leads/channels/{id}/test` sends a test message and reports the error.
+- Field types `Email` (required) and `Secret` (`password` input); `describe_field` for any
+  model; `standalone_session()` for code running its own event loop.
 - Leads: with the admin, every valid form submission is stored (module `leads`, table
   `leads`, migration `0003`) before the stub delivery; storing errors fail the request so
   the visitor can send again. Invalid and honeypot submissions are not stored.

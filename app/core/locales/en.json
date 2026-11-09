@@ -78,5 +78,23 @@
     "verify_email.body": "Hello!\n\nPlease confirm your email address for {site}:\n{link}\n\nThe link is valid for one hour. If you did not sign up, ignore this email.",
     "reset_password.subject": "Reset your password for {site}",
     "reset_password.body": "Hello!\n\nTo set a new password for {site}, open this link:\n{link}\n\nThe link is valid for one hour. If you did not ask for it, ignore this email: your password stays the same."
+  },
+  "leads": {
+    "new": "New submission: {form}",
+    "yes": "Yes",
+    "no": "No",
+    "test_title": "Test message",
+    "test_field": "Message",
+    "test_text": "This channel works: new submissions will arrive here."
+  },
+  "entities": {
+    "lead_email.title": "Email",
+    "lead_email.to": "Send to",
+    "lead_telegram.title": "Telegram",
+    "lead_telegram.bot_token": "Bot token",
+    "lead_telegram.chat_id": "Chat ID",
+    "lead_webhook.title": "Webhook",
+    "lead_webhook.url": "URL",
+    "lead_webhook.secret": "Signing secret"
   }
 }

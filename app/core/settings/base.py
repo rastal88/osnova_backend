@@ -21,6 +21,11 @@ def _optional_pattern(pattern: str, code: str):
     return AfterValidator(check)
 
 
+Email = Annotated[
+    str,
+    Field(min_length=3, max_length=254, json_schema_extra={"input": "email"}),
+    _optional_pattern(EMAIL_PATTERN, "email_invalid"),
+]
 OptionalEmail = Annotated[
     str,
     Field(max_length=254, json_schema_extra={"input": "email"}),
@@ -31,6 +36,20 @@ OptionalPhone = Annotated[
     Field(max_length=20, json_schema_extra={"input": "tel"}),
     _optional_pattern(PHONE_PATTERN, "phone_invalid"),
 ]
+
+
+# A password or token: rendered as a password input; APIs never send it back in clear
+Secret = Annotated[
+    str, Field(max_length=500, json_schema_extra={"input": "password", "secret": True})
+]
+
+
+def secret_fields(model: type[BaseModel]) -> set[str]:
+    return {
+        name
+        for name, info in model.model_fields.items()
+        if isinstance(info.json_schema_extra, dict) and info.json_schema_extra.get("secret")
+    }
 
 
 class SettingsGroup(BaseModel):
