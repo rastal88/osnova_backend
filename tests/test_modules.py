@@ -51,6 +51,7 @@ def test_minimal_profile_loads_no_optional_modules():
 
     assert data["status"] == 200
     assert data["loaded"] == []
+    assert "APP_PROFILE" not in result.stdout
     assert not any(path.startswith("/api/v1/auth") for path in data["paths"])
 
 

@@ -7,6 +7,7 @@ from .core.errors import add_exception_handlers, use_error_schema
 from .core.logging_config import setup_logging
 from .core.middlewares import add_middlewares
 from .core.modules import ShutdownHook, load_modules
+from .core.profile import check_profile
 from .core.routes import core_router
 
 
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
     add_exception_handlers(app)
     app.include_router(core_router, prefix="/api/v1")
     shutdown_hooks.extend(load_modules(app, config))
+    check_profile(config.APP_PROFILE, app.state.modules)
     use_error_schema(app)
 
     return app

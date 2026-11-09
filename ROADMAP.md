@@ -88,20 +88,48 @@ real-time, CMS.
 
 ## Standard profile (`v0.2.0`, MVP)
 
-Goal: a working *foundation* for every tool, not a full integration.
+Goal: a working *foundation* for every tool, not a full integration. What and why:
+[VISION.md](VISION.md); each stage is a few small PRs.
 
-- [ ] Client area and admin area: admin roles land in the admin after login and can switch to the client area; other users see only the client area; public pages stay public
-- [ ] Admin: users list and basic management
-- [~] Database: Alembic only (done), migration hygiene
-- [~] Auth sessions: JWT by default, Redis optional (done); email verification and password reset via email
-- [ ] Email sending abstraction (console backend for development)
-- [~] Files: safe local storage (done); storage interface for S3-compatible backends
-- [~] Background tasks: Celery app (done); worker service in Docker Compose
-- [ ] Notifications foundation
-- [ ] OAuth foundation
-- [ ] Lead delivery configured from the admin
-- [ ] Scalable profile: documented differences, health/readiness checks
+### S0. Ground work *(be)*
+- [x] `APP_PROFILE` checked at start: a warning when it does not match the setup
+- [x] One initial migration instead of the old history; CI checks migrations against the models
+- [x] VISION and ROADMAP in the repository
+
+### S1. Areas and roles *(be, fe)* — after S0
+- [ ] Public, client and admin areas; admin roles (`root`, `moderator`) land in the admin after sign-in
+- [ ] Area switcher in the user menu; route and menu guards on both sides
+- [ ] Admin area in the same shell with its own menu
+
+### S2. Settings *(be, fe)* — after S1
+- [ ] Singleton settings (typed groups in JSONB) and configurable entities, cached
+- [ ] Admin forms generated from the schemas
+- [ ] Site name and contacts, languages and the default managed from the admin
+
+### S3. Admin: users *(be, fe)* — after S1
+- [ ] Users list with search and filters
+- [ ] Block / unblock, change role
+
+### S4. Email and tasks *(be, fe)* — after S0
+- [~] Celery app (done); worker service in Docker Compose, one example task
+- [ ] Mail interface: console backend for development, SMTP for production; translated templates
+- [~] Auth: JWT by default, Redis sessions optional (done); email verification and password reset pages
+
+### S5. Leads *(be, fe)* — after S2, S4
+- [ ] Form submissions stored in the database and listed in the admin
+- [ ] Delivery channels (email, Telegram, webhook) configured as entities, sent by a task
+
+### S6. Files and notifications *(be, fe)* — after S1
+- [~] Safe local storage (done); storage interface for S3-compatible backends
+- [ ] In-app notifications: model, API, a bell in the header; channel interface for email / Telegram
+
+### S7. OAuth *(be, fe)* — after S1
+- [ ] Google sign-in end-to-end; providers listed in settings
+
+### S8. Release — after all
+- [ ] Docs per profile; scalable profile: documented differences, readiness check
+- [ ] `v0.2.0`
 
 ## Later
-- All documentation, instructions and code comments in English (READMEs done; left: `migrations/README` and comments in old migrations)
+- All documentation, instructions and code comments in English (done for the backend)
 - `osnova strip --profile minimal`: physically remove unused modules from a project

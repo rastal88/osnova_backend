@@ -22,11 +22,19 @@ if al_config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def render_item(type_, obj, autogen_context):
+    # fastapi-users' GUID is a plain UUID column in PostgreSQL: render it without the import
+    if type_ == "type" and type(obj).__name__ == "GUID":
+        return "sa.Uuid()"
+    return False
+
+
 def do_run_migrations(connection):
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
+        render_item=render_item,
     )
     with context.begin_transaction():
         context.run_migrations()
