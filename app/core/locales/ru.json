@@ -98,5 +98,9 @@
     "lead_webhook.title": "Webhook",
     "lead_webhook.url": "URL",
     "lead_webhook.secret": "Секрет для подписи"
+  },
+  "notifications": {
+    "lead_new.title": "Новая заявка",
+    "lead_new.body": "{summary}"
   }
 }

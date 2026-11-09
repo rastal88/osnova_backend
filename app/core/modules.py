@@ -86,6 +86,13 @@ MODULES: tuple[ModuleSpec, ...] = (
         hint="set FILES_ENABLED=true",
     ),
     ModuleSpec(
+        name="notifications",
+        path="app.modules.notifications",
+        enabled=lambda c: c.NOTIFICATIONS_ENABLED,
+        requires=("auth",),
+        hint="set NOTIFICATIONS_ENABLED=true",
+    ),
+    ModuleSpec(
         name="tasks",
         path="app.modules.tasks",
         enabled=lambda c: c.BACKGROUND_TASKS_ENABLED,

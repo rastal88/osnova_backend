@@ -116,7 +116,7 @@ When a capability is off, the frontend does not create its routes or UI:
 | `authentication` | `/login`, `/register`, protected routes (every page is public) |
 | `admin` | `/admin` section and its menu items |
 | `files` | upload / download components |
-| `notifications` | notification centre (for now only the flag exists) |
+| `notifications` | in-app notifications (the bell); admins hear about new leads |
 | `background_tasks` | usually nothing visible |
 
 Flags by profile:
@@ -166,6 +166,7 @@ osnova_backend/
 │   │   ├── entities/      # configurable entities (one table) ← ADMIN_ENABLED
 │   │   ├── leads/         # submissions, delivery channels    ← ADMIN_ENABLED
 │   │   ├── files/         # files: local or S3 storage        ← FILES_ENABLED
+│   │   ├── notifications/ # in-app notifications, channels    ← NOTIFICATIONS_ENABLED
 │   │   └── tasks/         # Celery app, email task            ← BACKGROUND_TASKS_ENABLED
 │   ├── client/            # client area API (any signed-in user)
 │   ├── forms.py           # the project's forms
@@ -273,6 +274,7 @@ listed with comments in [`.env.example`](.env.example).
 | `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth) |
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
 | `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
+| `NOTIFICATIONS_CHANNELS` | Where notifications go besides the bell: `in_app` (default), `in_app,email` |
 | `SETTINGS_REFRESH_SECONDS` | How often each process reloads settings changed in the admin (default `30`) |
 | `FILES_STORAGE`, `FILES_DIR`, `FILES_MAX_SIZE_MB`, `FILES_ALLOWED_TYPES` | `local` (folder `FILES_DIR`) or `s3`; size limit; allowed MIME types or prefixes (empty: any) |
 | `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_LINK_SECONDS` | S3-compatible bucket for `FILES_STORAGE=s3`; lifetime of download links |
@@ -307,6 +309,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`root`) | `ADMIN_ENABLED` |
 | GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (moderator: ordinary users), change role (root) | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
+| GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language, unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
 | POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and admins; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
 
 ---
@@ -342,6 +345,11 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   tasks on, it goes through the queue and the worker retries while the mail server is down.
   After sign-up the user gets a confirmation link; `forgot-password` sends a reset link —
   both open frontend pages (`/verify-email`, `/reset-password`).
+- **Notify users:** `await notify(session, users, "<kind>", params, link="/path")`
+  (`app/modules/notifications/service.py`) with texts `notifications.<kind>.title` / `.body`
+  in the locales; they are translated when read. Example: new leads in
+  `app/modules/leads/service.py`. Another channel (Telegram...): a function in
+  `app/modules/notifications/channels.py`, listed in `NOTIFICATIONS_CHANNELS`.
 - **Add a configurable entity:** a Pydantic model with `@entity_type` (`app/core/entities.py`;
   `type`, `group`, fields with defaults) and labels in the `entities` section of the
   locales. It is stored in the shared `entities` table and edited in the admin without a
