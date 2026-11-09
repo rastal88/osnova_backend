@@ -102,13 +102,13 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] Admin area in the same shell with its own menu
 
 ### S2. Settings *(be, fe)* — after S1
-- [~] Singleton settings: typed groups in JSONB, kept in memory, reloaded every `SETTINGS_REFRESH_SECONDS` — backend (done)
-- [~] Admin forms generated from the schemas — backend: field descriptions in the `SchemaForm` format (done)
-- [~] Site name and contacts, languages and the default managed from the admin — backend (done)
+- [x] Singleton settings: typed groups in JSONB, kept in memory, reloaded every `SETTINGS_REFRESH_SECONDS`
+- [x] Admin forms generated from the schemas (Admin → Settings)
+- [x] Site name and contacts, languages and the default managed from the admin
 
 ### S3. Admin: users *(be, fe)* — after S1
-- [ ] Users list with search and filters
-- [ ] Block / unblock, change role
+- [~] Users list with search and filters — backend: `GET /admin/users` in the DataTable query format (done)
+- [~] Block / unblock, change role — backend: `PATCH /admin/users/{id}` (done)
 
 ### S4. Email and tasks *(be, fe)* — after S0
 - [~] Celery app (done); worker service in Docker Compose, one example task

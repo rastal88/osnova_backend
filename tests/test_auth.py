@@ -106,13 +106,6 @@ async def test_admin_overview_counts_users(auth_client):
         "users_by_role": {"root": 1, "moderator": 1, "user": 1},
     }
 
-    users = (await client.get("/api/v1/admin/users")).json()
-    assert [item["email"] for item in users] == [
-        "moderator@example.com",
-        "root@example.com",
-        "user@example.com",
-    ]
-
 
 @pytest.mark.anyio
 async def test_create_superuser_gets_root_role(auth_client):

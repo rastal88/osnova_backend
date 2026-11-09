@@ -7,6 +7,13 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Admin users: `GET /admin/users` with search by email (`q`), filters `role` and `status`
+  (`active`, `blocked`, comma-separated), `sort` (`email`, `role`, `date_created`,
+  `last_login`; `-` for descending, newest first by default) and pages (`page`, `size` up
+  to 100), returning `{items, total}`; `PATCH /admin/users/{id}` blocks / unblocks
+  (`is_active`) and changes the role (`user` / `moderator`, root only). Nobody changes their
+  own account or the root user; a moderator manages ordinary users only. A blocked user
+  cannot sign in and loses access at the next request.
 - Settings the owner changes at runtime: typed groups (`SettingsGroup`, `app/settings.py`)
   with defaults from `.env`, read with `settings.get(Group)`. With the admin the new
   `settings` module stores them in the database (table `settings`, one JSONB row per
@@ -26,6 +33,7 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- `GET /admin/users` returns a page `{items, total}` instead of a plain list.
 - API paths: `/user_flow/*` → `/client/*` (package `app/client`), `/admin_flow/*` →
   `/admin/*`; `/user_flow/main` is now `/client/summary`.
 - Access is checked on the router: every endpoint of `client_router` needs a signed-in user,

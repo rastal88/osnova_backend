@@ -26,7 +26,9 @@
     "update_user_email_already_exists": "A user with this email already exists.",
     "update_user_invalid_password": "The password does not meet the requirements.",
     "form_not_found": "Form not found.",
-    "settings_group_not_found": "Settings group not found."
+    "settings_group_not_found": "Settings group not found.",
+    "admin_cannot_change_self": "You cannot change your own account here.",
+    "admin_root_protected": "The root user cannot be changed."
   },
   "validation": {
     "missing": "This field is required.",
