@@ -208,7 +208,7 @@ minimal profile alone `pip install -r requirements/base.txt` is enough.
 ```bash
 # .env: DATABASE_URL=postgresql+asyncpg://osnova:osnova@localhost:5432/osnova
 #       AUTH_ENABLED=true, SECRET_KEY=<long random value>
-alembic upgrade head          # the first migration creates the uuid-ossp extension
+alembic upgrade head          # one initial migration: migrations/versions/0001_initial_schema.py
 python manage.py createroot   # first user with the root role
 ```
 
@@ -257,7 +257,7 @@ listed with comments in [`.env.example`](.env.example).
 
 | Variable | Purpose |
 |---|---|
-| `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version, profile (`minimal` / `standard` / `scalable`) |
+| `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version, profile (`minimal` / `standard` / `scalable`); a mismatch with the setup is logged as a warning at start |
 | `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address, debug mode |
 | `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
 | `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`) |
@@ -322,10 +322,11 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
 - **Add a language:** `AVAILABLE_LANGUAGES` in `app/core/languages.py`, translations in
   `app/core/locales/`, then list it in `LANGUAGES`.
-- **Migrations:** `alembic revision --autogenerate -m "<message>"`.
+- **Migrations:** `alembic revision --autogenerate -m "<message>"`, then review the file
+  (see [`migrations/README.md`](migrations/README.md)).
 
-CI (GitHub Actions) runs ruff and the tests, starts the app with base requirements only,
-and builds the Docker image with base and with standard requirements.
+CI (GitHub Actions) runs ruff and the tests, checks that the migrations match the models on
+PostgreSQL, starts the app with base requirements only, and builds the Docker image with base and with standard requirements.
 
 ---
 
