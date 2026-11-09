@@ -128,9 +128,14 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [~] Google sign-in end-to-end; providers listed in settings — backend: `/auth/google/*`, `auth_providers` in `/bootstrap` (done); sign-in button
 
 ### S8. Release — after all
-- [ ] Docs per profile; scalable profile: documented differences, readiness check
-- [ ] `v0.2.0`
+- [x] Docs per profile; scalable profile: documented differences, readiness check (`/ready`)
+- [x] `make migrate` / `make createroot` for Docker; CORS headers on 500 responses
+- [ ] Release checklist (by hand, needs the owner's accounts):
+  - [ ] Telegram: a real bot in Admin → Channels — **Test**, then a form submission arrives
+  - [ ] Google: a real OAuth client — sign up a new user, sign in to an existing account by email
+- [ ] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
 
 ## Later
 - All documentation, instructions and code comments in English (done for the backend)
+- Scalable: a shared form rate-limit store in Redis; monitoring
 - `osnova strip --profile minimal`: physically remove unused modules from a project

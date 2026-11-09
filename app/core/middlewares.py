@@ -14,16 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def add_middlewares(app: FastAPI):
-    origins = [o.strip() for o in config.CORS_ORIGINS.split(",") if o.strip()]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=[REQUEST_ID_HEADER],
-    )
-
+    # Each add_middleware wraps the ones added before it
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
         started = time.perf_counter()
@@ -39,6 +30,17 @@ def add_middlewares(app: FastAPI):
         )
         return response
 
+    # Around the error handler above, so a 500 also carries the CORS headers and the
+    # frontend on another origin (development) sees the message, not a network error
+    origins = [o.strip() for o in config.CORS_ORIGINS.split(",") if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=[REQUEST_ID_HEADER],
+    )
     # So every response (errors included) is in the request language
     app.add_middleware(LanguageMiddleware)
     # Outermost, so the language middleware and every log line see the id

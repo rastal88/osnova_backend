@@ -25,9 +25,10 @@ from fastapi.testclient import TestClient
 from app import app
 with TestClient(app) as client:
     status = client.get("/api/v1/health").status_code
+    ready = client.get("/api/v1/ready").json()
 paths = sorted(app.openapi()["paths"])
 loaded = [m for m in {HEAVY!r} if m in sys.modules]
-print(json.dumps({{"status": status, "paths": paths, "loaded": loaded}}))
+print(json.dumps({{"status": status, "ready": ready, "paths": paths, "loaded": loaded}}))
 """
 
 
@@ -50,6 +51,8 @@ def test_minimal_profile_loads_no_optional_modules():
     data = json.loads(result.stdout.strip().splitlines()[-1])
 
     assert data["status"] == 200
+    # Nothing to depend on in minimal
+    assert data["ready"] == {"status": "ok", "checks": {}}
     assert data["loaded"] == []
     assert "APP_PROFILE" not in result.stdout
     assert not any(path.startswith("/api/v1/auth") for path in data["paths"])

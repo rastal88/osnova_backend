@@ -32,6 +32,7 @@
           "System"
         ],
         "summary": "Health",
+        "description": "Liveness: the process is running.",
         "operationId": "health_api_v1_health_get",
         "responses": {
           "200": {
@@ -40,6 +41,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ready": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Ready",
+        "description": "Readiness: the dependencies of the enabled modules answer (503 if one does not).",
+        "operationId": "ready_api_v1_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is down",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
                 }
               }
             }
@@ -3249,6 +3282,31 @@
           "authorization_url"
         ],
         "title": "OAuth2AuthorizeResponse"
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "ReadyResponse"
       },
       "Role": {
         "type": "string",

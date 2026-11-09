@@ -115,9 +115,12 @@ async def test_unhandled_error_is_hidden():
 
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/boom", headers=RU)
+        origin = {"Origin": "http://localhost:5173"}
+        response = await client.get("/boom", headers=RU | origin)
 
     assert response.status_code == 500
+    # The frontend on another origin can read it (not a "network error")
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
     assert response.json() == {
         "code": "internal_error",
         "message": "Что-то пошло не так. Попробуйте позже.",
