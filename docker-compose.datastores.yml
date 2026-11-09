@@ -1,6 +1,6 @@
 # Datastore override for the standard and scalable profiles.
-# Adds PostgreSQL + Redis and points the backend at them using in-network
-# service names, overriding any localhost values from the local .env.
+# Adds PostgreSQL + Redis and the Celery worker, and points the backend at them
+# using in-network service names, overriding any localhost values from the local .env.
 #
 #   docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
 #                  --profile standard up --build -d
@@ -44,6 +44,35 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Runs background tasks (app/modules/tasks), e.g. sending email when
+  # BACKGROUND_TASKS_ENABLED=true. Same image as the backend.
+  worker:
+    build:
+      context: .
+      args:
+        REQUIREMENTS: standard
+    profiles: ["standard", "scalable"]
+    restart: unless-stopped
+    command: ["celery", "-A", "app.modules.tasks.celery_app", "worker", "-l", "info"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-osnova}:${POSTGRES_PASSWORD:-osnova}@postgres:5432/${POSTGRES_DB:-osnova}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    # The image health check calls the HTTP API, which the worker does not serve
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.modules.tasks.celery_app inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    depends_on:
       redis:
         condition: service_healthy
 

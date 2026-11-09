@@ -164,7 +164,7 @@ osnova_backend/
 │   │   ├── admin/         # admin area API (root, moderator)  ← ADMIN_ENABLED
 │   │   ├── settings/      # settings stored in the database   ← ADMIN_ENABLED
 │   │   ├── files/         # file upload / download            ← FILES_ENABLED
-│   │   └── tasks/         # Celery app                        ← BACKGROUND_TASKS_ENABLED
+│   │   └── tasks/         # Celery app, email task            ← BACKGROUND_TASKS_ENABLED
 │   ├── client/            # client area API (any signed-in user)
 │   ├── forms.py           # the project's forms
 │   ├── settings.py        # settings groups edited in the admin (site, languages)
@@ -224,7 +224,7 @@ Both repositories must sit side by side (`osnova_backend/`, `osnova_frontend/`);
 ```bash
 cp .env.example .env
 make up-minimal       # backend + frontend
-make up-standard      # + PostgreSQL + Redis
+make up-standard      # + PostgreSQL + Redis + Celery worker
 make up-scalable      # standard with 3 backend replicas
 make logs             # follow logs
 make down             # stop (make down-volumes also deletes data)
@@ -240,13 +240,14 @@ How it works:
   `REQUIREMENTS=base` for minimal,
   `standard` with the datastore override. Port `8000` is exposed only inside the compose
   network, so replicas do not clash.
-- **Datastores:** `postgres` and `redis` live in `docker-compose.datastores.yml` and run
-  only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
+- **Datastores and worker:** `postgres`, `redis` and the Celery `worker` (same image as the
+  backend) live in `docker-compose.datastores.yml` and run only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
   from `.env` are ignored. In `minimal` `DATABASE_URL` and `REDIS_URL` are forced empty.
 - **Migrations:** with `RUN_MIGRATIONS=true` and a database the entrypoint runs
   `alembic upgrade head` before the app starts.
-- **Health checks:** `GET /api/v1/health` for the backend; built-in ones for postgres and
-  redis.
+- **Health checks:** `GET /api/v1/health` for the backend; `celery inspect ping` for the
+  worker; built-in ones for postgres and redis.
+- **Email links:** `FRONTEND_URL` is set from `SITE_URL` (or `http://localhost:8080`).
 - **Standard:** set `APP_PROFILE=standard` and the flags you need in `.env`.
   `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` default to `osnova`.
 
@@ -273,6 +274,9 @@ listed with comments in [`.env.example`](.env.example).
 | `SETTINGS_REFRESH_SECONDS` | How often each process reloads settings changed in the admin (default `30`) |
 | `FILES_DIR`, `FILES_MAX_SIZE_MB` | Upload folder and size limit |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
+| `FRONTEND_URL` | Public address of the frontend, for links in emails |
+| `MAIL_BACKEND`, `MAIL_FROM` | `console` (log, default) or `smtp`; sender address |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SECURITY`, `SMTP_TIMEOUT` | SMTP server; `starttls` (default), `ssl` or `none` |
 
 Docker Compose only: `FRONTEND_PORT`, `SITE_URL` (public origin for canonical links,
 link previews and `sitemap.xml`), `ANALYTICS_SCRIPT` (frontend analytics, loaded only after
@@ -326,6 +330,14 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   3. Dependencies in `requirements/<name>.txt`, included from `standard.txt`.
   4. A field in `Capabilities` (`app/core/capabilities.py`) and in `app/core/bootstrap.py`.
   5. Handle the flag in the frontend routes and UI.
+- **Send an email:** texts in the `mail` section of `app/core/locales/*.json`
+  (`<name>.subject`, `<name>.body`), then
+  `await send_mail(render_mail("<name>", to, **params))` (`app/core/mail`). With background
+  tasks on, it goes through the queue and the worker retries while the mail server is down.
+  After sign-up the user gets a confirmation link; `forgot-password` sends a reset link —
+  both open frontend pages (`/verify-email`, `/reset-password`).
+- **Add a background task:** a function with `@celery_app.task` in
+  `app/modules/tasks/tasks.py`, called with `.delay(...)`.
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
 - **Add a setting the owner can change:** a field (with a default) in a group in
   `app/settings.py`, or a new `SettingsGroup` added to `GROUPS`; labels in the `settings`

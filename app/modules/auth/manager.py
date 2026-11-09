@@ -1,17 +1,33 @@
 import logging
 import uuid
 from datetime import UTC, datetime
+from urllib.parse import urlencode
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, InvalidPasswordException, UUIDIDMixin
 from starlette.responses import Response
 
 from app.config import config
+from app.core.i18n import get_language
+from app.core.mail import render_mail, send_mail
+from app.core.settings import settings
 from app.modules.auth.models import User, get_user_db
 from app.modules.auth.roles import Role
 from app.modules.auth.schemas import UserCreate
+from app.settings import SiteSettings
 
 logger = logging.getLogger(__name__)
+
+
+def frontend_link(path: str, token: str) -> str:
+    """A frontend page in the request language, e.g. /en/verify-email?token=..."""
+    query = urlencode({"token": token})
+    return f"{config.FRONTEND_URL.rstrip('/')}/{get_language()}{path}?{query}"
+
+
+async def send_user_mail(name: str, user: User, link: str) -> None:
+    site = settings.get(SiteSettings).name
+    await send_mail(render_mail(name, user.email, site=site, link=link))
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -30,6 +46,14 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
     async def on_after_register(self, user: User, request: Request | None = None):
         logger.info("User %s has registered.", user.id)
+        # Sends the confirmation link (on_after_request_verify)
+        await self.request_verify(user, request)
+
+    async def on_after_request_verify(self, user: User, token: str, request: Request | None = None):
+        await send_user_mail("verify_email", user, frontend_link("/verify-email", token))
+
+    async def on_after_verify(self, user: User, request: Request | None = None):
+        logger.info("User %s has confirmed the email.", user.id)
 
     async def on_after_login(
         self,
@@ -43,11 +67,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Request | None = None
     ):
-        # No email delivery yet: expose the token in logs only in DEBUG for local testing.
-        if config.DEBUG:
-            logger.info("User %s requested a password reset. Token: %s", user.id, token)
-        else:
-            logger.info("User %s requested a password reset.", user.id)
+        logger.info("User %s requested a password reset.", user.id)
+        await send_user_mail("reset_password", user, frontend_link("/reset-password", token))
 
     async def on_after_reset_password(self, user: User, request: Request | None = None):
         logger.info("User %s has reset their password.", user.id)

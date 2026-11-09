@@ -7,6 +7,15 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Email (`app/core/mail`, no new packages): `render_mail` builds a message from the `mail`
+  translations, `send_mail` delivers it with `MAIL_BACKEND` — `console` (log, default) or
+  `smtp` (`SMTP_*`, STARTTLS / SSL). Failures are logged, not raised.
+- With background tasks on, emails go through the Celery task `mail.send` (retries with
+  backoff while the server is down); sending fails fast when the broker is down.
+- After sign-up the user gets a confirmation email; `forgot-password` sends a reset email.
+  Links lead to `FRONTEND_URL/<language>/verify-email` and `/reset-password`.
+- Docker Compose: the Celery `worker` service for standard / scalable, with a health check;
+  `FRONTEND_URL` from `SITE_URL`.
 - Admin users: `GET /admin/users` with search by email (`q`), filters `role` and `status`
   (`active`, `blocked`, comma-separated), `sort` (`email`, `role`, `date_created`,
   `last_login`; `-` for descending, newest first by default) and pages (`page`, `size` up
@@ -33,6 +42,10 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- The example task `tasks.send_notification` is replaced by `mail.send`; tasks are bound to
+  `celery_app` (a `shared_task` called from a thread used the default Celery settings).
+- The reset token is no longer written to the log in `DEBUG`: the console mail backend shows
+  the whole email instead.
 - `GET /admin/users` returns a page `{items, total}` instead of a plain list.
 - API paths: `/user_flow/*` → `/client/*` (package `app/client`), `/admin_flow/*` →
   `/admin/*`; `/user_flow/main` is now `/client/summary`.
