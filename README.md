@@ -162,10 +162,12 @@ osnova_backend/
 │   │   ├── db/            # SQLAlchemy (async) sessions       ← DATABASE_URL
 │   │   ├── auth/          # fastapi-users, roles, User model  ← AUTH_ENABLED
 │   │   ├── admin/         # admin area API (root, moderator)  ← ADMIN_ENABLED
+│   │   ├── settings/      # settings stored in the database   ← ADMIN_ENABLED
 │   │   ├── files/         # file upload / download            ← FILES_ENABLED
 │   │   └── tasks/         # Celery app                        ← BACKGROUND_TASKS_ENABLED
 │   ├── client/            # client area API (any signed-in user)
 │   ├── forms.py           # the project's forms
+│   ├── settings.py        # settings groups edited in the admin (site, languages)
 │   ├── config.py          # settings (every value has a default)
 │   └── __init__.py        # application factory
 ├── migrations/            # Alembic migrations
@@ -260,7 +262,7 @@ listed with comments in [`.env.example`](.env.example).
 | `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version, profile (`minimal` / `standard` / `scalable`); a mismatch with the setup is logged as a warning at start |
 | `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address, debug mode |
 | `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
-| `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`) |
+| `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`); initial values, changed later in Admin → Settings |
 | `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
 | `FORMS_DELIVERY`, `FORMS_FILE` | Form delivery stub: `log`, or `file` (also JSON lines in `FORMS_FILE`) |
 | `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables |
@@ -268,6 +270,7 @@ listed with comments in [`.env.example`](.env.example).
 | `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth) |
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
 | `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
+| `SETTINGS_REFRESH_SECONDS` | How often each process reloads settings changed in the admin (default `30`) |
 | `FILES_DIR`, `FILES_MAX_SIZE_MB` | Upload folder and size limit |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
 
@@ -285,13 +288,14 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 
 | Method | Path | Purpose | When |
 |---|---|---|---|
-| GET | `/bootstrap` | Version, profile, capabilities, languages | always |
+| GET | `/bootstrap` | Site name and contacts, version, profile, capabilities, languages | always |
 | GET | `/health` | Liveness check | always |
 | GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules) | always |
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
 | — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
 | GET | `/client/*` | Client area: any signed-in user (example: `/client/summary`) | `AUTH_ENABLED` |
 | GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`, `/admin/users`) | `ADMIN_ENABLED` |
+| GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
 | POST / GET | `/file_flow/upload`, `/file_flow/download/{name}` | Upload (signed-in users) and download | `FILES_ENABLED` |
 
 ---
@@ -322,8 +326,13 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   4. A field in `Capabilities` (`app/core/capabilities.py`) and in `app/core/bootstrap.py`.
   5. Handle the flag in the frontend routes and UI.
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
+- **Add a setting the owner can change:** a field (with a default) in a group in
+  `app/settings.py`, or a new `SettingsGroup` added to `GROUPS`; labels in the `settings`
+  section of `app/core/locales/*.json`. No migration and no frontend code: the admin form
+  is generated. Read it with `settings.get(SiteSettings).contact_email`. Values that need a
+  restart, secrets and capability flags stay in `.env`.
 - **Add a language:** `AVAILABLE_LANGUAGES` in `app/core/languages.py`, translations in
-  `app/core/locales/`, then list it in `LANGUAGES`.
+  `app/core/locales/`, then enable it in `LANGUAGES` or in Admin → Settings.
 - **Migrations:** `alembic revision --autogenerate -m "<message>"`, then review the file
   (see [`migrations/README.md`](migrations/README.md)).
 

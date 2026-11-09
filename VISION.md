@@ -98,17 +98,18 @@ restart (infrastructure, secrets, capability flags) and gives defaults.
 
 - **Singleton settings** — one typed group per topic (`site`, `forms`, `users`...), described
   in code as a Pydantic model with defaults and stored as one JSONB row per group. Adding a
-  field needs no migration; reading is typed (`settings.site.contact_email`) and cached in
-  process (later invalidated through Redis for replicas).
-- **Configurable entities** — lists of similar records (languages, countries, lead delivery
-  channels) in one generic table `(type, name, params JSONB)` with a Pydantic schema per type,
+  field needs no migration; reading is typed (`settings.get(SiteSettings).contact_email`)
+  and cached in process; each process reloads after a short interval, so replicas agree
+  without a shared cache.
+- **Configurable entities** — lists of similar records (lead delivery channels, countries) in one generic table `(type, name, params JSONB)` with a Pydantic schema per type,
   so a new kind of entity is a class, not a table and a migration. Entities that need
   relations or heavy queries become ordinary tables.
 - **Admin UI is generated** from the schemas: the same field description that drives
   `SchemaForm` renders the edit form, so a new setting appears in the admin without frontend
   code.
-- First users: site name and contacts, enabled languages and the default (moving from
-  `.env`, which stays as the initial value), lead delivery channels.
+- First users: site name and contacts, enabled languages and the default (a singleton group:
+  a language also needs translation files; `.env` stays as the initial value), lead
+  delivery channels (entities, with S5).
 
 ### Scalable (after MVP)
 
@@ -161,10 +162,10 @@ Each stage is a few small PRs; ROADMAP tracks the items.
 |---|---|---|
 | **S0. Ground work** | `APP_PROFILE` check; one clean initial migration instead of the current history; VISION and ROADMAP in the repo | — |
 | **S1. Areas and roles** | public / client / admin areas, landing by role after sign-in, area switcher in the user menu, guards on both sides; admin uses the same shell with its own menu | S0 |
-| **S2. Settings** | singleton settings and configurable entities (models, cache, API), generated admin forms; site settings, languages from the admin | S1 |
+| **S2. Settings** | singleton settings (models, cache, API), generated admin forms; site settings, languages from the admin | S1 |
 | **S3. Admin: users** | list with search and filters, block / unblock, change role | S1 |
 | **S4. Email and tasks** | mail interface (console / SMTP), translated templates, Celery worker in Compose; email verification and password reset pages | S0 |
-| **S5. Leads** | submissions stored in the database, admin list, delivery channels (email, Telegram, webhook) configured as entities, sent by a task | S2, S4 |
+| **S5. Leads** | configurable entities; submissions stored in the database, admin list, delivery channels (email, Telegram, webhook) configured as entities, sent by a task | S2, S4 |
 | **S6. Files and notifications** | storage interface (local / S3-compatible); in-app notifications with a bell and a channel interface | S1 |
 | **S7. OAuth** | Google sign-in end-to-end, provider list in settings | S1 |
 | **S8. Release** | docs per profile, scalable differences, readiness check, `v0.2.0` | all |

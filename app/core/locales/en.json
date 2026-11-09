@@ -25,7 +25,8 @@
     "verify_user_already_verified": "This email is already confirmed.",
     "update_user_email_already_exists": "A user with this email already exists.",
     "update_user_invalid_password": "The password does not meet the requirements.",
-    "form_not_found": "Form not found."
+    "form_not_found": "Form not found.",
+    "settings_group_not_found": "Settings group not found."
   },
   "validation": {
     "missing": "This field is required.",
@@ -43,7 +44,9 @@
     "literal_error": "Choose one of the options.",
     "must_be_checked": "Please check this box to continue.",
     "string_type": "Must be text.",
-    "bool_type": "Must be true or false."
+    "bool_type": "Must be true or false.",
+    "too_short": "Choose at least {min_length}.",
+    "default_language_not_enabled": "The default language must be one of the enabled languages."
   },
   "forms": {
     "contact.title": "Contact us",
@@ -58,5 +61,14 @@
     "contact.topic.other": "Other",
     "contact.message": "Message",
     "contact.consent": "I agree to the processing of my personal data"
+  },
+  "settings": {
+    "site.title": "Site",
+    "site.name": "Site name",
+    "site.contact_email": "Contact email",
+    "site.contact_phone": "Contact phone",
+    "languages.title": "Languages",
+    "languages.enabled": "Enabled languages",
+    "languages.default": "Default language"
   }
 }

@@ -17,7 +17,7 @@ from app.core.forms.schema import (
     build_model,
     describe,
 )
-from app.core.i18n import current_language, translate
+from app.core.i18n import get_language, translate
 from app.core.rate_limit import RateLimiter, parse_limit
 from app.forms import FORMS
 
@@ -72,5 +72,5 @@ async def submit_form(
     except ValidationError as exc:
         raise RequestValidationError(exc.errors()) from exc
 
-    await run_in_threadpool(deliver, form.name, data.model_dump(), current_language.get())
+    await run_in_threadpool(deliver, form.name, data.model_dump(), get_language())
     return success
