@@ -4,4 +4,6 @@ fastapi-users[sqlalchemy]==15.0.5
 # Pinned: pulled in by fastapi-users, older releases have known vulnerabilities
 pyjwt==2.15.1
 python-multipart==0.0.33
+# OAuth sign-in (Google): used only when a provider is configured
+httpx-oauth==0.16.1
 typer==0.20.0

@@ -46,8 +46,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
     async def on_after_register(self, user: User, request: Request | None = None):
         logger.info("User %s has registered.", user.id)
-        # Sends the confirmation link (on_after_request_verify)
-        await self.request_verify(user, request)
+        # Sends the confirmation link (on_after_request_verify); accounts from an OAuth
+        # provider come with a confirmed email
+        if not user.is_verified:
+            await self.request_verify(user, request)
 
     async def on_after_request_verify(self, user: User, token: str, request: Request | None = None):
         await send_user_mail("verify_email", user, frontend_link("/verify-email", token))

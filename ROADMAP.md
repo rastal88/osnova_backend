@@ -122,10 +122,10 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 
 ### S6. Files and notifications *(be, fe)* — after S1
 - [x] Files: storage interface with local and S3-compatible backends, owner-only access, safe serving; "My files" page
-- [~] In-app notifications: model, API, a bell in the header; channel interface for email / Telegram — backend (done)
+- [x] In-app notifications: model, API, a bell in the header; channel interface for email / Telegram
 
 ### S7. OAuth *(be, fe)* — after S1
-- [ ] Google sign-in end-to-end; providers listed in settings
+- [~] Google sign-in end-to-end; providers listed in settings — backend: `/auth/google/*`, `auth_providers` in `/bootstrap` (done); sign-in button
 
 ### S8. Release — after all
 - [ ] Docs per profile; scalable profile: documented differences, readiness check
