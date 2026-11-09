@@ -29,7 +29,12 @@
     "settings_group_not_found": "Группа настроек не найдена.",
     "admin_cannot_change_self": "Свой аккаунт здесь менять нельзя.",
     "admin_root_protected": "Пользователя root изменить нельзя.",
-    "file_type_not_allowed": "Такой тип файла не разрешён."
+    "file_type_not_allowed": "Такой тип файла не разрешён.",
+    "oauth_not_available_email": "Сервис не передал ваш email.",
+    "oauth_user_already_exists": "Аккаунт с таким email уже существует.",
+    "oauth_invalid_state": "Ссылка для входа устарела или открыта в другом браузере. Попробуйте ещё раз.",
+    "access_token_decode_error": "Не удалось подтвердить вход. Попробуйте ещё раз.",
+    "access_token_already_expired": "Вход занял слишком много времени. Попробуйте ещё раз."
   },
   "validation": {
     "missing": "Обязательное поле.",

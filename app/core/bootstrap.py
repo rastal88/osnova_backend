@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.config import config
-from app.core.capabilities import capabilities
+from app.core.capabilities import capabilities, oauth_providers
 from app.core.languages import get_languages
 from app.core.settings import settings
 from app.settings import SiteSettings
@@ -39,6 +39,8 @@ class BootstrapResponse(BaseModel):
     profile: Literal["minimal", "standard", "scalable"]
     i18n: BootstrapI18n
     features: BootstrapFeatures
+    # Sign-in providers to show as buttons, e.g. ["google"]
+    auth_providers: list[str]
 
 
 def get_bootstrap_config() -> BootstrapResponse:
@@ -65,4 +67,5 @@ def get_bootstrap_config() -> BootstrapResponse:
             notifications=capabilities.notifications,
             background_tasks=capabilities.background_tasks,
         ),
+        auth_providers=oauth_providers(config),
     )

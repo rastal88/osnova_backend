@@ -7,6 +7,15 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Sign-in with Google (fastapi-users OAuth + `httpx-oauth`, in `requirements/auth.txt`, about
+  1.7 MB with `httpx`): on when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+  `GET /auth/google/authorize` gives the Google link; Google returns to
+  `<FRONTEND_URL>/oauth/google/callback`, and that page calls `GET /auth/google/callback`,
+  which signs in with the usual cookie. New users get a confirmed email; an account with the
+  same email is linked. State and CSRF cookie are checked. Table `oauth_accounts`
+  (migration `0007`).
+- `/bootstrap` `auth_providers`: the configured sign-in providers, e.g. `["google"]`.
+- Translated messages for OAuth errors.
 - Notifications module (`NOTIFICATIONS_ENABLED`, migration `0006`): `notify(session, users,
   kind, params, link)` stores a notification per active user and sends it to the channels in
   `NOTIFICATIONS_CHANNELS` (`email` included; a channel is one function). Texts come from
@@ -79,6 +88,7 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- Sign-up no longer asks a provider-confirmed (OAuth) user to confirm the email again.
 - Files are private: only the owner and admin roles download or delete them (someone
   else's file answers 404). Files are served as `attachment` with
   `application/octet-stream` and `nosniff`, except PNG / JPEG / GIF / WebP / AVIF images,

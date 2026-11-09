@@ -217,6 +217,22 @@ alembic upgrade head          # one initial migration: migrations/versions/0001_
 python manage.py createroot   # first user with the root role
 ```
 
+### Sign-in with Google
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → OAuth
+   consent screen: create it (External; app name, support email).
+2. Credentials → Create credentials → OAuth client ID → Web application. Authorized
+   redirect URI: `<FRONTEND_URL>/oauth/google/callback`, e.g.
+   `http://localhost:5173/oauth/google/callback` for development and
+   `https://example.com/oauth/google/callback` for the site.
+3. Put the client ID and secret into `.env` as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+   and restart. `/bootstrap` then lists `"google"` in `auth_providers`, and the sign-in page
+   shows the button.
+
+A new Google user gets an account with a confirmed email; an existing account with the
+same email is linked. Another provider: a client from `httpx_oauth.clients` in
+`app/modules/auth/oauth.py` and its keys in `app/config.py`.
+
 ---
 
 ## Docker
@@ -273,6 +289,7 @@ listed with comments in [`.env.example`](.env.example).
 | `DATABASE_URL`, `DB_ECHO` | Database (turns on the `db` module), SQL logging |
 | `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth) |
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (both set turns it on) |
 | `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
 | `NOTIFICATIONS_CHANNELS` | Where notifications go besides the bell: `in_app` (default), `in_app,email` |
 | `SETTINGS_REFRESH_SECONDS` | How often each process reloads settings changed in the admin (default `30`) |
@@ -297,11 +314,12 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 
 | Method | Path | Purpose | When |
 |---|---|---|---|
-| GET | `/bootstrap` | Site name and contacts, version, profile, capabilities, languages | always |
+| GET | `/bootstrap` | Site name and contacts, version, profile, capabilities, languages, sign-in providers | always |
 | GET | `/health` | Liveness check | always |
 | GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules) | always |
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
 | — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
+| GET | `/auth/google/authorize`, `/auth/google/callback` | Sign-in with Google (`authorization_url`, then the callback signs in) | `GOOGLE_CLIENT_*` set |
 | GET | `/client/*` | Client area: any signed-in user (example: `/client/summary`) | `AUTH_ENABLED` |
 | GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`) | `ADMIN_ENABLED` |
 | GET / PATCH / DELETE | `/admin/leads`, `/admin/leads/{id}`, `/admin/leads/forms` | Form submissions: search `q` in the data, filters `form` / `status`, `sort`, pages; mark `new` / `done`; delete | `ADMIN_ENABLED` |

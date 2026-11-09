@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     AUTH_STRATEGY: Literal["jwt", "redis"] = "jwt"
     COOKIE_SECURE: bool = False
+    # Sign-in with Google: both set turns it on. Authorized redirect URI in Google Cloud:
+    # <FRONTEND_URL>/oauth/google/callback
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
 
     REDIS_URL: str | None = None
 

@@ -19,6 +19,8 @@ os.environ.update(
         "BACKGROUND_TASKS_ENABLED": "true",
         "CELERY_BROKER_URL": "memory://",
         "CORS_ORIGINS": "http://localhost:5173",
+        "GOOGLE_CLIENT_ID": "test-client-id",
+        "GOOGLE_CLIENT_SECRET": "test-client-secret",
     }
 )
 
@@ -30,7 +32,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # no
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from app import create_app  # noqa: E402
-from app.modules.auth.models import User, get_user_db  # noqa: E402
+from app.modules.auth.models import OAuthAccount, User, get_user_db  # noqa: E402
 from app.modules.db import Base, get_async_session  # noqa: E402
 
 
@@ -65,7 +67,7 @@ def _app_with(session_factory):
             yield session
 
     async def override_user_db(session=Depends(override_session)):
-        yield SQLAlchemyUserDatabase(session, User)
+        yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
 
     app = create_app()
     app.dependency_overrides[get_async_session] = override_session
