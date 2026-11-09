@@ -26,7 +26,9 @@
     "update_user_email_already_exists": "Пользователь с таким email уже существует.",
     "update_user_invalid_password": "Пароль не соответствует требованиям.",
     "form_not_found": "Форма не найдена.",
-    "settings_group_not_found": "Группа настроек не найдена."
+    "settings_group_not_found": "Группа настроек не найдена.",
+    "admin_cannot_change_self": "Свой аккаунт здесь менять нельзя.",
+    "admin_root_protected": "Пользователя root изменить нельзя."
   },
   "validation": {
     "missing": "Обязательное поле.",

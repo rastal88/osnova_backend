@@ -294,7 +294,8 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
 | — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
 | GET | `/client/*` | Client area: any signed-in user (example: `/client/summary`) | `AUTH_ENABLED` |
-| GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`, `/admin/users`) | `ADMIN_ENABLED` |
+| GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`) | `ADMIN_ENABLED` |
+| GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (moderator: ordinary users), change role (root) | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
 | POST / GET | `/file_flow/upload`, `/file_flow/download/{name}` | Upload (signed-in users) and download | `FILES_ENABLED` |
 

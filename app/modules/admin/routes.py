@@ -1,10 +1,9 @@
-import uuid
-
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.admin.users import users_router
 from app.modules.auth.dependencies import require_admin
 from app.modules.auth.models import User
 from app.modules.auth.roles import Role
@@ -20,14 +19,6 @@ class AdminOverview(BaseModel):
     users_by_role: dict[Role, int]
 
 
-class AdminUser(BaseModel):
-    id: uuid.UUID
-    email: str
-    role: Role
-    is_active: bool
-    is_verified: bool
-
-
 @admin_router.get("/overview")
 async def admin_overview(session: AsyncSession = Depends(get_async_session)) -> AdminOverview:
     """Counters for the admin dashboard."""
@@ -41,7 +32,4 @@ async def admin_overview(session: AsyncSession = Depends(get_async_session)) -> 
     )
 
 
-@admin_router.get("/users")
-async def list_users(session: AsyncSession = Depends(get_async_session)) -> list[AdminUser]:
-    result = await session.execute(select(User).order_by(User.email))
-    return [AdminUser.model_validate(user, from_attributes=True) for user in result.scalars()]
+admin_router.include_router(users_router)
