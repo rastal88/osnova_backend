@@ -98,6 +98,25 @@ async def login(client, email: str, password: str = "password123"):
     )
 
 
+async def create_user(session_factory, email: str, role: str, password: str = "password123"):
+    from app.modules.auth.manager import UserManager
+    from app.modules.auth.schemas import UserCreate
+
+    async with session_factory() as session:
+        manager = UserManager(SQLAlchemyUserDatabase(session, User))
+        user = await manager.create(UserCreate(email=email, password=password))
+        await manager.user_db.update(user, {"role": role})
+        await session.commit()
+
+
+@pytest.fixture(autouse=True)
+def reset_settings():
+    from app.core.settings import settings
+
+    yield
+    settings.reset()
+
+
 @pytest.fixture(autouse=True)
 def reset_rate_limits():
     from app.core.forms.routes import limiter

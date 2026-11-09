@@ -25,7 +25,8 @@
     "verify_user_already_verified": "Этот email уже подтверждён.",
     "update_user_email_already_exists": "Пользователь с таким email уже существует.",
     "update_user_invalid_password": "Пароль не соответствует требованиям.",
-    "form_not_found": "Форма не найдена."
+    "form_not_found": "Форма не найдена.",
+    "settings_group_not_found": "Группа настроек не найдена."
   },
   "validation": {
     "missing": "Обязательное поле.",
@@ -43,7 +44,9 @@
     "literal_error": "Выберите один из вариантов.",
     "must_be_checked": "Отметьте, чтобы продолжить.",
     "string_type": "Должно быть текстом.",
-    "bool_type": "Должно быть true или false."
+    "bool_type": "Должно быть true или false.",
+    "too_short": "Выберите хотя бы {min_length}.",
+    "default_language_not_enabled": "Язык по умолчанию должен быть среди включённых."
   },
   "forms": {
     "contact.title": "Связаться с нами",
@@ -58,5 +61,14 @@
     "contact.topic.other": "Другое",
     "contact.message": "Сообщение",
     "contact.consent": "Я согласен на обработку персональных данных"
+  },
+  "settings": {
+    "site.title": "Сайт",
+    "site.name": "Название сайта",
+    "site.contact_email": "Email для связи",
+    "site.contact_phone": "Телефон для связи",
+    "languages.title": "Языки",
+    "languages.enabled": "Включённые языки",
+    "languages.default": "Язык по умолчанию"
   }
 }

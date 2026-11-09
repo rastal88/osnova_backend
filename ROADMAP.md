@@ -97,14 +97,14 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] VISION and ROADMAP in the repository
 
 ### S1. Areas and roles *(be, fe)* — after S0
-- [~] Public, client and admin areas; admin roles (`root`, `moderator`) land in the admin after sign-in — backend: `areas` in `/auth/users/me` (done)
-- [~] Area switcher in the user menu; route and menu guards on both sides — backend: router-level guards (done)
-- [ ] Admin area in the same shell with its own menu
+- [x] Public, client and admin areas; admin roles (`root`, `moderator`) land in the admin after sign-in (`areas` in `/auth/users/me`)
+- [x] Area switcher in the user menu; route and menu guards on both sides
+- [x] Admin area in the same shell with its own menu
 
 ### S2. Settings *(be, fe)* — after S1
-- [ ] Singleton settings (typed groups in JSONB) and configurable entities, cached
-- [ ] Admin forms generated from the schemas
-- [ ] Site name and contacts, languages and the default managed from the admin
+- [~] Singleton settings: typed groups in JSONB, kept in memory, reloaded every `SETTINGS_REFRESH_SECONDS` — backend (done)
+- [~] Admin forms generated from the schemas — backend: field descriptions in the `SchemaForm` format (done)
+- [~] Site name and contacts, languages and the default managed from the admin — backend (done)
 
 ### S3. Admin: users *(be, fe)* — after S1
 - [ ] Users list with search and filters
@@ -116,6 +116,7 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [~] Auth: JWT by default, Redis sessions optional (done); email verification and password reset pages
 
 ### S5. Leads *(be, fe)* — after S2, S4
+- [ ] Configurable entities: one table `(type, name, params JSONB)`, a Pydantic schema per type, generated admin forms
 - [ ] Form submissions stored in the database and listed in the admin
 - [ ] Delivery channels (email, Telegram, webhook) configured as entities, sent by a task
 

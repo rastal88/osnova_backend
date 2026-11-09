@@ -4,12 +4,16 @@ from pydantic import BaseModel
 
 from app.config import config
 from app.core.capabilities import capabilities
-from app.core.languages import languages
+from app.core.languages import get_languages
+from app.core.settings import settings
+from app.settings import SiteSettings
 
 
 class BootstrapApplication(BaseModel):
     name: str
     version: str
+    contact_email: str
+    contact_phone: str
 
 
 class BootstrapLanguage(BaseModel):
@@ -38,8 +42,15 @@ class BootstrapResponse(BaseModel):
 
 
 def get_bootstrap_config() -> BootstrapResponse:
+    site = settings.get(SiteSettings)
+    languages = get_languages()
     return BootstrapResponse(
-        application=BootstrapApplication(name=config.APP_NAME, version=config.APP_VERSION),
+        application=BootstrapApplication(
+            name=site.name,
+            version=config.APP_VERSION,
+            contact_email=site.contact_email,
+            contact_phone=site.contact_phone,
+        ),
         profile=config.APP_PROFILE,
         i18n=BootstrapI18n(
             languages=[

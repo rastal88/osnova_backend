@@ -44,6 +44,9 @@ class Settings(BaseSettings):
 
     REDIS_URL: str | None = None
 
+    # Settings module: seconds before a process reloads settings changed in the admin
+    SETTINGS_REFRESH_SECONDS: int = 30
+
     # Files module
     FILES_DIR: str = "uploads"
     FILES_MAX_SIZE_MB: int = 10

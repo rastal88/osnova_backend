@@ -7,6 +7,15 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Settings the owner changes at runtime: typed groups (`SettingsGroup`, `app/settings.py`)
+  with defaults from `.env`, read with `settings.get(Group)`. With the admin the new
+  `settings` module stores them in the database (table `settings`, one JSONB row per
+  group, migration `0002`) and each process reloads them every `SETTINGS_REFRESH_SECONDS`.
+- `GET /admin/settings`: every group with a form description (the `SchemaForm` format) and
+  its values; `PUT /admin/settings/{group}` (root only) validates, stores and applies.
+- Groups `site` (name, contact email and phone) and `languages` (enabled, default): the
+  site name and contacts are in `/bootstrap` `application`; languages follow the settings.
+- Form fields of type `multiselect`.
 - Areas: `GET /auth/users/me` returns `areas` — `["admin", "client"]` for `root` and
   `moderator` when the admin module is on, otherwise `["client"]`; the first one is where
   the user lands after sign-in.

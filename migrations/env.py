@@ -14,6 +14,7 @@ from app.config import config
 # Import every model module so Alembic sees its tables.
 from app.modules.auth import models as _auth_models  # noqa: F401
 from app.modules.db import Base
+from app.modules.settings import models as _settings_models  # noqa: F401
 
 al_config = context.config
 if al_config.config_file_name is not None:

@@ -17,16 +17,23 @@ from dataclasses import dataclass, field
 from functools import cache
 from typing import Annotated, Any, Literal
 
-from pydantic import AfterValidator, BaseModel, BeforeValidator, StringConstraints, create_model
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    Field,
+    StringConstraints,
+    create_model,
+)
 from pydantic_core import PydanticCustomError
 
 from app.core.i18n import translate
+from app.core.patterns import EMAIL_PATTERN, PHONE_PATTERN
 
-FieldType = Literal["text", "textarea", "email", "tel", "select", "checkbox", "consent"]
+FieldType = Literal[
+    "text", "textarea", "email", "tel", "select", "multiselect", "checkbox", "consent"
+]
 
-# Simple on purpose: both run in Python and in the browser (sent as `pattern`)
-EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-PHONE_PATTERN = r"^\+?[0-9 ()\-]{5,20}$"
 
 # A name bots like to fill; forms cannot use it for a real field
 HONEYPOT_FIELD = "website"
@@ -49,7 +56,7 @@ class FormField:
     options: tuple[str, ...] = ()
 
     def __post_init__(self):
-        if self.type == "select" and not self.options:
+        if self.type in ("select", "multiselect") and not self.options:
             raise ValueError(f"Select field '{self.name}' needs options")
 
 
@@ -106,6 +113,10 @@ def _field_definition(item: FormField) -> tuple[Any, Any]:
     if item.type == "select":
         value_type: Any = Literal[item.options]  # type: ignore[valid-type]
         validators: list[Any] = []
+    elif item.type == "multiselect":
+        option: Any = Literal[item.options]  # type: ignore[valid-type]
+        value_type = list[option]
+        validators = [Field(min_length=1)] if item.required else []
     else:
         value_type = str
         validators = [
