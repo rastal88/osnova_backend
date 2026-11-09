@@ -161,10 +161,10 @@ osnova_backend/
 │   ├── modules/           # optional modules, one folder each
 │   │   ├── db/            # SQLAlchemy (async) sessions       ← DATABASE_URL
 │   │   ├── auth/          # fastapi-users, roles, User model  ← AUTH_ENABLED
-│   │   ├── admin/         # admin endpoints                   ← ADMIN_ENABLED
+│   │   ├── admin/         # admin area API (root, moderator)  ← ADMIN_ENABLED
 │   │   ├── files/         # file upload / download            ← FILES_ENABLED
 │   │   └── tasks/         # Celery app                        ← BACKGROUND_TASKS_ENABLED
-│   ├── user_flow/         # example application domain (for signed-in users)
+│   ├── client/            # client area API (any signed-in user)
 │   ├── forms.py           # the project's forms
 │   ├── config.py          # settings (every value has a default)
 │   └── __init__.py        # application factory
@@ -290,8 +290,8 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules) | always |
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
 | — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
-| GET | `/user_flow/main` | Example endpoint for any signed-in user | `AUTH_ENABLED` |
-| GET | `/admin_flow/*` | Admin endpoints (users list) | `ADMIN_ENABLED` |
+| GET | `/client/*` | Client area: any signed-in user (example: `/client/summary`) | `AUTH_ENABLED` |
+| GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`, `/admin/users`) | `ADMIN_ENABLED` |
 | POST / GET | `/file_flow/upload`, `/file_flow/download/{name}` | Upload (signed-in users) and download | `FILES_ENABLED` |
 
 ---
@@ -312,7 +312,9 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   and checks module dependencies (`requires`). The core never imports modules.
 - **Remove a module:** delete its folder, its entry in `MODULES` and
   `requirements/<name>.txt`.
-- **New application domain:** a package like `app/user_flow/` and an entry in `MODULES`.
+- **New endpoints for signed-in users:** add them to `client_router` (`app/client/routes.py`);
+  admin ones to `admin_router` (`app/modules/admin/routes.py`). Both routers check access
+  for every endpoint. A new domain: a package like `app/client/` and an entry in `MODULES`.
 - **Add a capability:**
   1. A flag in `app/config.py` and `.env.example`.
   2. A package `app/modules/<name>/` with `register(app)` and an entry in `MODULES`.

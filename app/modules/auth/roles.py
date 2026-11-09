@@ -7,8 +7,19 @@ class Role(str, Enum):
     USER = "user"
 
 
-PERMISSIONS = {
-    Role.USER: ["read_own_data"],
-    Role.ROOT: ["read_all_data", "manage_users"],
-    Role.MODERATOR: ["read_all_data"],
-}
+class Area(str, Enum):
+    """Parts of the interface: the public area needs no sign-in and is not listed."""
+
+    ADMIN = "admin"
+    CLIENT = "client"
+
+
+# Roles that work in the admin area; they can also use the client area.
+ADMIN_ROLES = (Role.ROOT, Role.MODERATOR)
+
+
+def user_areas(role: Role, admin_enabled: bool) -> list[Area]:
+    """Areas open to a role; the first one is where the user lands after sign-in."""
+    if admin_enabled and role in ADMIN_ROLES:
+        return [Area.ADMIN, Area.CLIENT]
+    return [Area.CLIENT]
