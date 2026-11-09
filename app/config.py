@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     SMTP_SECURITY: Literal["starttls", "ssl", "none"] = "starttls"
     SMTP_TIMEOUT: int = 10
 
+    # Notifications module: where notifications go besides the bell, e.g. "in_app,email"
+    NOTIFICATIONS_CHANNELS: str = "in_app"
+
     # Settings module: seconds before a process reloads settings changed in the admin
     SETTINGS_REFRESH_SECONDS: int = 30
 

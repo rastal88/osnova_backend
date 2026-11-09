@@ -121,8 +121,8 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] Delivery channels (email, Telegram, webhook) configured as entities, sent by a task (Admin → Channels)
 
 ### S6. Files and notifications *(be, fe)* — after S1
-- [~] Files: storage interface with local and S3-compatible backends, owner-only access, safe serving — backend (done); "My files" page
-- [ ] In-app notifications: model, API, a bell in the header; channel interface for email / Telegram
+- [x] Files: storage interface with local and S3-compatible backends, owner-only access, safe serving; "My files" page
+- [~] In-app notifications: model, API, a bell in the header; channel interface for email / Telegram — backend (done)
 
 ### S7. OAuth *(be, fe)* — after S1
 - [ ] Google sign-in end-to-end; providers listed in settings

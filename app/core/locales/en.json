@@ -98,5 +98,9 @@
     "lead_webhook.title": "Webhook",
     "lead_webhook.url": "URL",
     "lead_webhook.secret": "Signing secret"
+  },
+  "notifications": {
+    "lead_new.title": "New lead",
+    "lead_new.body": "{summary}"
   }
 }

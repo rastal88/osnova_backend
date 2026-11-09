@@ -7,6 +7,14 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Notifications module (`NOTIFICATIONS_ENABLED`, migration `0006`): `notify(session, users,
+  kind, params, link)` stores a notification per active user and sends it to the channels in
+  `NOTIFICATIONS_CHANNELS` (`email` included; a channel is one function). Texts come from
+  `notifications.<kind>.*` and are translated when read.
+- `/api/v1/notifications`: the user's list (newest first, `unread_only`), `/unread` for the
+  bell, mark one or all read, delete.
+- Admins get a notification for every new lead, linking to Admin → Leads; a failure there
+  never fails the form.
 - Files: `/api/v1/files` — upload, the user's files with search and pages, download,
   delete; metadata in the `files` table (migration `0005`), contents in a storage chosen by
   `FILES_STORAGE`: `local` (`FILES_DIR`) or `s3` — any S3-compatible bucket through a small
