@@ -7,6 +7,12 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Files: `/api/v1/files` — upload, the user's files with search and pages, download,
+  delete; metadata in the `files` table (migration `0005`), contents in a storage chosen by
+  `FILES_STORAGE`: `local` (`FILES_DIR`) or `s3` — any S3-compatible bucket through a small
+  Signature V4 client on the standard library (no boto3), downloads redirect to a
+  short-lived signed link (`S3_LINK_SECONDS`). `FILES_ALLOWED_TYPES` limits MIME types.
+- Webhook channel: an invalid URL gets its own message (`url_invalid`).
 - Configurable entities: an entity type is a Pydantic model registered with `@entity_type`
   (`app/core/entities.py`); all live in one table `entities` (migration `0004`). The
   `entities` module serves `/admin/entities` (list, create, update, delete; types with form
@@ -65,6 +71,11 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- Files are private: only the owner and admin roles download or delete them (someone
+  else's file answers 404). Files are served as `attachment` with
+  `application/octet-stream` and `nosniff`, except PNG / JPEG / GIF / WebP / AVIF images,
+  so uploaded HTML or SVG never runs on the site's origin.
+- `/file_flow/upload` and `/file_flow/download/{name}` are replaced by `/files`.
 - Tests: the `client` fixture also runs on an in-memory SQLite database.
 - The example task `tasks.send_notification` is replaced by `mail.send`; tasks are bound to
   `celery_app` (a `shared_task` called from a thread used the default Celery settings).

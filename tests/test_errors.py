@@ -100,7 +100,7 @@ async def test_auth_errors_use_codes(auth_client):
     }
 
     await login(client, "user@example.com")
-    response = await client.get("/api/v1/file_flow/download/missing.txt")
+    response = await client.get("/api/v1/files/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 404
     assert response.json()["code"] == "file_not_found"
 

@@ -60,9 +60,19 @@ class Settings(BaseSettings):
     # Settings module: seconds before a process reloads settings changed in the admin
     SETTINGS_REFRESH_SECONDS: int = 30
 
-    # Files module
+    # Files module: "local" keeps files in FILES_DIR, "s3" in an S3-compatible bucket
+    FILES_STORAGE: Literal["local", "s3"] = "local"
     FILES_DIR: str = "uploads"
     FILES_MAX_SIZE_MB: int = 10
+    # Comma-separated MIME types or prefixes ("image/", "application/pdf"); empty: any
+    FILES_ALLOWED_TYPES: str = ""
+    S3_ENDPOINT_URL: str | None = None
+    S3_BUCKET: str | None = None
+    S3_REGION: str = "us-east-1"
+    S3_ACCESS_KEY: str | None = None
+    S3_SECRET_KEY: str | None = None
+    # Lifetime of download links to the bucket
+    S3_LINK_SECONDS: int = 300
 
     # Background tasks module
     CELERY_BROKER_URL: str | None = None

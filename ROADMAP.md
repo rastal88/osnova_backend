@@ -116,12 +116,12 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] Auth: email verification and password reset by email, with frontend pages
 
 ### S5. Leads *(be, fe)* — after S2, S4
-- [~] Configurable entities: one table `(type, name, params JSONB)`, a Pydantic schema per type, generated admin forms — backend (done)
-- [~] Form submissions stored in the database and listed in the admin — backend: `leads` module, `/admin/leads` (done)
-- [~] Delivery channels (email, Telegram, webhook) configured as entities, sent by a task — backend (done)
+- [x] Configurable entities: one table `(type, name, params JSONB)`, a Pydantic schema per type, generated admin forms
+- [x] Form submissions stored in the database and listed in the admin (Admin → Leads)
+- [x] Delivery channels (email, Telegram, webhook) configured as entities, sent by a task (Admin → Channels)
 
 ### S6. Files and notifications *(be, fe)* — after S1
-- [~] Safe local storage (done); storage interface for S3-compatible backends
+- [~] Files: storage interface with local and S3-compatible backends, owner-only access, safe serving — backend (done); "My files" page
 - [ ] In-app notifications: model, API, a bell in the header; channel interface for email / Telegram
 
 ### S7. OAuth *(be, fe)* — after S1

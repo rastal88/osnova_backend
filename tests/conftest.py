@@ -43,8 +43,9 @@ def anyio_backend():
 async def database(tmp_path, monkeypatch):
     """An in-memory SQLite database with every table; returns the session factory."""
     from app.modules.files import routes as file_routes
+    from app.modules.files.storage import LocalStorage
 
-    monkeypatch.setattr(file_routes, "UPLOAD_DIR", tmp_path)
+    monkeypatch.setattr(file_routes, "get_storage", lambda: LocalStorage(tmp_path))
 
     engine = create_async_engine(
         "sqlite+aiosqlite://",
