@@ -9,7 +9,16 @@ from fastapi import FastAPI
 
 
 def register(app: FastAPI):
+    from .backend import redis
     from .routes import auth_router
+
+    if redis is not None:
+        from app.core.readiness import add_check
+
+        async def redis_sessions() -> None:
+            await redis.ping()
+
+        add_check("redis", redis_sessions)
 
     app.include_router(auth_router, prefix="/api/v1/auth")
     return None

@@ -7,6 +7,11 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `GET /api/v1/ready`: readiness — 200 when the dependencies of the enabled modules answer
+  (database, Redis sessions), 503 with the failing one otherwise; checks have a 3 s timeout.
+  Modules register checks with `app.core.readiness.add_check`.
+- `make migrate` and `make createroot` for the Docker stack.
+- README: what each profile gives and needs, and what changes with replicas (scalable).
 - Sign-in with Google (fastapi-users OAuth + `httpx-oauth`, in `requirements/auth.txt`, about
   1.7 MB with `httpx`): on when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
   `GET /auth/google/authorize` gives the Google link; Google returns to
@@ -88,6 +93,8 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- CORS headers are added to 500 responses too, so a frontend on another origin shows the
+  server message instead of a network error.
 - Sign-up no longer asks a provider-confirmed (OAuth) user to confirm the email again.
 - Files are private: only the owner and admin roles download or delete them (someone
   else's file answers 404). Files are served as `attachment` with

@@ -76,8 +76,32 @@ Frontend ──▶ FastAPI
                  └───── Celery workers
 ```
 
-The main profile for full applications: users and roles, admin, files, background tasks.
-The goal is a working *foundation* for each tool, not a complete integration.
+The main profile for full applications. The goal is a working *foundation* for each tool,
+not a complete integration:
+
+| Tool | What you get |
+|---|---|
+| Users | sign-up, sign-in (cookie, JWT or Redis sessions), email confirmation, password reset, Google |
+| Areas | public, client (`user`) and admin (`root`, `moderator`) with guards on both sides |
+| Admin | overview, users (search, block, role), leads, delivery channels, settings |
+| Settings | typed groups edited in the admin (site, languages), no migration per field |
+| Leads | form submissions stored, delivered to email / Telegram / webhook by a task |
+| Files | private uploads, local disk or any S3-compatible bucket |
+| Notifications | in-app bell, email as a second channel |
+| Tasks | Celery worker; email and lead delivery retried while a service is down |
+
+`.env` for standard (Docker sets the datastore addresses itself):
+
+```bash
+APP_PROFILE=standard
+AUTH_ENABLED=true
+ADMIN_ENABLED=true
+SECRET_KEY=<long random value>
+# optional
+FILES_ENABLED=true
+NOTIFICATIONS_ENABLED=true
+BACKGROUND_TASKS_ENABLED=true
+```
 
 ### Scalable
 
@@ -92,6 +116,20 @@ The goal is a working *foundation* for each tool, not a complete integration.
 `standard` with several backend replicas: the backend publishes no host port and the
 frontend nginx spreads requests over the replicas through Docker DNS. A load balancer,
 CDN and monitoring are not part of the template yet.
+
+What changes with replicas — the template already handles the first group, the second is
+what to watch:
+
+| | Behaviour with several replicas |
+|---|---|
+| Sessions | JWT cookies are stateless; Redis sessions are shared |
+| Settings | each replica reloads them every `SETTINGS_REFRESH_SECONDS` (30 s) |
+| Background work | the Celery worker is a separate service; tasks go through Redis |
+| Readiness | `GET /api/v1/ready` checks the database (and Redis sessions): route traffic by it |
+| **Migrations** | run them once (`make migrate`), not with `RUN_MIGRATIONS=true` on every replica |
+| **Files** | `FILES_STORAGE=s3` for several machines; local files work only on one host (shared Docker volume) |
+| **Form rate limit** | counted in each replica's memory: with N replicas a client may send up to N × `FORMS_RATE_LIMIT` (a Redis store is planned) |
+| **Lead delivery without tasks** | runs in the replica that got the form; turn background tasks on for retries |
 
 ---
 
@@ -262,8 +300,11 @@ How it works:
 - **Datastores and worker:** `postgres`, `redis` and the Celery `worker` (same image as the
   backend) live in `docker-compose.datastores.yml` and run only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
   from `.env` are ignored. In `minimal` `DATABASE_URL` and `REDIS_URL` are forced empty.
-- **Migrations:** with `RUN_MIGRATIONS=true` and a database the entrypoint runs
-  `alembic upgrade head` before the app starts.
+- **Migrations:** `make migrate` runs `alembic upgrade head` once in a one-off container;
+  `make createroot` creates the first root user. With `RUN_MIGRATIONS=true` the entrypoint
+  runs migrations on every start — fine for one backend, not for replicas.
+- **Readiness:** `GET /api/v1/ready` answers 503 while the database (or Redis sessions) is
+  unreachable; `GET /api/v1/health` only says the process runs.
 - **Health checks:** `GET /api/v1/health` for the backend; `celery inspect ping` for the
   worker; built-in ones for postgres and redis.
 - **Email links:** `FRONTEND_URL` is set from `SITE_URL` (or `http://localhost:8080`).
@@ -315,7 +356,8 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | Method | Path | Purpose | When |
 |---|---|---|---|
 | GET | `/bootstrap` | Site name and contacts, version, profile, capabilities, languages, sign-in providers | always |
-| GET | `/health` | Liveness check | always |
+| GET | `/health` | Liveness: the process runs | always |
+| GET | `/ready` | Readiness: the database (and Redis sessions) answer; 503 otherwise | always |
 | GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules) | always |
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
 | — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
