@@ -78,5 +78,23 @@
     "verify_email.body": "Здравствуйте!\n\nПодтвердите адрес электронной почты для {site}:\n{link}\n\nСсылка действует один час. Если вы не регистрировались, просто проигнорируйте это письмо.",
     "reset_password.subject": "Сброс пароля для {site}",
     "reset_password.body": "Здравствуйте!\n\nЧтобы задать новый пароль для {site}, откройте ссылку:\n{link}\n\nСсылка действует один час. Если вы не запрашивали сброс, проигнорируйте письмо: пароль останется прежним."
+  },
+  "leads": {
+    "new": "Новая заявка: {form}",
+    "yes": "Да",
+    "no": "Нет",
+    "test_title": "Тестовое сообщение",
+    "test_field": "Сообщение",
+    "test_text": "Канал работает: сюда будут приходить новые заявки."
+  },
+  "entities": {
+    "lead_email.title": "Email",
+    "lead_email.to": "Кому",
+    "lead_telegram.title": "Telegram",
+    "lead_telegram.bot_token": "Токен бота",
+    "lead_telegram.chat_id": "ID чата",
+    "lead_webhook.title": "Webhook",
+    "lead_webhook.url": "URL",
+    "lead_webhook.secret": "Секрет для подписи"
   }
 }

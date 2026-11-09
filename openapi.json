@@ -957,6 +957,266 @@
         }
       }
     },
+    "/api/v1/admin/entities/types": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Types",
+        "description": "Entity types with their form description, in the request language.",
+        "operationId": "list_types_api_v1_admin_entities_types_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntityTypeDescription"
+                  },
+                  "title": "Response List Types Api V1 Admin Entities Types Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/entities": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Entities",
+        "operationId": "list_entities_api_v1_admin_entities_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only types of this group",
+              "title": "Group"
+            },
+            "description": "Only types of this group"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntityRead"
+                  },
+                  "title": "Response List Entities Api V1 Admin Entities Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create Entity",
+        "operationId": "create_entity_api_v1_admin_entities_post",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntityCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/entities/{entity_id}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Entity",
+        "operationId": "update_entity_api_v1_admin_entities__entity_id__put",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntityUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete Entity",
+        "operationId": "delete_entity_api_v1_admin_entities__entity_id__delete",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/leads/forms": {
       "get": {
         "tags": [
@@ -986,6 +1246,55 @@
             "APIKeyCookie": []
           }
         ]
+      }
+    },
+    "/api/v1/admin/leads/channels/{channel_id}/test": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Test Channel",
+        "description": "Send a test message through one channel now and report the result.",
+        "operationId": "test_channel_api_v1_admin_leads_channels__channel_id__test_post",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "channel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Channel Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelTestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/admin/leads": {
@@ -1803,6 +2112,31 @@
         ],
         "title": "BootstrapResponse"
       },
+      "ChannelTestResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "error"
+        ],
+        "title": "ChannelTestResult"
+      },
       "ClientSummary": {
         "properties": {
           "email": {
@@ -1819,6 +2153,151 @@
           "role"
         ],
         "title": "ClientSummary"
+      },
+      "EntityCreate": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "name"
+        ],
+        "title": "EntityCreate"
+      },
+      "EntityRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "name",
+          "enabled",
+          "params",
+          "created_at"
+        ],
+        "title": "EntityRead"
+      },
+      "EntityTypeDescription": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FormFieldDescription"
+            },
+            "type": "array",
+            "title": "Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "group",
+          "title",
+          "fields"
+        ],
+        "title": "EntityTypeDescription"
+      },
+      "EntityUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          }
+        },
+        "type": "object",
+        "title": "EntityUpdate"
       },
       "FormDescription": {
         "properties": {
@@ -1869,6 +2348,7 @@
               "textarea",
               "email",
               "tel",
+              "password",
               "select",
               "multiselect",
               "checkbox",
@@ -1983,6 +2463,56 @@
         ],
         "title": "HealthResponse"
       },
+      "LeadDelivery": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "final": {
+            "type": "boolean",
+            "title": "Final",
+            "default": false
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel",
+          "type",
+          "status",
+          "error",
+          "at"
+        ],
+        "title": "LeadDelivery"
+      },
       "LeadPage": {
         "properties": {
           "items": {
@@ -2036,6 +2566,13 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "deliveries": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/LeadDelivery"
+            },
+            "type": "object",
+            "title": "Deliveries"
           }
         },
         "type": "object",
@@ -2045,7 +2582,8 @@
           "data",
           "language",
           "status",
-          "created_at"
+          "created_at",
+          "deliveries"
         ],
         "title": "LeadRead"
       },

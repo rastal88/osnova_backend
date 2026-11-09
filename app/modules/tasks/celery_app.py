@@ -1,3 +1,5 @@
+from importlib.util import find_spec
+
 from celery import Celery
 
 from app.config import config
@@ -5,11 +7,14 @@ from app.config import config
 if not config.CELERY_BROKER_URL:
     raise RuntimeError("Background tasks module requires CELERY_BROKER_URL")
 
+# Task modules of the optional packages that are present (a deleted module is skipped)
+TASK_MODULES = ("app.modules.tasks.tasks", "app.modules.leads.tasks")
+
 celery_app = Celery(
     "osnova",
     broker=config.CELERY_BROKER_URL,
     backend=config.CELERY_RESULT_BACKEND or config.CELERY_BROKER_URL,
-    include=["app.modules.tasks.tasks"],
+    include=[name for name in TASK_MODULES if find_spec(name)],
 )
 
 celery_app.conf.update(

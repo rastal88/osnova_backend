@@ -163,7 +163,8 @@ osnova_backend/
 │   │   ├── auth/          # fastapi-users, roles, User model  ← AUTH_ENABLED
 │   │   ├── admin/         # admin area API (root, moderator)  ← ADMIN_ENABLED
 │   │   ├── settings/      # settings stored in the database   ← ADMIN_ENABLED
-│   │   ├── leads/         # form submissions in the database  ← ADMIN_ENABLED
+│   │   ├── entities/      # configurable entities (one table) ← ADMIN_ENABLED
+│   │   ├── leads/         # submissions, delivery channels    ← ADMIN_ENABLED
 │   │   ├── files/         # file upload / download            ← FILES_ENABLED
 │   │   └── tasks/         # Celery app, email task            ← BACKGROUND_TASKS_ENABLED
 │   ├── client/            # client area API (any signed-in user)
@@ -301,6 +302,8 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET | `/client/*` | Client area: any signed-in user (example: `/client/summary`) | `AUTH_ENABLED` |
 | GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`) | `ADMIN_ENABLED` |
 | GET / PATCH / DELETE | `/admin/leads`, `/admin/leads/{id}`, `/admin/leads/forms` | Form submissions: search `q` in the data, filters `form` / `status`, `sort`, pages; mark `new` / `done`; delete | `ADMIN_ENABLED` |
+| GET / POST / PUT / DELETE | `/admin/entities`, `/admin/entities/{id}`, `/admin/entities/types` | Configurable entities (e.g. lead channels) with form descriptions; secrets masked; changes by `root` | `ADMIN_ENABLED` |
+| POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`root`) | `ADMIN_ENABLED` |
 | GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (moderator: ordinary users), change role (root) | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
 | POST / GET | `/file_flow/upload`, `/file_flow/download/{name}` | Upload (signed-in users) and download | `FILES_ENABLED` |
@@ -338,6 +341,10 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   tasks on, it goes through the queue and the worker retries while the mail server is down.
   After sign-up the user gets a confirmation link; `forgot-password` sends a reset link —
   both open frontend pages (`/verify-email`, `/reset-password`).
+- **Add a configurable entity:** a Pydantic model with `@entity_type` (`app/core/entities.py`;
+  `type`, `group`, fields with defaults) and labels in the `entities` section of the
+  locales. It is stored in the shared `entities` table and edited in the admin without a
+  migration or frontend code. Example: the lead channels in `app/modules/leads/channels.py`.
 - **Add a background task:** a function with `@celery_app.task` in
   `app/modules/tasks/tasks.py`, called with `.delay(...)`.
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.

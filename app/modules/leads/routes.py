@@ -2,19 +2,25 @@
 `size`, `sort` (`-` for descending) and filters `form`, `status`."""
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from sqlalchemy import String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
 from app.core.forms.schema import FormDescription, describe
+from app.core.i18n import get_language, translate
 from app.forms import FORMS
-from app.modules.auth.dependencies import require_admin
+from app.modules.auth.dependencies import require_admin, require_any_role
+from app.modules.auth.roles import Role
 from app.modules.db import get_async_session
+from app.modules.entities.models import Entity
+from app.modules.entities.service import parse_params
+from app.modules.leads.channels import GROUP, LeadMessage
 from app.modules.leads.models import Lead, LeadStatus
 
 leads_router = APIRouter(dependencies=[Depends(require_admin)])
@@ -24,6 +30,16 @@ LeadSort = Literal[tuple(f"{sign}{name}" for name in SORT_COLUMNS for sign in ("
 STATUSES: tuple[str, ...] = ("new", "done")
 
 
+class LeadDelivery(BaseModel):
+    channel: str
+    type: str
+    status: Literal["sent", "failed"]
+    error: str | None
+    # The receiver refused it: not retried
+    final: bool = False
+    at: datetime
+
+
 class LeadRead(BaseModel):
     id: uuid.UUID
     form: str
@@ -31,6 +47,13 @@ class LeadRead(BaseModel):
     language: str
     status: LeadStatus
     created_at: datetime
+    # By channel (entity) id
+    deliveries: dict[str, LeadDelivery]
+
+
+class ChannelTestResult(BaseModel):
+    ok: bool
+    error: str | None
 
 
 class LeadPage(BaseModel):
@@ -50,6 +73,33 @@ def _values(raw: str | None, allowed: tuple[str, ...]) -> list[str]:
 async def lead_forms() -> list[FormDescription]:
     """The project's forms with translated field labels, to show and filter leads."""
     return [describe(form) for form in FORMS]
+
+
+@leads_router.post(
+    "/channels/{channel_id}/test", dependencies=[Depends(require_any_role(Role.ROOT))]
+)
+async def test_channel(
+    channel_id: uuid.UUID, session: AsyncSession = Depends(get_async_session)
+) -> ChannelTestResult:
+    """Send a test message through one channel now and report the result."""
+    entity = await session.get(Entity, channel_id)
+    channel = parse_params(entity) if entity else None
+    if entity is None or channel is None or channel.group != GROUP:
+        raise AppError(404, "not_found")
+    message = LeadMessage(
+        id=str(uuid.uuid4()),
+        form="test",
+        title=translate("leads.test_title"),
+        language=get_language(),
+        created_at=datetime.now(UTC).isoformat(),
+        fields=[(translate("leads.test_field"), translate("leads.test_text"))],
+        data={"test": True},
+    )
+    try:
+        await run_in_threadpool(channel.send, message)  # type: ignore[attr-defined]
+    except Exception as exc:
+        return ChannelTestResult(ok=False, error=f"{type(exc).__name__}: {exc}"[:500])
+    return ChannelTestResult(ok=True, error=None)
 
 
 @leads_router.get("")

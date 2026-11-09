@@ -31,7 +31,15 @@ from app.core.i18n import translate
 from app.core.patterns import EMAIL_PATTERN, PHONE_PATTERN
 
 FieldType = Literal[
-    "text", "textarea", "email", "tel", "select", "multiselect", "checkbox", "consent"
+    "text",
+    "textarea",
+    "email",
+    "tel",
+    "password",
+    "select",
+    "multiselect",
+    "checkbox",
+    "consent",
 ]
 
 

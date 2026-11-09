@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.config import config
 
@@ -39,3 +40,17 @@ async def app_session(app: FastAPI) -> AsyncIterator[AsyncSession]:
         yield await anext(sessions)
     finally:
         await sessions.aclose()
+
+
+@asynccontextmanager
+async def standalone_session() -> AsyncIterator[AsyncSession]:
+    """A session with its own short-lived engine, for code that runs its own event loop
+    (a Celery task with asyncio.run): pooled connections cannot cross event loops."""
+    if not config.DATABASE_URL:
+        raise RuntimeError("Database is not configured: set DATABASE_URL")
+    own_engine = create_async_engine(config.DATABASE_URL, poolclass=NullPool)
+    try:
+        async with async_sessionmaker(own_engine, expire_on_commit=False)() as session:
+            yield session
+    finally:
+        await own_engine.dispose()
