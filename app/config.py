@@ -44,6 +44,19 @@ class Settings(BaseSettings):
 
     REDIS_URL: str | None = None
 
+    # Public address of the frontend: links in emails (verification, password reset)
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    # Email (app/core/mail): "console" writes messages to the log, "smtp" sends them
+    MAIL_BACKEND: Literal["console", "smtp"] = "console"
+    MAIL_FROM: str = "Osnova <noreply@example.com>"
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_SECURITY: Literal["starttls", "ssl", "none"] = "starttls"
+    SMTP_TIMEOUT: int = 10
+
     # Settings module: seconds before a process reloads settings changed in the admin
     SETTINGS_REFRESH_SECONDS: int = 30
 

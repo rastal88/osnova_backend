@@ -107,13 +107,13 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] Site name and contacts, languages and the default managed from the admin
 
 ### S3. Admin: users *(be, fe)* — after S1
-- [~] Users list with search and filters — backend: `GET /admin/users` in the DataTable query format (done)
-- [~] Block / unblock, change role — backend: `PATCH /admin/users/{id}` (done)
+- [x] Users list with search, filters, sorting and pages (`GET /admin/users` in the DataTable query format)
+- [x] Block / unblock, change role (`PATCH /admin/users/{id}`)
 
 ### S4. Email and tasks *(be, fe)* — after S0
-- [~] Celery app (done); worker service in Docker Compose, one example task
-- [ ] Mail interface: console backend for development, SMTP for production; translated templates
-- [~] Auth: JWT by default, Redis sessions optional (done); email verification and password reset pages
+- [x] Celery app; worker service in Docker Compose; the email task as the example
+- [x] Mail interface: console backend for development, SMTP for production; translated templates
+- [~] Auth: email verification and password reset by email — backend (done); frontend pages
 
 ### S5. Leads *(be, fe)* — after S2, S4
 - [ ] Configurable entities: one table `(type, name, params JSONB)`, a Pydantic schema per type, generated admin forms

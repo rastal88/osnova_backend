@@ -28,6 +28,8 @@ services:
       # Trust X-Forwarded-For from the frontend proxy, so rate limits see the
       # client IP. Safe while the backend has no published port (see below).
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-*}
+      # Links in emails point to the public site (the frontend proxy)
+      FRONTEND_URL: ${SITE_URL:-http://localhost:${FRONTEND_PORT:-8080}}
       # Explicitly empty so the minimal profile never tries to reach a database,
       # regardless of what the local .env contains. The datastore override
       # (standard/scalable) replaces these with in-network service URLs.
