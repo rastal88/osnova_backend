@@ -29,6 +29,39 @@ jobs:
       - name: Tests
         run: python -m pytest
 
+  migrations:
+    name: Migrations match the models
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: osnova
+          POSTGRES_PASSWORD: osnova
+          POSTGRES_DB: osnova
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://osnova:osnova@localhost:5432/osnova
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements/dev.txt
+
+      - name: Upgrade, check, downgrade
+        run: |
+          alembic upgrade head
+          alembic check
+          alembic downgrade base
+
   minimal:
     name: Minimal profile (base requirements only)
     runs-on: ubuntu-latest
