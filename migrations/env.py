@@ -15,6 +15,7 @@ from app.config import config
 from app.modules.auth import models as _auth_models  # noqa: F401
 from app.modules.db import Base
 from app.modules.entities import models as _entities_models  # noqa: F401
+from app.modules.files import models as _files_models  # noqa: F401
 from app.modules.leads import models as _leads_models  # noqa: F401
 from app.modules.settings import models as _settings_models  # noqa: F401
 

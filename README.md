@@ -165,7 +165,7 @@ osnova_backend/
 │   │   ├── settings/      # settings stored in the database   ← ADMIN_ENABLED
 │   │   ├── entities/      # configurable entities (one table) ← ADMIN_ENABLED
 │   │   ├── leads/         # submissions, delivery channels    ← ADMIN_ENABLED
-│   │   ├── files/         # file upload / download            ← FILES_ENABLED
+│   │   ├── files/         # files: local or S3 storage        ← FILES_ENABLED
 │   │   └── tasks/         # Celery app, email task            ← BACKGROUND_TASKS_ENABLED
 │   ├── client/            # client area API (any signed-in user)
 │   ├── forms.py           # the project's forms
@@ -274,7 +274,8 @@ listed with comments in [`.env.example`](.env.example).
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
 | `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
 | `SETTINGS_REFRESH_SECONDS` | How often each process reloads settings changed in the admin (default `30`) |
-| `FILES_DIR`, `FILES_MAX_SIZE_MB` | Upload folder and size limit |
+| `FILES_STORAGE`, `FILES_DIR`, `FILES_MAX_SIZE_MB`, `FILES_ALLOWED_TYPES` | `local` (folder `FILES_DIR`) or `s3`; size limit; allowed MIME types or prefixes (empty: any) |
+| `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_LINK_SECONDS` | S3-compatible bucket for `FILES_STORAGE=s3`; lifetime of download links |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
 | `FRONTEND_URL` | Public address of the frontend, for links in emails |
 | `MAIL_BACKEND`, `MAIL_FROM` | `console` (log, default) or `smtp`; sender address |
@@ -306,7 +307,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`root`) | `ADMIN_ENABLED` |
 | GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (moderator: ordinary users), change role (root) | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
-| POST / GET | `/file_flow/upload`, `/file_flow/download/{name}` | Upload (signed-in users) and download | `FILES_ENABLED` |
+| POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and admins; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
 
 ---
 

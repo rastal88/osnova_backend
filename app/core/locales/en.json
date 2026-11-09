@@ -28,7 +28,8 @@
     "form_not_found": "Form not found.",
     "settings_group_not_found": "Settings group not found.",
     "admin_cannot_change_self": "You cannot change your own account here.",
-    "admin_root_protected": "The root user cannot be changed."
+    "admin_root_protected": "The root user cannot be changed.",
+    "file_type_not_allowed": "This file type is not allowed."
   },
   "validation": {
     "missing": "This field is required.",
@@ -48,7 +49,8 @@
     "string_type": "Must be text.",
     "bool_type": "Must be true or false.",
     "too_short": "Choose at least {min_length}.",
-    "default_language_not_enabled": "The default language must be one of the enabled languages."
+    "default_language_not_enabled": "The default language must be one of the enabled languages.",
+    "url_invalid": "Enter an address starting with https:// or http://."
   },
   "forms": {
     "contact.title": "Contact us",

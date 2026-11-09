@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Annotated, Any
 
 from pydantic import AfterValidator, Field
+from pydantic_core import PydanticCustomError
 
 from app.core.entities import EntityType, entity_type
 from app.core.mail import EmailMessage, deliver
@@ -70,7 +71,7 @@ def _post_json(url: str, body: bytes, headers: dict[str, str] | None = None) -> 
 
 def _http_url(value: str) -> str:
     if not value.startswith(("https://", "http://")):
-        raise ValueError("The address must start with https:// or http://")
+        raise PydanticCustomError("url_invalid", "The address must start with https://")
     return value
 
 

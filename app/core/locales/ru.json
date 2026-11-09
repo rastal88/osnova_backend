@@ -28,7 +28,8 @@
     "form_not_found": "Форма не найдена.",
     "settings_group_not_found": "Группа настроек не найдена.",
     "admin_cannot_change_self": "Свой аккаунт здесь менять нельзя.",
-    "admin_root_protected": "Пользователя root изменить нельзя."
+    "admin_root_protected": "Пользователя root изменить нельзя.",
+    "file_type_not_allowed": "Такой тип файла не разрешён."
   },
   "validation": {
     "missing": "Обязательное поле.",
@@ -48,7 +49,8 @@
     "string_type": "Должно быть текстом.",
     "bool_type": "Должно быть true или false.",
     "too_short": "Выберите хотя бы {min_length}.",
-    "default_language_not_enabled": "Язык по умолчанию должен быть среди включённых."
+    "default_language_not_enabled": "Язык по умолчанию должен быть среди включённых.",
+    "url_invalid": "Введите адрес, начинающийся с https:// или http://."
   },
   "forms": {
     "contact.title": "Связаться с нами",
