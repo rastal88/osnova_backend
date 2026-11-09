@@ -48,8 +48,8 @@ MODULES: tuple[ModuleSpec, ...] = (
         hint="set AUTH_ENABLED=true",
     ),
     ModuleSpec(
-        name="user_flow",
-        path="app.user_flow",
+        name="client",
+        path="app.client",
         enabled=lambda c: c.AUTH_ENABLED,
         requires=("auth",),
     ),

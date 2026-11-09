@@ -715,19 +715,22 @@
         }
       }
     },
-    "/api/v1/user_flow/main": {
+    "/api/v1/client/summary": {
       "get": {
         "tags": [
-          "User"
+          "Client"
         ],
-        "summary": "User Profile",
-        "operationId": "user_profile_api_v1_user_flow_main_get",
+        "summary": "Client Summary",
+        "description": "Example endpoint: data for the client dashboard.",
+        "operationId": "client_summary_api_v1_client_summary_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClientSummary"
+                }
               }
             }
           }
@@ -739,20 +742,22 @@
         ]
       }
     },
-    "/api/v1/admin_flow/main": {
+    "/api/v1/admin/overview": {
       "get": {
         "tags": [
-          "Admin",
-          "admin"
+          "Admin"
         ],
-        "summary": "Admin Dashboard",
-        "operationId": "admin_dashboard_api_v1_admin_flow_main_get",
+        "summary": "Admin Overview",
+        "description": "Counters for the admin dashboard.",
+        "operationId": "admin_overview_api_v1_admin_overview_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOverview"
+                }
               }
             }
           }
@@ -764,20 +769,25 @@
         ]
       }
     },
-    "/api/v1/admin_flow/users": {
+    "/api/v1/admin/users": {
       "get": {
         "tags": [
-          "Admin",
-          "admin"
+          "Admin"
         ],
-        "summary": "List All Users",
-        "operationId": "list_all_users_api_v1_admin_flow_users_get",
+        "summary": "List Users",
+        "operationId": "list_users_api_v1_admin_users_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminUser"
+                  },
+                  "type": "array",
+                  "title": "Response List Users Api V1 Admin Users Get"
+                }
               }
             }
           }
@@ -876,6 +886,77 @@
   },
   "components": {
     "schemas": {
+      "AdminOverview": {
+        "properties": {
+          "users": {
+            "type": "integer",
+            "title": "Users"
+          },
+          "active_users": {
+            "type": "integer",
+            "title": "Active Users"
+          },
+          "users_by_role": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "type": "object",
+            "title": "Users By Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "users",
+          "active_users",
+          "users_by_role"
+        ],
+        "title": "AdminOverview"
+      },
+      "AdminUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "role",
+          "is_active",
+          "is_verified"
+        ],
+        "title": "AdminUser"
+      },
+      "Area": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "client"
+        ],
+        "title": "Area",
+        "description": "Parts of the interface: the public area needs no sign-in and is not listed."
+      },
       "Body_auth_cookie_login_api_v1_auth_login_post": {
         "properties": {
           "grant_type": {
@@ -1127,6 +1208,23 @@
           "features"
         ],
         "title": "BootstrapResponse"
+      },
+      "ClientSummary": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "ClientSummary"
       },
       "FormDescription": {
         "properties": {
@@ -1384,13 +1482,23 @@
           },
           "role": {
             "$ref": "#/components/schemas/Role"
+          },
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/Area"
+            },
+            "type": "array",
+            "title": "Areas",
+            "description": "Areas the user can open; the frontend lands on the first one after sign-in.",
+            "readOnly": true
           }
         },
         "type": "object",
         "required": [
           "id",
           "email",
-          "role"
+          "role",
+          "areas"
         ],
         "title": "UserRead"
       },

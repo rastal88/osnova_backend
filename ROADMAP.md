@@ -97,8 +97,8 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] VISION and ROADMAP in the repository
 
 ### S1. Areas and roles *(be, fe)* — after S0
-- [ ] Public, client and admin areas; admin roles (`root`, `moderator`) land in the admin after sign-in
-- [ ] Area switcher in the user menu; route and menu guards on both sides
+- [~] Public, client and admin areas; admin roles (`root`, `moderator`) land in the admin after sign-in — backend: `areas` in `/auth/users/me` (done)
+- [~] Area switcher in the user menu; route and menu guards on both sides — backend: router-level guards (done)
 - [ ] Admin area in the same shell with its own menu
 
 ### S2. Settings *(be, fe)* — after S1
