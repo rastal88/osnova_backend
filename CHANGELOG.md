@@ -7,6 +7,14 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Leads: with the admin, every valid form submission is stored (module `leads`, table
+  `leads`, migration `0003`) before the stub delivery; storing errors fail the request so
+  the visitor can send again. Invalid and honeypot submissions are not stored.
+- `GET /admin/leads` (search in the submitted data, filters `form` / `status`, sort, pages,
+  `{items, total}`), `PATCH /admin/leads/{id}` (`new` / `done`), `DELETE /admin/leads/{id}`
+  and `GET /admin/leads/forms` (form descriptions with labels for the admin table).
+- Form receivers: `add_receiver` in `app/core/forms/delivery.py` lets a module handle every
+  valid submission; `app_session(app)` in the db module opens a session outside a route.
 - Email (`app/core/mail`, no new packages): `render_mail` builds a message from the `mail`
   translations, `send_mail` delivers it with `MAIL_BACKEND` — `console` (log, default) or
   `smtp` (`SMTP_*`, STARTTLS / SSL). Failures are logged, not raised.
@@ -42,6 +50,7 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- Tests: the `client` fixture also runs on an in-memory SQLite database.
 - The example task `tasks.send_notification` is replaced by `mail.send`; tasks are bound to
   `celery_app` (a `shared_task` called from a thread used the default Celery settings).
 - The reset token is no longer written to the log in `DEBUG`: the console mail backend shows

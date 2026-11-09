@@ -5,7 +5,7 @@ import time
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.config import config
-from app.modules.db import get_async_session
+from app.modules.db import app_session
 from app.modules.settings.service import load_settings
 
 logger = logging.getLogger(__name__)
@@ -29,11 +29,8 @@ class SettingsRefreshMiddleware:
         async with self.lock:
             if not self._stale():
                 return
-            # Honours dependency overrides, so tests can use their own database
-            app = scope["app"]
-            session_factory = app.dependency_overrides.get(get_async_session, get_async_session)
             try:
-                async for session in session_factory():
+                async with app_session(scope["app"]) as session:
                     await load_settings(session)
             except Exception:
                 logger.warning("Could not load settings, keeping current values", exc_info=True)

@@ -61,6 +61,12 @@ MODULES: tuple[ModuleSpec, ...] = (
         hint="set ADMIN_ENABLED=true",
     ),
     ModuleSpec(
+        name="leads",
+        path="app.modules.leads",
+        enabled=lambda c: c.ADMIN_ENABLED,
+        requires=("admin",),
+    ),
+    ModuleSpec(
         name="settings",
         path="app.modules.settings",
         enabled=lambda c: c.ADMIN_ENABLED,

@@ -1,0 +1,114 @@
+"""Admin → Leads. The list query matches the frontend DataTable: `q`, `page`,
+`size`, `sort` (`-` for descending) and filters `form`, `status`."""
+
+import uuid
+from datetime import datetime
+from typing import Any, Literal
+
+from fastapi import APIRouter, Depends, Query, Response
+from pydantic import BaseModel
+from sqlalchemy import String, cast, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.errors import AppError
+from app.core.forms.schema import FormDescription, describe
+from app.forms import FORMS
+from app.modules.auth.dependencies import require_admin
+from app.modules.db import get_async_session
+from app.modules.leads.models import Lead, LeadStatus
+
+leads_router = APIRouter(dependencies=[Depends(require_admin)])
+
+SORT_COLUMNS = {"created_at": Lead.created_at, "form": Lead.form, "status": Lead.status}
+LeadSort = Literal[tuple(f"{sign}{name}" for name in SORT_COLUMNS for sign in ("", "-"))]  # type: ignore[valid-type]
+STATUSES: tuple[str, ...] = ("new", "done")
+
+
+class LeadRead(BaseModel):
+    id: uuid.UUID
+    form: str
+    data: dict[str, Any]
+    language: str
+    status: LeadStatus
+    created_at: datetime
+
+
+class LeadPage(BaseModel):
+    items: list[LeadRead]
+    total: int
+
+
+class LeadUpdate(BaseModel):
+    status: LeadStatus
+
+
+def _values(raw: str | None, allowed: tuple[str, ...]) -> list[str]:
+    return [value for value in (raw or "").split(",") if value in allowed]
+
+
+@leads_router.get("/forms")
+async def lead_forms() -> list[FormDescription]:
+    """The project's forms with translated field labels, to show and filter leads."""
+    return [describe(form) for form in FORMS]
+
+
+@leads_router.get("")
+async def list_leads(
+    q: str = Query("", max_length=100, description="Text anywhere in the submitted data"),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    sort: LeadSort = "-created_at",  # type: ignore[valid-type]
+    form: str | None = Query(None, description="Comma-separated form names"),
+    status: str | None = Query(None, description="Comma-separated: new, done"),
+    session: AsyncSession = Depends(get_async_session),
+) -> LeadPage:
+    conditions = []
+    if search := q.strip():
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        conditions.append(cast(Lead.data, String).ilike(f"%{escaped}%", escape="\\"))
+    if forms := _values(form, tuple(item.name for item in FORMS)):
+        conditions.append(Lead.form.in_(forms))
+    if statuses := _values(status, STATUSES):
+        conditions.append(Lead.status.in_(statuses))
+
+    column = SORT_COLUMNS[sort.lstrip("-")]
+    order = column.desc() if sort.startswith("-") else column.asc()
+    total = await session.scalar(select(func.count()).select_from(Lead).where(*conditions))
+    result = await session.scalars(
+        select(Lead)
+        .where(*conditions)
+        .order_by(order, Lead.created_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+    )
+    return LeadPage(
+        items=[LeadRead.model_validate(lead, from_attributes=True) for lead in result],
+        total=total or 0,
+    )
+
+
+async def _get_lead(session: AsyncSession, lead_id: uuid.UUID) -> Lead:
+    lead = await session.get(Lead, lead_id)
+    if lead is None:
+        raise AppError(404, "not_found")
+    return lead
+
+
+@leads_router.patch("/{lead_id}")
+async def update_lead(
+    lead_id: uuid.UUID, changes: LeadUpdate, session: AsyncSession = Depends(get_async_session)
+) -> LeadRead:
+    lead = await _get_lead(session, lead_id)
+    lead.status = changes.status
+    await session.commit()
+    return LeadRead.model_validate(lead, from_attributes=True)
+
+
+@leads_router.delete("/{lead_id}", status_code=204)
+async def delete_lead(
+    lead_id: uuid.UUID, session: AsyncSession = Depends(get_async_session)
+) -> Response:
+    """Removes the submission and its personal data for good."""
+    await session.delete(await _get_lead(session, lead_id))
+    await session.commit()
+    return Response(status_code=204)

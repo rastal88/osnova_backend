@@ -113,11 +113,11 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 ### S4. Email and tasks *(be, fe)* — after S0
 - [x] Celery app; worker service in Docker Compose; the email task as the example
 - [x] Mail interface: console backend for development, SMTP for production; translated templates
-- [~] Auth: email verification and password reset by email — backend (done); frontend pages
+- [x] Auth: email verification and password reset by email, with frontend pages
 
 ### S5. Leads *(be, fe)* — after S2, S4
 - [ ] Configurable entities: one table `(type, name, params JSONB)`, a Pydantic schema per type, generated admin forms
-- [ ] Form submissions stored in the database and listed in the admin
+- [~] Form submissions stored in the database and listed in the admin — backend: `leads` module, `/admin/leads` (done)
 - [ ] Delivery channels (email, Telegram, webhook) configured as entities, sent by a task
 
 ### S6. Files and notifications *(be, fe)* — after S1

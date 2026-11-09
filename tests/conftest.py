@@ -40,16 +40,8 @@ def anyio_backend():
 
 
 @pytest.fixture
-async def client():
-    async with AsyncClient(
-        transport=ASGITransport(app=create_app()),
-        base_url="http://test",
-    ) as ac:
-        yield ac
-
-
-@pytest.fixture
-async def auth_client(tmp_path, monkeypatch):
+async def database(tmp_path, monkeypatch):
+    """An in-memory SQLite database with every table; returns the session factory."""
     from app.modules.files import routes as file_routes
 
     monkeypatch.setattr(file_routes, "UPLOAD_DIR", tmp_path)
@@ -62,8 +54,11 @@ async def auth_client(tmp_path, monkeypatch):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    yield async_sessionmaker(engine, expire_on_commit=False)
+    await engine.dispose()
 
+
+def _app_with(session_factory):
     async def override_session():
         async with session_factory() as session:
             yield session
@@ -74,14 +69,25 @@ async def auth_client(tmp_path, monkeypatch):
     app = create_app()
     app.dependency_overrides[get_async_session] = override_session
     app.dependency_overrides[get_user_db] = override_user_db
+    return app
 
+
+@pytest.fixture
+async def client(database):
     async with AsyncClient(
-        transport=ASGITransport(app=app),
+        transport=ASGITransport(app=_app_with(database)),
         base_url="http://test",
     ) as ac:
-        yield ac, session_factory
+        yield ac
 
-    await engine.dispose()
+
+@pytest.fixture
+async def auth_client(database):
+    async with AsyncClient(
+        transport=ASGITransport(app=_app_with(database)),
+        base_url="http://test",
+    ) as ac:
+        yield ac, database
 
 
 async def register(client, email: str, password: str = "password123"):
