@@ -7,9 +7,9 @@ Requirements: requirements/db.txt
 
 from fastapi import FastAPI
 
-from .database import Base, engine, get_async_session
+from .database import Base, app_session, engine, get_async_session
 
-__all__ = ["Base", "engine", "get_async_session", "register"]
+__all__ = ["Base", "app_session", "engine", "get_async_session", "register"]
 
 
 def register(app: FastAPI):

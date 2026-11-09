@@ -163,6 +163,7 @@ osnova_backend/
 │   │   ├── auth/          # fastapi-users, roles, User model  ← AUTH_ENABLED
 │   │   ├── admin/         # admin area API (root, moderator)  ← ADMIN_ENABLED
 │   │   ├── settings/      # settings stored in the database   ← ADMIN_ENABLED
+│   │   ├── leads/         # form submissions in the database  ← ADMIN_ENABLED
 │   │   ├── files/         # file upload / download            ← FILES_ENABLED
 │   │   └── tasks/         # Celery app, email task            ← BACKGROUND_TASKS_ENABLED
 │   ├── client/            # client area API (any signed-in user)
@@ -265,7 +266,7 @@ listed with comments in [`.env.example`](.env.example).
 | `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
 | `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`); initial values, changed later in Admin → Settings |
 | `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
-| `FORMS_DELIVERY`, `FORMS_FILE` | Form delivery stub: `log`, or `file` (also JSON lines in `FORMS_FILE`) |
+| `FORMS_DELIVERY`, `FORMS_FILE` | Form delivery stub: `log`, or `file` (also JSON lines in `FORMS_FILE`); with the admin, submissions are also stored as leads |
 | `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables |
 | `DATABASE_URL`, `DB_ECHO` | Database (turns on the `db` module), SQL logging |
 | `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth) |
@@ -299,6 +300,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
 | GET | `/client/*` | Client area: any signed-in user (example: `/client/summary`) | `AUTH_ENABLED` |
 | GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`) | `ADMIN_ENABLED` |
+| GET / PATCH / DELETE | `/admin/leads`, `/admin/leads/{id}`, `/admin/leads/forms` | Form submissions: search `q` in the data, filters `form` / `status`, `sort`, pages; mark `new` / `done`; delete | `ADMIN_ENABLED` |
 | GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (moderator: ordinary users), change role (root) | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
 | POST / GET | `/file_flow/upload`, `/file_flow/download/{name}` | Upload (signed-in users) and download | `FILES_ENABLED` |

@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from app.config import config
 from app.core.errors import AppError
-from app.core.forms.delivery import deliver
+from app.core.forms.delivery import deliver, make_record, receivers
 from app.core.forms.schema import (
     HONEYPOT_FIELD,
     Form,
@@ -72,5 +72,9 @@ async def submit_form(
     except ValidationError as exc:
         raise RequestValidationError(exc.errors()) from exc
 
-    await run_in_threadpool(deliver, form.name, data.model_dump(), get_language())
+    record = make_record(form.name, data.model_dump(), get_language())
+    # Stored first: if that fails, the visitor sees an error and can send again
+    for receiver in receivers:
+        await receiver(record, request)
+    await run_in_threadpool(deliver, record)
     return success
