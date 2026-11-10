@@ -1,7 +1,7 @@
 # Tool configuration. Dependencies live in requirements/ (one file per module).
 [project]
 name = "osnova-backend"
-version = "0.1.0"
+version = "0.2.0"
 description = "Backend of Osnova — a modular full-stack template (FastAPI)"
 requires-python = ">=3.13"
 license = "MIT"
