@@ -1,7 +1,7 @@
 # Roadmap
 
-Osnova is released in two steps: **minimal** first, then **standard**.
-MVP = both profiles work as documented and the template can be offered to others.
+Osnova was released in two steps, **minimal** (`v0.1.0`) and **standard** (`v0.2.0`, MVP);
+the road to the finished template (`v1.0.0`) is in [VISION.md](VISION.md#8-road-to-v100-agreed-2026-11-10).
 
 Legend: `[x]` done · `[~]` partly done · `[ ]` not started.
 Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova_frontend),
@@ -139,15 +139,42 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
   - [x] Google: a real OAuth client — sign up a new user, sign in to an existing account by email
 - [x] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
 
-## Next: permissions (`v0.3.0`)
-- Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
-  on the backend and one helper on the frontend, instead of role lists in the code
-- Roles as sets of permissions, edited in the admin; `root` keeps every permission
-- User groups: assign roles to a group, users get the roles of their groups
-- Migrate the fixed roles (`root`, `moderator`, `user`) to the new model without breaking
-  existing projects
+## Account and everyday tools (`v0.3.0`)
+- [ ] Profile: change name, email (confirmed again) and password *(be, fe)*
+- [ ] Delete the account with its data (files, notifications); root cannot delete itself *(be, fe)*
+- [ ] Sign out everywhere: sessions end after a password change or on request (JWT and Redis) *(be, fe)*
+- [ ] Scheduled tasks: Celery beat in Compose; cleanup example (old notifications, never confirmed accounts) *(be)*
+- [ ] HTML email layout (site name, button link) with the text version kept *(be)*
+- [ ] CSV export of leads and users from the admin tables, with the current filters *(be, fe)*
+- [ ] Optional captcha for forms next to the honeypot (an interface, e.g. Cloudflare Turnstile; off by default) *(be, fe)*
 
-## Later
-- All documentation, instructions and code comments in English (done for the backend)
-- Scalable: a shared form rate-limit store in Redis; monitoring
-- `osnova strip --profile minimal`: physically remove unused modules from a project
+## Permissions (`v0.4.0`)
+- [ ] Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
+  on the backend and one helper on the frontend, instead of role lists in the code
+- [ ] Roles as sets of permissions, edited in the admin; `root` keeps every permission
+- [ ] User groups: assign roles to a group, users get the roles of their groups
+- [ ] Move the fixed roles (`root`, `moderator`, `user`) to the new model without breaking
+  existing projects
+- [ ] Audit log of admin actions (who, what, when), shown in the admin
+
+## Production and scalable (`v0.5.0`)
+- [ ] Security headers in nginx (HSTS, CSP, X-Frame-Options, Referrer-Policy) *(fe)*
+- [ ] HTTPS and a deployment guide for one server (reverse proxy with certificates)
+- [ ] Database backups: `make backup` / `make restore`
+- [ ] Optional error tracking: Sentry when `SENTRY_DSN` is set (its own requirements file) *(be, fe)*
+- [ ] JSON logs for log collectors
+- [ ] Form and auth rate limits in Redis for several replicas; local files refused with replicas (use S3)
+- [ ] CI: the stack on 3 backend replicas
+
+## Publication (`v1.0.0`)
+- [ ] All documentation in English (done for the backend) *(fe)*
+- [ ] Quick start: from clone to a running standard stack in 10 minutes
+- [ ] `make strip`: physically remove unused modules from a project *(be, fe)*
+- [ ] Demo: screenshots in the README or a demo stand
+- [ ] CI: Docker smoke test of the whole stack (sign-in, form, upload)
+- [ ] Upgrade guide between versions; semver stability promise
+
+## After `v1.0.0`
+Fixes, dependency updates and modules from [VISION.md §5](VISION.md#5-not-in-the-template)
+(payments, search, comments, real-time, content pages...) when the community or real
+projects ask for them.

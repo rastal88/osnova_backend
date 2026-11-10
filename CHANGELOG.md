@@ -6,6 +6,11 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- VISION and ROADMAP: what the finished template (`v1.0.0`) is and the releases on the way —
+  account and everyday tools, permissions, production and scalable, publication; what stays
+  out of the template.
+
 ## [0.2.0] - 2026-11-10
 
 The `standard` profile: users, areas and roles, admin, settings, leads with delivery
