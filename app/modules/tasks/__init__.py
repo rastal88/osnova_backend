@@ -1,9 +1,11 @@
-"""Background tasks module: Celery app, the worker and the email task.
+"""Background tasks module: Celery app, the worker, the email task and the schedule.
 
 Enabled by BACKGROUND_TASKS_ENABLED. Requires CELERY_BROKER_URL.
 Worker: ``celery -A app.modules.tasks.celery_app worker -l info`` (the `worker`
 service in Docker Compose for standard / scalable). When enabled, emails from
 app.core.mail go through the queue instead of being sent in the web process.
+Scheduled tasks (``beat_schedule`` in celery_app.py) are sent by one
+``celery -A app.modules.tasks.celery_app beat -l info`` (the `beat` service).
 Requirements: requirements/tasks.txt
 """
 

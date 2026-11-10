@@ -90,7 +90,12 @@
     "reset_password.subject": "Reset your password for {site}",
     "reset_password.body": "Hello!\n\nTo set a new password for {site}, open this link:\n{link}\n\nThe link is valid for one hour. If you did not ask for it, ignore this email: your password stays the same.",
     "email_changed.subject": "The email of your {site} account was changed",
-    "email_changed.body": "Hello!\n\nThe email of your {site} account was just changed, and this address is no longer used for it.\n\nIf you did not do it, reset your password at once and contact the site."
+    "email_changed.body": "Hello!\n\nThe email of your {site} account was just changed, and this address is no longer used for it.\n\nIf you did not do it, reset your password at once and contact the site.",
+    "verify_email.button": "Confirm email",
+    "reset_password.button": "Set a new password",
+    "open": "Open",
+    "link_fallback": "If the button does not work, copy this link into your browser:",
+    "footer": "This email was sent by {site}."
   },
   "leads": {
     "new": "New submission: {form}",

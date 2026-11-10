@@ -18,6 +18,13 @@ All notable changes are documented here. The format follows
   a password change or reset and by sign out everywhere.
 - `app.modules.auth.hooks.on_user_delete`: modules remove a deleted user's data (files,
   notifications).
+- HTML emails: every message is sent as text and HTML in one layout
+  (`app/core/mail/layout.html`: site name, heading, a button for the link); `render_html` for
+  messages built by hand. Used by the account, notification and lead emails.
+- Scheduled tasks: a `beat` service in Docker Compose and `beat_schedule` in the Celery app.
+- Nightly cleanup (`maintenance.cleanup`, or `python manage.py cleanup` / `make cleanup`
+  without Celery): read notifications older than `NOTIFICATIONS_KEEP_DAYS` (90) and, when
+  `UNVERIFIED_ACCOUNT_DAYS` is set, accounts that never confirmed the email.
 
 ### Changed
 - **Security:** `PATCH /auth/users/me` no longer changes the password or the email (it did

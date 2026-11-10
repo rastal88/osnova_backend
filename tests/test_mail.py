@@ -6,7 +6,14 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 
 from app.config import config
-from app.core.mail import EmailMessage, render_mail, send_mail, sending, use_dispatcher
+from app.core.mail import (
+    EmailMessage,
+    render_html,
+    render_mail,
+    send_mail,
+    sending,
+    use_dispatcher,
+)
 from app.modules.tasks.celery_app import celery_app
 from tests.conftest import login, register
 
@@ -162,3 +169,69 @@ async def test_password_reset_by_email(auth_client, outbox):
     response = await client.post("/api/v1/auth/forgot-password", json={"email": "no@example.com"})
     assert response.status_code == 202
     assert outbox == []
+
+
+def test_html_version_has_layout_button_and_escapes():
+    from app.core.settings import settings
+    from app.settings import SiteSettings
+
+    settings.set(SiteSettings(name="Acme & <Co>"))
+    link = "http://x/verify?token=a&b=1"
+    message = render_mail("verify_email", "a@example.com", "ru", site="Acme", link=link)
+
+    assert link in message.text
+    assert '<html lang="ru">' in message.html
+    assert "Acme &amp; &lt;Co&gt;" in message.html
+    assert "<Co>" not in message.html
+    assert 'href="http://x/verify?token=a&amp;b=1"' in message.html
+    assert ">Подтвердить email</a>" in message.html
+    assert "$" not in message.html
+
+    # A message without a link has no button; only web links become one
+    assert "<a " not in render_mail("email_changed", "a@example.com", site="Acme").html
+    assert "<a " not in render_html("Hi\n\njavascript:x", "S", link="javascript:x")
+    html = render_html("<b>one</b>\ntwo\n\nthree", "Subject")
+    assert "&lt;b&gt;one&lt;/b&gt;<br>two</p>" in html
+    assert html.count("<p ") == 2
+
+
+def test_smtp_sends_text_and_html(monkeypatch):
+    sent = []
+
+    class FakeSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def starttls(self, context):
+            pass
+
+        def send_message(self, mime):
+            sent.append(mime)
+
+    monkeypatch.setattr(sending.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr(config, "MAIL_BACKEND", "smtp")
+
+    sending.deliver(render_mail("reset_password", "a@example.com", site="Acme", link="http://x"))
+    sending.deliver(EmailMessage(to="a@example.com", subject="Hi", text="Body"))
+
+    with_html, text_only = sent
+    assert with_html.get_content_type() == "multipart/alternative"
+    assert [part.get_content_type() for part in with_html.iter_parts()] == [
+        "text/plain",
+        "text/html",
+    ]
+    assert "Set a new password" in with_html.get_body(("html",)).get_content()
+    assert text_only.get_content_type() == "text/plain"
+
+
+def test_queued_message_keeps_html_and_old_payloads_work():
+    message = EmailMessage(to="a@example.com", subject="Hi", text="Body", html="<p>Body</p>")
+    assert EmailMessage(**message.to_dict()) == message
+    # A task queued before the HTML version existed
+    assert EmailMessage(to="a@example.com", subject="Hi", text="Body").html is None

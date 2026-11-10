@@ -1,6 +1,7 @@
 from importlib.util import find_spec
 
 from celery import Celery
+from celery.schedules import crontab
 
 from app.config import config
 
@@ -28,3 +29,10 @@ celery_app.conf.update(
     broker_transport_options={"max_retries": 0},
     task_publish_retry_policy={"max_retries": 2, "interval_start": 0, "interval_step": 0.2},
 )
+
+# Tasks on a schedule, sent by `celery beat` (one instance: the `beat` service in Docker
+# Compose). Times are UTC. Add an entry with the task name and a crontab or seconds.
+if config.DATABASE_URL:
+    celery_app.conf.beat_schedule = {
+        "cleanup": {"task": "maintenance.cleanup", "schedule": crontab(hour=3, minute=30)},
+    }

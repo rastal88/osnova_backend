@@ -42,5 +42,16 @@ def createroot(
     asyncio.run(_create_superuser())
 
 
+@app.command()
+def cleanup():
+    """Removes old rows (read notifications, never confirmed accounts): for cron in
+    projects without Celery beat, which does the same every night."""
+    from app.modules.db.cleanup import run_cleanup
+
+    removed = asyncio.run(run_cleanup())
+    for name, count in removed.items():
+        typer.echo(f"{name}: {count}")
+
+
 if __name__ == "__main__":
     app()

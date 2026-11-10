@@ -19,7 +19,7 @@ from pydantic import AfterValidator, Field
 from pydantic_core import PydanticCustomError
 
 from app.core.entities import EntityType, entity_type
-from app.core.mail import EmailMessage, deliver
+from app.core.mail import EmailMessage, deliver, render_html
 from app.core.settings import Email, Secret
 
 GROUP = "lead_channels"
@@ -43,9 +43,12 @@ class LeadMessage:
     data: dict[str, Any]
 
     @property
+    def body(self) -> str:
+        return "\n".join(f"{label}: {value}" for label, value in self.fields)
+
+    @property
     def text(self) -> str:
-        lines = [f"{label}: {value}" for label, value in self.fields]
-        return "\n".join([self.title, "", *lines])
+        return f"{self.title}\n\n{self.body}"
 
 
 def _json(payload: dict) -> bytes:
@@ -83,7 +86,8 @@ class EmailChannel(EntityType):
     to: Email
 
     def send(self, message: LeadMessage) -> None:
-        deliver(EmailMessage(to=self.to, subject=message.title, text=message.text))
+        html = render_html(message.body, message.title, language=message.language)
+        deliver(EmailMessage(to=self.to, subject=message.title, text=message.text, html=html))
 
 
 @entity_type
