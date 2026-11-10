@@ -125,16 +125,17 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] In-app notifications: model, API, a bell in the header; channel interface for email / Telegram
 
 ### S7. OAuth *(be, fe)* — after S1
-- [~] Google sign-in end-to-end; providers listed in settings — backend: `/auth/google/*`, `auth_providers` in `/bootstrap` (done); sign-in button
+- [x] Google sign-in end-to-end; providers listed in settings — backend: `/auth/google/*`, `auth_providers` in `/bootstrap` (done); sign-in button
 
 ### S8. Release — after all
 - [x] Docs per profile; scalable profile: documented differences, readiness check (`/ready`)
 - [x] `make migrate` / `make createroot` for Docker; CORS headers on 500 responses
 - [x] Pre-release review: safe Google account linking, `SECRET_KEY` check, auth rate limits, background email, no personal data in logs, docs only with `DEBUG`
-- [ ] Pre-release review *(fe)*: nginx client IP and upload size; admin menu (Settings → General / Channels, Users under Overview); Client area opens Home, client dashboard removed
-- [ ] Release checklist (by hand, needs the owner's accounts):
-  - [ ] Telegram: a real bot in Admin → Channels — **Test**, then a form submission arrives
-  - [ ] Google: a real OAuth client — sign up a new user, sign in to an existing account by email
+- [x] Pre-release review *(fe)*: nginx client IP and upload size; admin menu (Settings → General / Channels, Users under Overview); the user area opens Home, client dashboard removed
+- [ ] Client area renamed to user area *(be, fe)*; one profile page for every role; overview with users, leads per day, channels and the system
+- [x] Release checklist (by hand, needs the owner's accounts):
+  - [x] Telegram: a real bot in Admin → Channels — **Test**, then a form submission arrives
+  - [x] Google: a real OAuth client — sign up a new user, sign in to an existing account by email
 - [ ] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
 
 ## Next: permissions (`v0.3.0`)

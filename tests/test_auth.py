@@ -64,9 +64,9 @@ async def _create(session_factory, email: str, role: Role) -> None:
 @pytest.mark.parametrize(
     ("role", "areas", "admin_status"),
     [
-        (Role.USER, ["client"], 403),
-        (Role.MODERATOR, ["admin", "client"], 200),
-        (Role.ROOT, ["admin", "client"], 200),
+        (Role.USER, ["user"], 403),
+        (Role.MODERATOR, ["admin", "user"], 200),
+        (Role.ROOT, ["admin", "user"], 200),
     ],
 )
 async def test_areas_by_role(auth_client, role, areas, admin_status):
@@ -77,14 +77,14 @@ async def test_areas_by_role(auth_client, role, areas, admin_status):
     me = await client.get("/api/v1/auth/users/me")
     assert me.json()["areas"] == areas
 
-    assert (await client.get("/api/v1/client/summary")).status_code == 200
+    assert (await client.get("/api/v1/user/summary")).status_code == 200
     for path in ("/api/v1/admin/overview", "/api/v1/admin/users"):
         assert (await client.get(path)).status_code == admin_status
 
 
 @pytest.mark.anyio
 @pytest.mark.parametrize(
-    "path", ["/api/v1/admin/overview", "/api/v1/admin/users", "/api/v1/client/summary"]
+    "path", ["/api/v1/admin/overview", "/api/v1/admin/users", "/api/v1/user/summary"]
 )
 async def test_guest_gets_401(auth_client, path):
     client, _ = auth_client

@@ -107,7 +107,7 @@ async def test_blocked_user_loses_access(auth_client):
     alice = await _id(session_factory, "alice@example.com")
 
     await login(client, "alice@example.com")
-    assert (await client.get("/api/v1/client/summary")).status_code == 200
+    assert (await client.get("/api/v1/user/summary")).status_code == 200
 
     await login(client, "admin-root@example.com")
     await client.patch(f"{USERS}/{alice}", json={"is_active": False})

@@ -2,7 +2,7 @@
 `size`, `sort` (`-` for descending) and filters `form`, `status`."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Response
@@ -65,6 +65,18 @@ class LeadUpdate(BaseModel):
     status: LeadStatus
 
 
+class LeadDay(BaseModel):
+    date: date
+    count: int
+
+
+class LeadStats(BaseModel):
+    total: int
+    by_status: dict[str, int]
+    # Every day of the period, oldest first, days without leads included (UTC)
+    by_day: list[LeadDay]
+
+
 def _values(raw: str | None, allowed: tuple[str, ...]) -> list[str]:
     return [value for value in (raw or "").split(",") if value in allowed]
 
@@ -73,6 +85,33 @@ def _values(raw: str | None, allowed: tuple[str, ...]) -> list[str]:
 async def lead_forms() -> list[FormDescription]:
     """The project's forms with translated field labels, to show and filter leads."""
     return [describe(form) for form in FORMS]
+
+
+@leads_router.get("/stats")
+async def lead_stats(
+    days: int = Query(14, ge=1, le=90, description="Length of the by_day period"),
+    session: AsyncSession = Depends(get_async_session),
+) -> LeadStats:
+    """Counters and leads per day, for the admin overview."""
+    by_status = dict(
+        (await session.execute(select(Lead.status, func.count()).group_by(Lead.status))).all()
+    )
+    today = datetime.now(UTC).date()
+    first = today - timedelta(days=days - 1)
+    day = func.date(Lead.created_at)
+    rows = await session.execute(
+        select(day, func.count())
+        .where(Lead.created_at >= datetime.combine(first, datetime.min.time()))
+        .group_by(day)
+    )
+    # PostgreSQL returns a date, SQLite a "YYYY-MM-DD" string
+    counts = {str(value)[:10]: count for value, count in rows.all()}
+    period = [first + timedelta(days=offset) for offset in range(days)]
+    return LeadStats(
+        total=sum(by_status.values()),
+        by_status={status: by_status.get(status, 0) for status in STATUSES},
+        by_day=[LeadDay(date=item, count=counts.get(str(item), 0)) for item in period],
+    )
 
 
 @leads_router.post(
