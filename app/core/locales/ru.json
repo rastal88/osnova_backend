@@ -33,6 +33,7 @@
     "oauth_not_available_email": "Сервис не передал ваш email.",
     "oauth_user_already_exists": "Аккаунт с таким email уже существует.",
     "oauth_invalid_state": "Ссылка для входа устарела или открыта в другом браузере. Попробуйте ещё раз.",
+    "oauth_provider_unavailable": "Сервис входа не отвечает. Попробуйте позже.",
     "oauth_provider_error": "Не удалось войти через сервис. Попробуйте ещё раз.",
     "access_token_decode_error": "Не удалось подтвердить вход. Попробуйте ещё раз.",
     "access_token_already_expired": "Вход занял слишком много времени. Попробуйте ещё раз."

@@ -11,6 +11,7 @@ from fastapi import FastAPI
 def register(app: FastAPI):
     import logging
 
+    import httpx
     from httpx_oauth.exceptions import HTTPXOAuthError
 
     from app.core.errors import error_response
@@ -25,7 +26,13 @@ def register(app: FastAPI):
         logging.getLogger(__name__).warning("OAuth provider error: %s %s", exc, detail)
         return error_response(400, "oauth_provider_error")
 
+    async def oauth_provider_unreachable(request, exc: httpx.TransportError):
+        # Only sign-in providers are called with httpx: the network or the provider is down
+        logging.getLogger(__name__).warning("OAuth provider unreachable: %r", exc)
+        return error_response(502, "oauth_provider_unavailable")
+
     app.add_exception_handler(HTTPXOAuthError, oauth_provider_error)
+    app.add_exception_handler(httpx.TransportError, oauth_provider_unreachable)
 
     if redis is not None:
         from app.core.readiness import add_check

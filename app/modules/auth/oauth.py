@@ -14,6 +14,7 @@ To add a provider: a client from httpx_oauth.clients in ``oauth_clients`` and
 its keys in app/config.py (see app.core.capabilities.oauth_providers).
 """
 
+import httpx
 from httpx_oauth.clients.google import GoogleOAuth2
 from httpx_oauth.exceptions import GetIdEmailError
 from httpx_oauth.oauth2 import BaseOAuth2
@@ -22,6 +23,8 @@ from app.config import config
 from app.core.capabilities import oauth_providers
 
 GOOGLE_USERINFO = "https://openidconnect.googleapis.com/v1/userinfo"
+# Seconds for each request to the provider (httpx waits 5 by default)
+PROVIDER_TIMEOUT = 15
 
 
 class GoogleOpenID(GoogleOAuth2):
@@ -34,6 +37,9 @@ class GoogleOpenID(GoogleOAuth2):
 
     def __init__(self, client_id: str, client_secret: str):
         super().__init__(client_id, client_secret, scopes=["openid", "email"])
+
+    def get_httpx_client(self) -> httpx.AsyncClient:
+        return httpx.AsyncClient(timeout=PROVIDER_TIMEOUT)
 
     async def get_id_email(self, token: str) -> tuple[str, str | None]:
         async with self.get_httpx_client() as client:

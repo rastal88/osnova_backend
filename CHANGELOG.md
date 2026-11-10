@@ -136,7 +136,8 @@ All notable changes are documented here. The format follows
 
 ### Fixed
 - An error from the OAuth provider (e.g. a refused token) answers 400 `oauth_provider_error`
-  instead of 500.
+  instead of 500; an unreachable provider (network, timeout) answers 502
+  `oauth_provider_unavailable`. Requests to Google wait up to 15 s instead of 5.
 
 ### Removed
 - The sample `hello` command of `manage.py`.

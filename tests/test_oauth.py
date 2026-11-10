@@ -160,6 +160,19 @@ async def test_provider_error_is_not_a_500(auth_client, google, monkeypatch):
     assert response.json()["code"] == "oauth_provider_error"
 
 
+@pytest.mark.anyio
+async def test_unreachable_provider_is_not_a_500(auth_client, google, monkeypatch):
+    async def get_id_email(self, token):
+        raise httpx.ConnectTimeout("timed out")
+
+    monkeypatch.setattr(GoogleOpenID, "get_id_email", get_id_email)
+    client, _ = auth_client
+    state = await _authorize(client)
+    response = await client.get(f"{GOOGLE}/callback", params={"code": "good-code", "state": state})
+    assert response.status_code == 502
+    assert response.json()["code"] == "oauth_provider_unavailable"
+
+
 def _userinfo(monkeypatch, status: int, body: dict):
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url == "https://openidconnect.googleapis.com/v1/userinfo"
