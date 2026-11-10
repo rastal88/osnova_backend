@@ -140,11 +140,11 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
 
 ## Account and everyday tools (`v0.3.0`)
-- [~] Profile: change name, email (confirmed again) and password *(be, fe)* — backend done
-- [~] Delete the account with its data (files, notifications); root cannot delete itself *(be, fe)* — backend done
-- [~] Sign out everywhere: sessions end after a password change or on request (JWT and Redis) *(be, fe)* — backend done
-- [ ] Scheduled tasks: Celery beat in Compose; cleanup example (old notifications, never confirmed accounts) *(be)*
-- [ ] HTML email layout (site name, button link) with the text version kept *(be)*
+- [x] Profile: change name, email (confirmed again) and password *(be, fe)*
+- [x] Delete the account with its data (files, notifications); root cannot delete itself *(be, fe)*
+- [x] Sign out everywhere: sessions end after a password change or on request (JWT and Redis) *(be, fe)*
+- [x] Scheduled tasks: Celery beat in Compose; cleanup example (old notifications, never confirmed accounts) *(be)*
+- [x] HTML email layout (site name, button link) with the text version kept *(be)*
 - [ ] CSV export of leads and users from the admin tables, with the current filters *(be, fe)*
 - [ ] Optional captcha for forms next to the honeypot (an interface, e.g. Cloudflare Turnstile; off by default) *(be, fe)*
 

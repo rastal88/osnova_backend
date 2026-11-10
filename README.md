@@ -205,7 +205,7 @@ osnova_backend/
 │   │   ├── leads/         # submissions, delivery channels    ← ADMIN_ENABLED
 │   │   ├── files/         # files: local or S3 storage        ← FILES_ENABLED
 │   │   ├── notifications/ # in-app notifications, channels    ← NOTIFICATIONS_ENABLED
-│   │   └── tasks/         # Celery app, email task            ← BACKGROUND_TASKS_ENABLED
+│   │   └── tasks/         # Celery app, email task, schedule  ← BACKGROUND_TASKS_ENABLED
 │   ├── user/              # user area API (any signed-in user)
 │   ├── forms.py           # the project's forms
 │   ├── settings.py        # settings groups edited in the admin (site, languages)
@@ -221,7 +221,7 @@ osnova_backend/
 ├── docker-compose.yml     # base compose, safe for minimal
 ├── docker-compose.datastores.yml  # adds PostgreSQL + Redis (standard / scalable)
 ├── Makefile               # all commands: make help
-└── manage.py              # CLI: createroot
+└── manage.py              # CLI: createroot, cleanup
 ```
 
 ---
@@ -286,7 +286,7 @@ Both repositories must sit side by side (`osnova_backend/`, `osnova_frontend/`);
 ```bash
 cp .env.example .env
 make up-minimal       # backend + frontend
-make up-standard      # + PostgreSQL + Redis + Celery worker
+make up-standard      # + PostgreSQL + Redis + Celery worker and beat
 make up-scalable      # standard with 3 backend replicas
 make logs             # follow logs
 make down             # stop (make down-volumes also deletes data)
@@ -302,8 +302,8 @@ How it works:
   `REQUIREMENTS=base` for minimal,
   `standard` with the datastore override. Port `8000` is exposed only inside the compose
   network, so replicas do not clash.
-- **Datastores and worker:** `postgres`, `redis` and the Celery `worker` (same image as the
-  backend) live in `docker-compose.datastores.yml` and run only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
+- **Datastores and worker:** `postgres`, `redis`, the Celery `worker` and `beat` (same image
+  as the backend; `beat` sends scheduled tasks and always runs as one instance) live in `docker-compose.datastores.yml` and run only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
   from `.env` are ignored. In `minimal` `DATABASE_URL` and `REDIS_URL` are forced empty.
 - **Migrations:** `make migrate` runs `alembic upgrade head` once in a one-off container;
   `make createroot` creates the first root user. With `RUN_MIGRATIONS=true` the entrypoint
@@ -343,6 +343,7 @@ listed with comments in [`.env.example`](.env.example).
 | `FILES_STORAGE`, `FILES_DIR`, `FILES_MAX_SIZE_MB`, `FILES_ALLOWED_TYPES` | `local` (folder `FILES_DIR`) or `s3`; size limit; allowed MIME types or prefixes (empty: any) |
 | `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_LINK_SECONDS` | S3-compatible bucket for `FILES_STORAGE=s3`; lifetime of download links |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
+| `NOTIFICATIONS_KEEP_DAYS`, `UNVERIFIED_ACCOUNT_DAYS` | Nightly cleanup: days to keep read notifications (90) and never confirmed accounts (0 = keep) |
 | `FRONTEND_URL` | Public address of the frontend, for links in emails |
 | `MAIL_BACKEND`, `MAIL_FROM` | `console` (log, default) or `smtp`; sender address |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SECURITY`, `SMTP_TIMEOUT` | SMTP server; `starttls` (default), `ssl` or `none` |
@@ -410,6 +411,9 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   (`<name>.subject`, `<name>.body`), then
   `await send_mail(render_mail("<name>", to, **params))` (`app/core/mail`). With background
   tasks on, it goes through the queue and the worker retries while the mail server is down.
+  Every message has the text and an HTML version in one layout
+  (`app/core/mail/layout.html`, `button.html`: site name, heading, a button for `link`;
+  colours are edited there). The console backend prints the text.
   After sign-up the user gets a confirmation link; `forgot-password` sends a reset link —
   both open frontend pages (`/verify-email`, `/reset-password`).
 - **Notify users:** `await notify(session, users, "<kind>", params, link="/path")`
@@ -423,6 +427,14 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   migration or frontend code. Example: the lead channels in `app/modules/leads/channels.py`.
 - **Add a background task:** a function with `@celery_app.task` in
   `app/modules/tasks/tasks.py`, called with `.delay(...)`.
+- **Run a task on a schedule:** an entry in `beat_schedule`
+  (`app/modules/tasks/celery_app.py`) with the task name and a `crontab` (UTC).
+- **Clean old data:** every night at 03:30 UTC the `maintenance.cleanup` task removes read
+  notifications older than `NOTIFICATIONS_KEEP_DAYS` (90) and, when
+  `UNVERIFIED_ACCOUNT_DAYS` is set, accounts that never confirmed the email and never
+  signed in. Without Celery run `python manage.py cleanup` from cron (`make cleanup` in
+  Docker). Another rule: `cleanup.py` in the module with `async def cleanup(session) -> int`
+  and an entry in `JOBS` (`app/modules/db/cleanup.py`).
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
 - **Add a setting the owner can change:** a field (with a default) in a group in
   `app/settings.py`, or a new `SettingsGroup` added to `GROUPS`; labels in the `settings`

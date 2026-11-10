@@ -31,6 +31,8 @@ def _smtp(message: EmailMessage) -> None:
     mime["To"] = message.to
     mime["Subject"] = message.subject
     mime.set_content(message.text)
+    if message.html:
+        mime.add_alternative(message.html, subtype="html")
 
     address = (config.SMTP_HOST, config.SMTP_PORT)
     if config.SMTP_SECURITY == "ssl":

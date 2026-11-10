@@ -11,7 +11,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from app.config import config
-from app.core.mail import EmailMessage, send_mail
+from app.core.mail import EmailMessage, render_html, send_mail
 from app.modules.auth.models import User
 from app.modules.notifications.texts import render
 
@@ -22,9 +22,11 @@ Channel = Callable[[User, str, dict[str, Any], str | None], Awaitable[None]]
 
 async def email_channel(user: User, kind: str, params: dict[str, Any], link: str | None) -> None:
     title, body = render(kind, params)
-    if link:
-        body = f"{body}\n\n{config.FRONTEND_URL.rstrip('/')}{link}"
-    await send_mail(EmailMessage(to=user.email, subject=title, text=body))
+    url = f"{config.FRONTEND_URL.rstrip('/')}{link}" if link else None
+    if url:
+        body = f"{body}\n\n{url}"
+    html = render_html(body, title, link=url)
+    await send_mail(EmailMessage(to=user.email, subject=title, text=body, html=html))
 
 
 CHANNELS: dict[str, Channel] = {"email": email_channel}

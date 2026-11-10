@@ -71,6 +71,12 @@ class Settings(BaseSettings):
     # Notifications module: where notifications go besides the bell, e.g. "in_app,email"
     NOTIFICATIONS_CHANNELS: str = "in_app"
 
+    # Nightly cleanup (app/modules/db/cleanup.py); 0 turns a rule off.
+    # Read notifications are removed this many days after they were created
+    NOTIFICATIONS_KEEP_DAYS: int = 90
+    # Accounts that never confirmed the email are removed this many days after sign-up
+    UNVERIFIED_ACCOUNT_DAYS: int = 0
+
     # Settings module: seconds before a process reloads settings changed in the admin
     SETTINGS_REFRESH_SECONDS: int = 30
 

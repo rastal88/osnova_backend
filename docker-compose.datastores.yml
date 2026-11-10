@@ -1,5 +1,5 @@
 # Datastore override for the standard and scalable profiles.
-# Adds PostgreSQL + Redis and the Celery worker, and points the backend at them
+# Adds PostgreSQL + Redis, the Celery worker and beat, and points the backend at them
 # using in-network service names, overriding any localhost values from the local .env.
 #
 #   docker compose -f docker-compose.yml -f docker-compose.datastores.yml \
@@ -72,6 +72,31 @@ services:
       timeout: 10s
       start_period: 20s
       retries: 3
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Sends scheduled tasks (beat_schedule in app/modules/tasks/celery_app.py) to the
+  # worker. Always one instance: a second one would send every task twice.
+  beat:
+    build:
+      context: .
+      args:
+        REQUIREMENTS: standard
+    profiles: ["standard", "scalable"]
+    restart: unless-stopped
+    command: ["celery", "-A", "app.modules.tasks.celery_app", "beat", "-l", "info", "-s", "/tmp/celerybeat-schedule"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-osnova}:${POSTGRES_PASSWORD:-osnova}@postgres:5432/${POSTGRES_DB:-osnova}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    # The image health check calls the HTTP API, which beat does not serve
+    healthcheck:
+      disable: true
     depends_on:
       redis:
         condition: service_healthy
