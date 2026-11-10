@@ -118,5 +118,21 @@
   "notifications": {
     "lead_new.title": "New lead",
     "lead_new.body": "{summary}"
+  },
+  "export": {
+    "yes": "Yes",
+    "no": "No",
+    "email": "Email",
+    "name": "Name",
+    "role": "Role",
+    "active": "Active",
+    "verified": "Email confirmed",
+    "date_created": "Signed up",
+    "last_login": "Last sign-in",
+    "created_at": "Date",
+    "form": "Form",
+    "status": "Status",
+    "language": "Language",
+    "other": "Other"
   }
 }

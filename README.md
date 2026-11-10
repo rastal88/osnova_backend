@@ -375,6 +375,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET / PATCH / DELETE | `/admin/leads`, `/admin/leads/{id}`, `/admin/leads/forms` | Form submissions: search `q` in the data, filters `form` / `status`, `sort`, pages; mark `new` / `done`; delete | `ADMIN_ENABLED` |
 | GET / POST / PUT / DELETE | `/admin/entities`, `/admin/entities/{id}`, `/admin/entities/types` | Configurable entities (e.g. lead channels) with form descriptions; secrets masked; changes by `root` | `ADMIN_ENABLED` |
 | POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`root`) | `ADMIN_ENABLED` |
+| GET | `/admin/users/export`, `/admin/leads/export` | CSV file of everything the list shows with the same `q`, filters and `sort` (no pages); `delimiter=comma` / `semicolon`, by the request language when not given | `ADMIN_ENABLED` |
 | GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (moderator: ordinary users), change role (root) | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
 | GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language, unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
@@ -429,6 +430,12 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   `app/modules/tasks/tasks.py`, called with `.delay(...)`.
 - **Run a task on a schedule:** an entry in `beat_schedule`
   (`app/modules/tasks/celery_app.py`) with the task name and a `crontab` (UTC).
+- **Export a table to CSV:** `csv_response("<name>", header, rows)` (`app/core/csv_export.py`)
+  streams a file a spreadsheet opens: UTF-8 with a BOM, UTC dates, `;` between columns for
+  languages where Excel expects it, cells that would run as formulas made text. `rows` is
+  an async iterator; read it with `session.stream_scalars(...)` in a session of its own.
+  Examples: `export_users` (`app/modules/admin/users.py`), `export_leads`
+  (`app/modules/leads/routes.py`).
 - **Clean old data:** every night at 03:30 UTC the `maintenance.cleanup` task removes read
   notifications older than `NOTIFICATIONS_KEEP_DAYS` (90) and, when
   `UNVERIFIED_ACCOUNT_DAYS` is set, accounts that never confirmed the email and never
