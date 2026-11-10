@@ -1,16 +1,12 @@
 import uuid
 
 from fastapi_users import FastAPIUsers
-from fastapi_users.authentication import (
-    AuthenticationBackend,
-    CookieTransport,
-    JWTStrategy,
-    RedisStrategy,
-)
+from fastapi_users.authentication import AuthenticationBackend, CookieTransport
 
 from app.config import config
 from app.modules.auth.manager import get_user_manager
 from app.modules.auth.models import User
+from app.modules.auth.sessions import SessionJWTStrategy, SessionRedisStrategy
 
 MIN_SECRET_LENGTH = 32
 # Values from the docs that must never sign real tokens
@@ -45,11 +41,12 @@ if config.AUTH_STRATEGY == "redis":
     redis = redis_asyncio.from_url(config.REDIS_URL, decode_responses=True)
 
 
-def get_strategy() -> JWTStrategy | RedisStrategy:
+def get_strategy() -> SessionJWTStrategy | SessionRedisStrategy:
     # JWT keeps the auth module stateless (no Redis); Redis allows server-side logout.
+    # Both end every session of a user at once (app/modules/auth/sessions.py).
     if redis is not None:
-        return RedisStrategy(redis, lifetime_seconds=lifetime_seconds)
-    return JWTStrategy(
+        return SessionRedisStrategy(redis, lifetime_seconds=lifetime_seconds)
+    return SessionJWTStrategy(
         secret=config.SECRET_KEY,
         lifetime_seconds=lifetime_seconds,
         algorithm=config.ALGORITHM,

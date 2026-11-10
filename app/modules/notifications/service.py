@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterable
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.models import User
@@ -34,6 +34,11 @@ async def notify(
                 await channel(user, kind, params, link)
             except Exception:
                 logger.exception("Notification %s to %s failed", kind, user.id)
+
+
+async def delete_user_notifications(session: AsyncSession, user: User) -> None:
+    """Account deletion (app/modules/auth/hooks.py)."""
+    await session.execute(delete(Notification).where(Notification.user_id == user.id))
 
 
 async def users_with_roles(session: AsyncSession, *roles: Role) -> list[User]:

@@ -35,7 +35,10 @@
     "oauth_invalid_state": "The sign-in link has expired or was opened in another browser. Please try again.",
     "oauth_provider_error": "Could not sign in with the provider. Please try again.",
     "access_token_decode_error": "The sign-in could not be confirmed. Please try again.",
-    "access_token_already_expired": "The sign-in took too long. Please try again."
+    "access_token_already_expired": "The sign-in took too long. Please try again.",
+    "current_password_wrong": "The current password is wrong.",
+    "root_cannot_delete_self": "The root account cannot be deleted.",
+    "account_delete_not_confirmed": "Enter your password to delete the account."
   },
   "validation": {
     "missing": "This field is required.",
@@ -85,7 +88,9 @@
     "verify_email.subject": "Confirm your email for {site}",
     "verify_email.body": "Hello!\n\nPlease confirm your email address for {site}:\n{link}\n\nThe link is valid for one hour. If you did not sign up, ignore this email.",
     "reset_password.subject": "Reset your password for {site}",
-    "reset_password.body": "Hello!\n\nTo set a new password for {site}, open this link:\n{link}\n\nThe link is valid for one hour. If you did not ask for it, ignore this email: your password stays the same."
+    "reset_password.body": "Hello!\n\nTo set a new password for {site}, open this link:\n{link}\n\nThe link is valid for one hour. If you did not ask for it, ignore this email: your password stays the same.",
+    "email_changed.subject": "The email of your {site} account was changed",
+    "email_changed.body": "Hello!\n\nThe email of your {site} account was just changed, and this address is no longer used for it.\n\nIf you did not do it, reset your password at once and contact the site."
   },
   "leads": {
     "new": "New submission: {form}",

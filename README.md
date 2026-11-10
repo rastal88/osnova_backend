@@ -122,7 +122,7 @@ what to watch:
 
 | | Behaviour with several replicas |
 |---|---|
-| Sessions | JWT cookies are stateless; Redis sessions are shared. A JWT stays valid until it expires (`ACCESS_TOKEN_EXPIRE_MINUTES`) even after sign-out or a password change; use `AUTH_STRATEGY=redis` when sessions must end at once |
+| Sessions | JWT cookies are stateless; Redis sessions are shared. Either way a password change or reset and **Sign out everywhere** end every session of the user (`sessions_valid_after`); a single sign-out ends one JWT only when it expires, a Redis session at once |
 | Settings | each replica reloads them every `SETTINGS_REFRESH_SECONDS` (30 s) |
 | Background work | the Celery worker is a separate service; tasks go through Redis |
 | Readiness | `GET /api/v1/ready` checks the database, Redis sessions and the task broker of the enabled modules: route traffic by it |
@@ -363,10 +363,11 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 |---|---|---|---|
 | GET | `/bootstrap` | Site name and contacts, version, profile, capabilities, languages, sign-in providers | always |
 | GET | `/health` | Liveness: the process runs | always |
-| GET | `/ready` | Readiness: the database (and Redis sessions) answer; 503 otherwise | always |
+| GET | `/ready` | Readiness: the database, Redis sessions and the task broker of the enabled modules answer; 503 otherwise | always |
 | GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules) | always |
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
-| — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
+| — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users; `PATCH /auth/users/me` changes only the name | `AUTH_ENABLED` |
+| — | `/auth/me/*` | The user's own account, each with the current password: `POST password` (other sessions end), `POST email` (confirmed again, the old address is told), `POST sign-out-everywhere`, `DELETE` (with files and notifications; root cannot) | `AUTH_ENABLED` |
 | GET | `/auth/google/authorize`, `/auth/google/callback` | Sign-in with Google (`authorization_url`, then the callback signs in) | `GOOGLE_CLIENT_*` set |
 | GET | `/user/*` | User area: any signed-in user (example: `/user/summary`) | `AUTH_ENABLED` |
 | GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`) | `ADMIN_ENABLED` |

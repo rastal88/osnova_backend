@@ -8,7 +8,7 @@ from fastapi_users_db_sqlalchemy import (
     SQLAlchemyUserDatabase,
 )
 from fastapi_users_db_sqlalchemy.generics import GUID
-from sqlalchemy import DateTime, ForeignKey
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
@@ -40,8 +40,15 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         default=lambda: datetime.now(UTC).replace(tzinfo=None),
     )
     last_login: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    # Loaded with the user (async code cannot load it later)
-    oauth_accounts: Mapped[list[OAuthAccount]] = relationship(lazy="selectin")
+    # Shown instead of the email where a name reads better; optional
+    name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Sessions issued before this moment no longer sign in (sign out everywhere,
+    # password change); see app/modules/auth/sessions.py
+    sessions_valid_after: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Loaded with the user (async code cannot load it later); deleted with the user
+    oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan"
+    )
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):

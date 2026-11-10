@@ -6,7 +6,23 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Account self-service, every change asks for the current password: `POST /auth/me/password`
+  (other sessions end, this one gets a new cookie), `POST /auth/me/email` (confirmed again; the
+  old address gets a notice), `POST /auth/me/sign-out-everywhere`, `DELETE /auth/me` (files and
+  notifications removed; provider-only accounts confirm with their email; root cannot).
+- User `name` (migration `0008`): sign-up, `PATCH /auth/users/me`, `UserRead`; the admin users
+  list shows it and searches by it.
+- Sessions that end for every device: tokens record when they were issued (JWT `iat`, next to
+  the id in Redis) and are refused when older than the user's `sessions_valid_after`, set by
+  a password change or reset and by sign out everywhere.
+- `app.modules.auth.hooks.on_user_delete`: modules remove a deleted user's data (files,
+  notifications).
+
 ### Changed
+- **Security:** `PATCH /auth/users/me` no longer changes the password or the email (it did
+  without the current password, so a stolen session could take the account over); it takes
+  only `name` and refuses other fields.
 - VISION and ROADMAP: what the finished template (`v1.0.0`) is and the releases on the way —
   account and everyday tools, permissions, production and scalable, publication; what stays
   out of the template.
