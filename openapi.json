@@ -899,21 +899,21 @@
         }
       }
     },
-    "/api/v1/client/summary": {
+    "/api/v1/user/summary": {
       "get": {
         "tags": [
-          "Client"
+          "User"
         ],
-        "summary": "Client Summary",
-        "description": "Example endpoint: data for the client dashboard.",
-        "operationId": "client_summary_api_v1_client_summary_get",
+        "summary": "User Summary",
+        "description": "Example endpoint of the user area: data about the signed-in user.",
+        "operationId": "user_summary_api_v1_user_summary_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClientSummary"
+                  "$ref": "#/components/schemas/UserSummary"
                 }
               }
             }
@@ -1430,6 +1430,59 @@
             "APIKeyCookie": []
           }
         ]
+      }
+    },
+    "/api/v1/admin/leads/stats": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Lead Stats",
+        "description": "Counters and leads per day, for the admin overview.",
+        "operationId": "lead_stats_api_v1_admin_leads_stats_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Length of the by_day period",
+              "default": 14,
+              "title": "Days"
+            },
+            "description": "Length of the by_day period"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadStats"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/admin/leads/channels/{channel_id}/test": {
@@ -2364,7 +2417,7 @@
         "type": "string",
         "enum": [
           "admin",
-          "client"
+          "user"
         ],
         "title": "Area",
         "description": "Parts of the interface: the public area needs no sign-in and is not listed."
@@ -2663,23 +2716,6 @@
           "error"
         ],
         "title": "ChannelTestResult"
-      },
-      "ClientSummary": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "title": "Email"
-          },
-          "role": {
-            "$ref": "#/components/schemas/Role"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "role"
-        ],
-        "title": "ClientSummary"
       },
       "EntityCreate": {
         "properties": {
@@ -3051,6 +3087,25 @@
         ],
         "title": "HealthResponse"
       },
+      "LeadDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "count"
+        ],
+        "title": "LeadDay"
+      },
       "LeadDelivery": {
         "properties": {
           "channel": {
@@ -3174,6 +3229,35 @@
           "deliveries"
         ],
         "title": "LeadRead"
+      },
+      "LeadStats": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "by_day": {
+            "items": {
+              "$ref": "#/components/schemas/LeadDay"
+            },
+            "type": "array",
+            "title": "By Day"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "by_status",
+          "by_day"
+        ],
+        "title": "LeadStats"
       },
       "LeadUpdate": {
         "properties": {
@@ -3466,6 +3550,23 @@
           "areas"
         ],
         "title": "UserRead"
+      },
+      "UserSummary": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "UserSummary"
       },
       "UserUpdate": {
         "properties": {

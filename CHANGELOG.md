@@ -7,6 +7,8 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `GET /admin/leads/stats?days=14`: leads total, by status and per day (UTC, days without leads
+  included), for the admin overview.
 - Rate limit on sign-in, sign-up, password reset and email confirmation:
   `AUTH_RATE_LIMIT` (default `10/minute` per client IP and endpoint), answered with 429 and
   `Retry-After`.
@@ -86,8 +88,8 @@ All notable changes are documented here. The format follows
 - Groups `site` (name, contact email and phone) and `languages` (enabled, default): the
   site name and contacts are in `/bootstrap` `application`; languages follow the settings.
 - Form fields of type `multiselect`.
-- Areas: `GET /auth/users/me` returns `areas` — `["admin", "client"]` for `root` and
-  `moderator` when the admin module is on, otherwise `["client"]`; the first one is where
+- Areas: `GET /auth/users/me` returns `areas` — `["admin", "user"]` for `root` and
+  `moderator` when the admin module is on, otherwise `["user"]`; the first one is where
   the user lands after sign-in.
 - `GET /admin/overview`: user counters for the admin dashboard.
 - `APP_PROFILE` check: a warning at start when the profile does not match the setup
@@ -96,6 +98,9 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- The client area is now the user area: `areas` lists `"user"` instead of `"client"`
+  (`Area.USER`), package `app/client` → `app/user` (`user_router`), `/client/summary` →
+  `/user/summary` (`UserSummary`).
 - Google sign-in reads the account from the OpenID Connect userinfo endpoint (scopes
   `openid email`) instead of the People API, which had to be enabled in Google Cloud
   separately; an email Google has not confirmed is refused.

@@ -99,3 +99,31 @@ async def test_only_admins_see_leads(auth_client):
     await create_user(session_factory, "user@example.com", "user")
     await login(client, "user@example.com")
     assert (await client.get(LEADS)).status_code == 403
+
+
+@pytest.mark.anyio
+async def test_stats_for_the_overview(auth_client):
+    from datetime import UTC, datetime, timedelta
+
+    client, session_factory = await _admin(auth_client)
+    now = datetime.now(UTC).replace(tzinfo=None)
+    async with session_factory() as session:
+        for days_ago, status in ((0, "new"), (0, "done"), (2, "new"), (30, "done")):
+            lead = Lead(form="contact", data={}, language="en", status=status)
+            lead.created_at = now - timedelta(days=days_ago)
+            session.add(lead)
+        await session.commit()
+
+    response = await client.get(f"{LEADS}/stats", params={"days": 7})
+    assert response.status_code == 200, response.text
+    stats = response.json()
+    assert stats["total"] == 4
+    assert stats["by_status"] == {"new": 2, "done": 2}
+    by_day = stats["by_day"]
+    assert len(by_day) == 7
+    assert by_day[-1] == {"date": now.date().isoformat(), "count": 2}
+    assert by_day[-3]["count"] == 1
+    # The lead of 30 days ago is outside the period
+    assert sum(day["count"] for day in by_day) == 3
+
+    assert (await client.get(f"{LEADS}/stats", params={"days": 0})).status_code == 422

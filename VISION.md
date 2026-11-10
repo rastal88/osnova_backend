@@ -71,9 +71,9 @@ PostgreSQL, so it is a `standard` capability (no SQLite mode).
 **Areas and roles**
 
 - **Public area** — pages for everyone (as in minimal).
-- **Client area** — for signed-in users: dashboard, profile, the project's own pages.
+- **User area** — for signed-in users: profile, the project's own pages; it starts on home.
 - **Admin area** — for `root` and `moderator`: after sign-in they land here and can switch
-  to the client area; other users never see it.
+  to the user area; other users never see it.
 
 **Foundations**
 
@@ -161,7 +161,7 @@ Each stage is a few small PRs; ROADMAP tracks the items.
 | Stage | Content | Depends on |
 |---|---|---|
 | **S0. Ground work** | `APP_PROFILE` check; one clean initial migration instead of the current history; VISION and ROADMAP in the repo | — |
-| **S1. Areas and roles** | public / client / admin areas, landing by role after sign-in, area switcher in the user menu, guards on both sides; admin uses the same shell with its own menu | S0 |
+| **S1. Areas and roles** | public / user / admin areas, landing by role after sign-in, area switcher in the user menu, guards on both sides; admin uses the same shell with its own menu | S0 |
 | **S2. Settings** | singleton settings (models, cache, API), generated admin forms; site settings, languages from the admin | S1 |
 | **S3. Admin: users** | list with search and filters, block / unblock, change role | S1 |
 | **S4. Email and tasks** | mail interface (console / SMTP), translated templates, Celery worker in Compose; email verification and password reset pages | S0 |

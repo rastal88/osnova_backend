@@ -82,7 +82,7 @@ not a complete integration:
 | Tool | What you get |
 |---|---|
 | Users | sign-up, sign-in (cookie, JWT or Redis sessions), email confirmation, password reset, Google |
-| Areas | public, client (`user`) and admin (`root`, `moderator`) with guards on both sides |
+| Areas | public, user (any signed-in user) and admin (`root`, `moderator`) with guards on both sides |
 | Admin | overview, users (search, block, role), leads, delivery channels, settings |
 | Settings | typed groups edited in the admin (site, languages), no migration per field |
 | Leads | form submissions stored, delivered to email / Telegram / webhook by a task |
@@ -206,7 +206,7 @@ osnova_backend/
 │   │   ├── files/         # files: local or S3 storage        ← FILES_ENABLED
 │   │   ├── notifications/ # in-app notifications, channels    ← NOTIFICATIONS_ENABLED
 │   │   └── tasks/         # Celery app, email task            ← BACKGROUND_TASKS_ENABLED
-│   ├── client/            # client area API (any signed-in user)
+│   ├── user/              # user area API (any signed-in user)
 │   ├── forms.py           # the project's forms
 │   ├── settings.py        # settings groups edited in the admin (site, languages)
 │   ├── config.py          # settings (every value has a default)
@@ -368,7 +368,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
 | — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users | `AUTH_ENABLED` |
 | GET | `/auth/google/authorize`, `/auth/google/callback` | Sign-in with Google (`authorization_url`, then the callback signs in) | `GOOGLE_CLIENT_*` set |
-| GET | `/client/*` | Client area: any signed-in user (example: `/client/summary`) | `AUTH_ENABLED` |
+| GET | `/user/*` | User area: any signed-in user (example: `/user/summary`) | `AUTH_ENABLED` |
 | GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`) | `ADMIN_ENABLED` |
 | GET / PATCH / DELETE | `/admin/leads`, `/admin/leads/{id}`, `/admin/leads/forms` | Form submissions: search `q` in the data, filters `form` / `status`, `sort`, pages; mark `new` / `done`; delete | `ADMIN_ENABLED` |
 | GET / POST / PUT / DELETE | `/admin/entities`, `/admin/entities/{id}`, `/admin/entities/types` | Configurable entities (e.g. lead channels) with form descriptions; secrets masked; changes by `root` | `ADMIN_ENABLED` |
@@ -396,9 +396,9 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   and checks module dependencies (`requires`). The core never imports modules.
 - **Remove a module:** delete its folder, its entry in `MODULES` and
   `requirements/<name>.txt`.
-- **New endpoints for signed-in users:** add them to `client_router` (`app/client/routes.py`);
+- **New endpoints for signed-in users:** add them to `user_router` (`app/user/routes.py`);
   admin ones to `admin_router` (`app/modules/admin/routes.py`). Both routers check access
-  for every endpoint. A new domain: a package like `app/client/` and an entry in `MODULES`.
+  for every endpoint. A new domain: a package like `app/user/` and an entry in `MODULES`.
 - **Add a capability:**
   1. A flag in `app/config.py` and `.env.example`.
   2. A package `app/modules/<name>/` with `register(app)` and an entry in `MODULES`.
