@@ -9,15 +9,19 @@ generate:client). Run after changing endpoints or their models:
 
 import json
 import os
+import runpy
 import sys
 from pathlib import Path
 
-OUTPUT = Path(__file__).resolve().parent.parent / "openapi.json"
+ROOT = Path(__file__).resolve().parent.parent
+OUTPUT = ROOT / "openapi.json"
+# Read without importing the app package: importing it builds the app with the local .env
+VERSION = runpy.run_path(str(ROOT / "app" / "version.py"))["VERSION"]
 
 # Explicit values, so a developer's .env does not change the schema
 ENV = {
     "APP_NAME": "Osnova Application",
-    "APP_VERSION": "0.1.0",
+    "APP_VERSION": VERSION,
     "APP_PROFILE": "standard",
     "AUTH_ENABLED": "true",
     "ADMIN_ENABLED": "true",

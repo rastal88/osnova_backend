@@ -41,6 +41,8 @@ class BootstrapResponse(BaseModel):
     features: BootstrapFeatures
     # Sign-in providers to show as buttons, e.g. ["google"]
     auth_providers: list[str]
+    # Interactive API docs are served at /docs (only with DEBUG)
+    api_docs: bool
 
 
 def get_bootstrap_config() -> BootstrapResponse:
@@ -68,4 +70,5 @@ def get_bootstrap_config() -> BootstrapResponse:
             background_tasks=capabilities.background_tasks,
         ),
         auth_providers=oauth_providers(config),
+        api_docs=config.DEBUG,
     )

@@ -38,7 +38,8 @@ class Storage(Protocol):
 def content_disposition(name: str, inline: bool) -> str:
     """Original name for the browser; non-ASCII names per RFC 5987."""
     kind = "inline" if inline else "attachment"
-    ascii_name = name.encode("ascii", "replace").decode().replace('"', "")
+    # A quote or backslash would end or escape the quoted name
+    ascii_name = name.encode("ascii", "replace").decode().replace('"', "").replace("\\", "")
     return f"{kind}; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(name)}"
 
 
