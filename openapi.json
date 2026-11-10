@@ -1230,6 +1230,129 @@
         }
       }
     },
+    "/api/v1/admin/users/export": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Export Users",
+        "description": "Every user the list shows with this query, as a CSV file.",
+        "operationId": "export_users_api_v1_admin_users_export_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "description": "Part of the email or the name",
+              "default": "",
+              "title": "Q"
+            },
+            "description": "Part of the email or the name"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "email",
+                "-email",
+                "role",
+                "-role",
+                "date_created",
+                "-date_created",
+                "last_login",
+                "-last_login"
+              ],
+              "type": "string",
+              "default": "-date_created",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated roles",
+              "title": "Role"
+            },
+            "description": "Comma-separated roles"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated: active, blocked",
+              "title": "Status"
+            },
+            "description": "Comma-separated: active, blocked"
+          },
+          {
+            "name": "delimiter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "comma",
+                    "semicolon"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Default: by the request language",
+              "title": "Delimiter"
+            },
+            "description": "Default: by the request language"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/users/{user_id}": {
       "patch": {
         "tags": [
@@ -1795,6 +1918,127 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/leads/export": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Export Leads",
+        "description": "Every lead the list shows with this query, as a CSV file: a column per field of\nthe chosen forms (all forms without the filter), answers as the visitor saw them.",
+        "operationId": "export_leads_api_v1_admin_leads_export_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "description": "Text anywhere in the submitted data",
+              "default": "",
+              "title": "Q"
+            },
+            "description": "Text anywhere in the submitted data"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "created_at",
+                "-created_at",
+                "form",
+                "-form",
+                "status",
+                "-status"
+              ],
+              "type": "string",
+              "default": "-created_at",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "form",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated form names",
+              "title": "Form"
+            },
+            "description": "Comma-separated form names"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated: new, done",
+              "title": "Status"
+            },
+            "description": "Comma-separated: new, done"
+          },
+          {
+            "name": "delimiter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "comma",
+                    "semicolon"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Default: by the request language",
+              "title": "Delimiter"
+            },
+            "description": "Default: by the request language"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",

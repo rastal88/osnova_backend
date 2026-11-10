@@ -1,27 +1,37 @@
 """Admin → Leads. The list query matches the frontend DataTable: `q`, `page`,
-`size`, `sort` (`-` for descending) and filters `form`, `status`."""
+`size`, `sort` (`-` for descending) and filters `form`, `status`.
+`GET /admin/leads/export` takes the same query without pages and answers with a
+CSV file of everything that matches."""
 
+import json
+import logging
 import uuid
+from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import String, cast, func, select
+from sqlalchemy import ColumnElement, String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.csv_export import Delimiter, csv_response
 from app.core.errors import AppError
 from app.core.forms.schema import FormDescription, describe
 from app.core.i18n import get_language, translate
 from app.forms import FORMS
 from app.modules.auth.dependencies import require_admin, require_any_role
+from app.modules.auth.models import User
 from app.modules.auth.roles import Role
-from app.modules.db import get_async_session
+from app.modules.db import app_session, get_async_session
 from app.modules.entities.models import Entity
 from app.modules.entities.service import parse_params
 from app.modules.leads.channels import GROUP, LeadMessage
 from app.modules.leads.models import Lead, LeadStatus
+
+logger = logging.getLogger(__name__)
 
 leads_router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -141,6 +151,24 @@ async def test_channel(
     return ChannelTestResult(ok=True, error=None)
 
 
+def _conditions(q: str, form: str | None, status: str | None) -> list[ColumnElement[bool]]:
+    """What the list and the export show."""
+    conditions: list[ColumnElement[bool]] = []
+    if search := q.strip():
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        conditions.append(cast(Lead.data, String).ilike(f"%{escaped}%", escape="\\"))
+    if forms := _values(form, tuple(item.name for item in FORMS)):
+        conditions.append(Lead.form.in_(forms))
+    if statuses := _values(status, STATUSES):
+        conditions.append(Lead.status.in_(statuses))
+    return conditions
+
+
+def _order(sort: str) -> ColumnElement[Any]:
+    column = SORT_COLUMNS[sort.lstrip("-")]
+    return column.desc() if sort.startswith("-") else column.asc()
+
+
 @leads_router.get("")
 async def list_leads(
     q: str = Query("", max_length=100, description="Text anywhere in the submitted data"),
@@ -151,22 +179,12 @@ async def list_leads(
     status: str | None = Query(None, description="Comma-separated: new, done"),
     session: AsyncSession = Depends(get_async_session),
 ) -> LeadPage:
-    conditions = []
-    if search := q.strip():
-        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        conditions.append(cast(Lead.data, String).ilike(f"%{escaped}%", escape="\\"))
-    if forms := _values(form, tuple(item.name for item in FORMS)):
-        conditions.append(Lead.form.in_(forms))
-    if statuses := _values(status, STATUSES):
-        conditions.append(Lead.status.in_(statuses))
-
-    column = SORT_COLUMNS[sort.lstrip("-")]
-    order = column.desc() if sort.startswith("-") else column.asc()
+    conditions = _conditions(q, form, status)
     total = await session.scalar(select(func.count()).select_from(Lead).where(*conditions))
     result = await session.scalars(
         select(Lead)
         .where(*conditions)
-        .order_by(order, Lead.created_at.desc())
+        .order_by(_order(sort), Lead.created_at.desc())
         .offset((page - 1) * size)
         .limit(size)
     )
@@ -174,6 +192,72 @@ async def list_leads(
         items=[LeadRead.model_validate(lead, from_attributes=True) for lead in result],
         total=total or 0,
     )
+
+
+@leads_router.get("/export", response_class=StreamingResponse)
+async def export_leads(
+    request: Request,
+    q: str = Query("", max_length=100, description="Text anywhere in the submitted data"),
+    sort: LeadSort = "-created_at",  # type: ignore[valid-type]
+    form: str | None = Query(None, description="Comma-separated form names"),
+    status: str | None = Query(None, description="Comma-separated: new, done"),
+    delimiter: Delimiter | None = Query(None, description="Default: by the request language"),
+    admin: User = Depends(require_admin),
+) -> StreamingResponse:
+    """Every lead the list shows with this query, as a CSV file: a column per field of
+    the chosen forms (all forms without the filter), answers as the visitor saw them."""
+    names = _values(form, tuple(item.name for item in FORMS))
+    forms = {item.name: describe(item) for item in FORMS if not names or item.name in names}
+    # Field name -> label; forms that share a field name share the column
+    columns: dict[str, str] = {}
+    options: dict[tuple[str, str], dict[str, str]] = {}
+    for description in forms.values():
+        for field in description.fields:
+            columns.setdefault(field.name, field.label)
+            options[description.name, field.name] = {o.value: o.label for o in field.options}
+    yes_no = {True: translate("export.yes"), False: translate("export.no")}
+
+    def text(value: Any, labels: dict[str, str]) -> Any:
+        if isinstance(value, bool):
+            return yes_no[value]
+        if isinstance(value, list):
+            return ", ".join(labels.get(str(item), str(item)) for item in value)
+        return labels.get(value, value) if isinstance(value, str) else value
+
+    statement = (
+        select(Lead)
+        .where(*_conditions(q, form, status))
+        .order_by(_order(sort), Lead.created_at.desc())
+    )
+
+    async def rows() -> AsyncIterator[list[Any]]:
+        count = 0
+        # Its own session: the request's one may be closed before the file is sent
+        async with app_session(request.app) as session:
+            result = await session.stream_scalars(statement.execution_options(yield_per=500))
+            async for lead in result:
+                count += 1
+                # Answers to fields the form no longer has
+                other = {key: value for key, value in lead.data.items() if key not in columns}
+                yield [
+                    lead.created_at,
+                    forms[lead.form].title if lead.form in forms else lead.form,
+                    lead.status,
+                    lead.language,
+                    *(
+                        text(lead.data.get(name), options.get((lead.form, name), {}))
+                        for name in columns
+                    ),
+                    json.dumps(other, ensure_ascii=False) if other else None,
+                ]
+        logger.info("User %s exported %d leads.", admin.id, count)
+
+    header = [
+        *(translate(f"export.{name}") for name in ("created_at", "form", "status", "language")),
+        *columns.values(),
+        translate("export.other"),
+    ]
+    return csv_response("leads", header, rows(), delimiter)
 
 
 async def _get_lead(session: AsyncSession, lead_id: uuid.UUID) -> Lead:

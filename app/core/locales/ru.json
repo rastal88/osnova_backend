@@ -118,5 +118,21 @@
   "notifications": {
     "lead_new.title": "Новая заявка",
     "lead_new.body": "{summary}"
+  },
+  "export": {
+    "yes": "Да",
+    "no": "Нет",
+    "email": "Email",
+    "name": "Имя",
+    "role": "Роль",
+    "active": "Активен",
+    "verified": "Email подтверждён",
+    "date_created": "Регистрация",
+    "last_login": "Последний вход",
+    "created_at": "Дата",
+    "form": "Форма",
+    "status": "Статус",
+    "language": "Язык",
+    "other": "Прочее"
   }
 }
