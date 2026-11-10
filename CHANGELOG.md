@@ -7,6 +7,9 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `/bootstrap` `api_docs`: whether `/docs` is served (`DEBUG`), so the frontend links to it only then.
+- `GET /ready` also checks the task broker when background tasks are on.
+- `app/version.py`: the release of the code, the default of `APP_VERSION`.
 - `GET /admin/leads/stats?days=14`: leads total, by status and per day (UTC, days without leads
   included), for the admin overview.
 - Rate limit on sign-in, sign-up, password reset and email confirmation:
@@ -98,6 +101,8 @@ All notable changes are documented here. The format follows
 - `VISION.md`: what Osnova is, the profiles and the stages of `standard`.
 
 ### Changed
+- `APP_VERSION` is no longer in `.env.example`: a copied `.env` kept an old version.
+- File names without backslashes in the quoted `Content-Disposition` name.
 - The client area is now the user area: `areas` lists `"user"` instead of `"client"`
   (`Area.USER`), package `app/client` → `app/user` (`user_router`), `/client/summary` →
   `/user/summary` (`UserSummary`).

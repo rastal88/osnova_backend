@@ -53,6 +53,7 @@ async def test_upload_list_download_delete(auth_client):
     assert download.headers["content-disposition"].startswith("attachment;")
     disposition = download.headers["content-disposition"]
     assert "filename*=UTF-8''%D0%9E%D1%82%D1%87%D1%91%D1%82" in disposition
+
     assert download.headers["x-content-type-options"] == "nosniff"
 
     assert (await client.delete(uploaded["url"])).status_code == 204
@@ -120,3 +121,10 @@ async def test_odd_names_and_types_are_cleaned(auth_client):
 def test_control_characters_are_removed_from_names():
     upload = UploadFile(file=io.BytesIO(), filename="a\x00b\x1f.txt")
     assert file_routes._name(upload) == "ab.txt"
+
+
+def test_quoted_name_cannot_be_broken():
+    from app.modules.files.storage import content_disposition
+
+    value = content_disposition('a"b\\c.txt', inline=False)
+    assert value.startswith('attachment; filename="abc.txt"; ')

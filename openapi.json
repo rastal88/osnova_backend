@@ -2680,6 +2680,10 @@
             },
             "type": "array",
             "title": "Auth Providers"
+          },
+          "api_docs": {
+            "type": "boolean",
+            "title": "Api Docs"
           }
         },
         "type": "object",
@@ -2688,7 +2692,8 @@
           "profile",
           "i18n",
           "features",
-          "auth_providers"
+          "auth_providers",
+          "api_docs"
         ],
         "title": "BootstrapResponse"
       },

@@ -9,7 +9,7 @@ from app.core import readiness
 async def test_ready_checks_the_database(client):
     response = await client.get("/api/v1/ready")
     assert response.status_code == 200, response.text
-    assert response.json() == {"status": "ok", "checks": {"database": True}}
+    assert response.json() == {"status": "ok", "checks": {"database": True, "broker": True}}
 
 
 @pytest.mark.anyio
@@ -23,6 +23,7 @@ async def test_a_failing_or_hanging_dependency_gives_503(client, monkeypatch):
     monkeypatch.setattr(readiness, "TIMEOUT_SECONDS", 0.1)
     monkeypatch.setitem(readiness.checks, "database", down)
     monkeypatch.setitem(readiness.checks, "redis", hangs)
+    monkeypatch.delitem(readiness.checks, "broker", raising=False)
 
     response = await client.get("/api/v1/ready")
     assert response.status_code == 503

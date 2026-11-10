@@ -122,10 +122,10 @@ what to watch:
 
 | | Behaviour with several replicas |
 |---|---|
-| Sessions | JWT cookies are stateless; Redis sessions are shared |
+| Sessions | JWT cookies are stateless; Redis sessions are shared. A JWT stays valid until it expires (`ACCESS_TOKEN_EXPIRE_MINUTES`) even after sign-out or a password change; use `AUTH_STRATEGY=redis` when sessions must end at once |
 | Settings | each replica reloads them every `SETTINGS_REFRESH_SECONDS` (30 s) |
 | Background work | the Celery worker is a separate service; tasks go through Redis |
-| Readiness | `GET /api/v1/ready` checks the database (and Redis sessions): route traffic by it |
+| Readiness | `GET /api/v1/ready` checks the database, Redis sessions and the task broker of the enabled modules: route traffic by it |
 | **Migrations** | run them once (`make migrate`), not with `RUN_MIGRATIONS=true` on every replica |
 | **Files** | `FILES_STORAGE=s3` for several machines; local files work only on one host (shared Docker volume) |
 | **Form rate limit** | counted in each replica's memory: with N replicas a client may send up to N × `FORMS_RATE_LIMIT` (a Redis store is planned) |
@@ -325,7 +325,7 @@ listed with comments in [`.env.example`](.env.example).
 
 | Variable | Purpose |
 |---|---|
-| `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version, profile (`minimal` / `standard` / `scalable`); a mismatch with the setup is logged as a warning at start |
+| `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version (defaults to the release of the code; leave it out of `.env`), profile (`minimal` / `standard` / `scalable`); a mismatch with the setup is logged as a warning at start |
 | `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address; `DEBUG=true` serves `/docs`, `/redoc` and `/openapi.json` (off in production) |
 | `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
 | `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`); initial values, changed later in Admin → Settings |

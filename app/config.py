@@ -3,10 +3,13 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.version import VERSION
+
 
 class Settings(BaseSettings):
     APP_NAME: str = "Osnova Application"
-    APP_VERSION: str = "0.1.0"
+    # The release of this code (app/version.py); set in .env only to override it
+    APP_VERSION: str = VERSION
     APP_PROFILE: Literal["minimal", "standard", "scalable"] = "minimal"
     APP_HOST: str = "localhost"
     APP_PORT: int = 8000

@@ -27,9 +27,11 @@ with TestClient(app) as client:
     status = client.get("/api/v1/health").status_code
     ready = client.get("/api/v1/ready").json()
     docs = [client.get(path).status_code for path in ("/docs", "/redoc", "/openapi.json")]
+    api_docs = client.get("/api/v1/bootstrap").json()["api_docs"]
 paths = sorted(app.openapi()["paths"])
 loaded = [m for m in {HEAVY!r} if m in sys.modules]
-result = {{"status": status, "ready": ready, "paths": paths, "loaded": loaded, "docs": docs}}
+result = {{"status": status, "ready": ready, "paths": paths, "loaded": loaded}}
+result.update(docs=docs, api_docs=api_docs)
 print(json.dumps(result))
 """
 
@@ -59,6 +61,7 @@ def test_minimal_profile_loads_no_optional_modules():
     assert data["loaded"] == []
     # Without DEBUG the API is not mapped publicly
     assert data["docs"] == [404, 404, 404]
+    assert data["api_docs"] is False
     assert "APP_PROFILE" not in result.stdout
     assert not any(path.startswith("/api/v1/auth") for path in data["paths"])
 

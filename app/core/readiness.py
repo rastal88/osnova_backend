@@ -1,7 +1,7 @@
 """Readiness: can this process serve requests right now?
 
 GET /health answers while the process runs (liveness). GET /ready also checks
-what the enabled modules depend on — the database, Redis sessions — so a load
+what the enabled modules depend on — the database, Redis sessions, the task broker — so a load
 balancer or orchestrator sends traffic only to replicas that can serve it.
 Modules register their checks with ``add_check`` (the core imports no module).
 """
