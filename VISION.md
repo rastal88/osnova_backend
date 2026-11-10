@@ -66,7 +66,7 @@ PostgreSQL, so it is a `standard` capability (no SQLite mode).
 - Docker, CI, linters, tests, `make dev-all`
 - Examples in one folder that can be deleted
 
-### Standard — an application with users (MVP, `v0.2.0`)
+### Standard — an application with users (MVP, released `v0.2.0`, 2026-11-10)
 
 **Areas and roles**
 

@@ -86,7 +86,7 @@ real-time, CMS.
 - Frontend tooling: Biome only (lint + format), Vitest unit tests for pure logic; end-to-end tests are not part of minimal.
 - i18n: react-i18next. Link previews / SEO: build-time prerender. Languages: `en` (default), `ru`.
 
-## Standard profile (`v0.2.0`, MVP)
+## Standard profile (`v0.2.0`, MVP, released 2026-11-10)
 
 Goal: a working *foundation* for every tool, not a full integration. What and why:
 [VISION.md](VISION.md); each stage is a few small PRs.
@@ -132,11 +132,12 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] `make migrate` / `make createroot` for Docker; CORS headers on 500 responses
 - [x] Pre-release review: safe Google account linking, `SECRET_KEY` check, auth rate limits, background email, no personal data in logs, docs only with `DEBUG`
 - [x] Pre-release review *(fe)*: nginx client IP and upload size; admin menu (Settings → General / Channels, Users under Overview); the user area opens Home, client dashboard removed
-- [ ] Client area renamed to user area *(be, fe)*; one profile page for every role; overview with users, leads per day, channels and the system
+- [x] Client area renamed to user area *(be, fe)*; one profile page for every role; overview with users, leads per day, channels and the system
+- [x] Second review: API docs link only with `DEBUG`, version from the code, broker in `/ready`, clear 413 message
 - [x] Release checklist (by hand, needs the owner's accounts):
   - [x] Telegram: a real bot in Admin → Channels — **Test**, then a form submission arrives
   - [x] Google: a real OAuth client — sign up a new user, sign in to an existing account by email
-- [ ] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
+- [x] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
 
 ## Next: permissions (`v0.3.0`)
 - Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
