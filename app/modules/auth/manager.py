@@ -14,6 +14,7 @@ from app.core.settings import settings
 from app.modules.auth.models import User, get_user_db
 from app.modules.auth.roles import Role
 from app.modules.auth.schemas import UserCreate
+from app.modules.auth.sessions import now_for_sessions
 from app.settings import SiteSettings
 
 logger = logging.getLogger(__name__)
@@ -25,9 +26,9 @@ def frontend_link(path: str, token: str) -> str:
     return f"{config.FRONTEND_URL.rstrip('/')}/{get_language()}{path}?{query}"
 
 
-async def send_user_mail(name: str, user: User, link: str) -> None:
+async def send_user_mail(name: str, user: User, link: str, to: str | None = None) -> None:
     site = settings.get(SiteSettings).name
-    await send_mail(render_mail(name, user.email, site=site, link=link))
+    await send_mail(render_mail(name, to or user.email, site=site, link=link))
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -74,6 +75,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
     async def on_after_reset_password(self, user: User, request: Request | None = None):
         logger.info("User %s has reset their password.", user.id)
+        # Whoever knew the old password is signed out everywhere
+        await self.user_db.update(user, {"sessions_valid_after": now_for_sessions()})
 
     async def oauth_callback(
         self,

@@ -14,7 +14,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
@@ -38,6 +38,7 @@ UserStatus = Literal["active", "blocked"]
 class AdminUser(BaseModel):
     id: uuid.UUID
     email: str
+    name: str | None = None
     role: Role
     is_active: bool
     is_verified: bool
@@ -63,7 +64,7 @@ def _values(raw: str | None, allowed: tuple[str, ...]) -> list[str]:
 
 @users_router.get("")
 async def list_users(
-    q: str = Query("", max_length=100, description="Part of the email"),
+    q: str = Query("", max_length=100, description="Part of the email or the name"),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     sort: UserSort = "-date_created",  # type: ignore[valid-type]
@@ -74,7 +75,10 @@ async def list_users(
     conditions = []
     if search := q.strip():
         escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        conditions.append(User.email.ilike(f"%{escaped}%", escape="\\"))
+        pattern = f"%{escaped}%"
+        conditions.append(
+            or_(User.email.ilike(pattern, escape="\\"), User.name.ilike(pattern, escape="\\"))
+        )
     if roles := _values(role, tuple(item.value for item in Role)):
         conditions.append(User.role.in_([Role(item) for item in roles]))
     if statuses := _values(status, ("active", "blocked")):

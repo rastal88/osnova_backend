@@ -152,6 +152,15 @@ async def download_file(
     return response
 
 
+async def delete_user_files(session: AsyncSession, user: User) -> None:
+    """Account deletion (app/modules/auth/hooks.py): contents first, then the rows."""
+    storage = get_storage()
+    for file in await session.scalars(select(FileRecord).where(FileRecord.owner_id == user.id)):
+        await storage.delete(file.key)
+        await session.delete(file)
+    await session.flush()
+
+
 @files_router.delete("/{file_id}", status_code=204)
 async def delete_file(
     file_id: uuid.UUID,

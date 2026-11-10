@@ -124,3 +124,16 @@ async def test_unknown_user_is_404(auth_client):
         f"{USERS}/00000000-0000-0000-0000-000000000000", json={"is_active": False}
     )
     assert response.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_search_by_name(auth_client):
+    client, session_factory = await _setup(auth_client, "root")
+    async with session_factory() as session:
+        alice = await session.scalar(select(User).where(User.email == "alice@example.com"))
+        alice.name = "Alice Liddell"
+        await session.commit()
+    items = (await client.get(USERS, params={"q": "liddell"})).json()["items"]
+    assert [(item["email"], item["name"]) for item in items] == [
+        ("alice@example.com", "Alice Liddell")
+    ]

@@ -10,7 +10,11 @@ from fastapi import FastAPI
 
 
 def register(app: FastAPI):
-    from .routes import files_router
+    from app.modules.auth.hooks import on_user_delete
+
+    from .routes import delete_user_files, files_router
+
+    on_user_delete(delete_user_files)
 
     app.include_router(files_router, prefix="/api/v1/files", tags=["Files"])
     return None

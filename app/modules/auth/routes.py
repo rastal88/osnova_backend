@@ -1,23 +1,16 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter
 
 from app.config import config
-from app.core.rate_limit import RateLimiter, check_limit, client_address, parse_limit
+from app.modules.auth.account import account_router
 from app.modules.auth.backend import auth_backend, fastapi_users
+from app.modules.auth.limits import limited, limiter  # noqa: F401  limiter: reset by tests
 from app.modules.auth.oauth import oauth_clients, redirect_url
 from app.modules.auth.schemas import UserCreate, UserRead, UserUpdate
 
-rate_limit = parse_limit(config.AUTH_RATE_LIMIT)
-limiter = RateLimiter(*rate_limit) if rate_limit else None
-
-
-async def limit_by_ip(request: Request) -> None:
-    """Slows down password guessing and sending emails to someone else's address."""
-    check_limit(limiter, f"{request.url.path}:{client_address(request)}")
-
-
-limited = [Depends(limit_by_ip)]
-
 auth_router = APIRouter()
+
+# The user's own password, email, sessions and deletion: /auth/me/*
+auth_router.include_router(account_router, tags=["account"])
 
 auth_router.include_router(
     fastapi_users.get_auth_router(auth_backend), tags=["auth"], dependencies=limited

@@ -174,6 +174,153 @@
         }
       }
     },
+    "/api/v1/auth/me/password": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Change Password",
+        "description": "Set a new password; every other session ends, this one gets a new cookie.",
+        "operationId": "change_password_api_v1_auth_me_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me/email": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Change Email",
+        "description": "Move the account to a new email: it has to be confirmed again, the old address\ngets a notice.",
+        "operationId": "change_email_api_v1_auth_me_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me/sign-out-everywhere": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Sign Out Everywhere",
+        "description": "End every session of this user, this one included.",
+        "operationId": "sign_out_everywhere_api_v1_auth_me_sign_out_everywhere_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "delete": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Delete Account",
+        "description": "Delete the account and its data for good (files, notifications, linked\nproviders). Root cannot: the site needs one.",
+        "operationId": "delete_account_api_v1_auth_me_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountDelete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
@@ -973,11 +1120,11 @@
             "schema": {
               "type": "string",
               "maxLength": 100,
-              "description": "Part of the email",
+              "description": "Part of the email or the name",
               "default": "",
               "title": "Q"
             },
-            "description": "Part of the email"
+            "description": "Part of the email or the name"
           },
           {
             "name": "page",
@@ -2272,6 +2419,37 @@
   },
   "components": {
     "schemas": {
+      "AccountDelete": {
+        "properties": {
+          "password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 320
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "title": "AccountDelete",
+        "description": "The current password, or the account's email for provider-only accounts."
+      },
       "AdminOverview": {
         "properties": {
           "users": {
@@ -2311,6 +2489,17 @@
           "email": {
             "type": "string",
             "title": "Email"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
           },
           "role": {
             "$ref": "#/components/schemas/Role"
@@ -2721,6 +2910,26 @@
           "error"
         ],
         "title": "ChannelTestResult"
+      },
+      "EmailChange": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Password"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password",
+          "email"
+        ],
+        "title": "EmailChange"
       },
       "EntityCreate": {
         "properties": {
@@ -3372,6 +3581,27 @@
         ],
         "title": "OAuth2AuthorizeResponse"
       },
+      "PasswordChange": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 8,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChange"
+      },
       "ReadyResponse": {
         "properties": {
           "status": {
@@ -3498,6 +3728,18 @@
             ],
             "title": "Is Verified",
             "default": false
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
           }
         },
         "type": "object",
@@ -3537,6 +3779,17 @@
           "role": {
             "$ref": "#/components/schemas/Role"
           },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
           "areas": {
             "items": {
               "$ref": "#/components/schemas/Area"
@@ -3575,65 +3828,23 @@
       },
       "UserUpdate": {
         "properties": {
-          "password": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Password"
-          },
-          "email": {
+          "name": {
             "anyOf": [
               {
                 "type": "string",
-                "format": "email"
+                "maxLength": 100
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Email"
-          },
-          "is_active": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Active"
-          },
-          "is_superuser": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Superuser"
-          },
-          "is_verified": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Verified"
+            "title": "Name"
           }
         },
+        "additionalProperties": false,
         "type": "object",
-        "title": "UserUpdate"
+        "title": "UserUpdate",
+        "description": "PATCH /auth/users/me: only the name. Password and email change through\n/auth/me/*, which ask for the current password."
       },
       "FieldError": {
         "properties": {
