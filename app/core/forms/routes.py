@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
 from app.config import config
+from app.core.captcha import require_captcha
 from app.core.errors import AppError
 from app.core.forms.delivery import deliver, make_record, receivers
 from app.core.forms.schema import (
@@ -60,6 +61,8 @@ async def submit_form(
         data = build_model(form).model_validate(payload)
     except ValidationError as exc:
         raise RequestValidationError(exc.errors()) from exc
+    # After the fields: a captcha token works once, a typo must not use it up
+    await require_captcha(request)
 
     record = make_record(form.name, data.model_dump(), get_language())
     # Stored first: if that fails, the visitor sees an error and can send again

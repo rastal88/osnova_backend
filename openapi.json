@@ -3015,6 +3015,25 @@
         ],
         "title": "BootstrapApplication"
       },
+      "BootstrapCaptcha": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "const": "turnstile",
+            "title": "Provider"
+          },
+          "site_key": {
+            "type": "string",
+            "title": "Site Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "site_key"
+        ],
+        "title": "BootstrapCaptcha"
+      },
       "BootstrapFeatures": {
         "properties": {
           "authentication": {
@@ -3117,6 +3136,16 @@
           "api_docs": {
             "type": "boolean",
             "title": "Api Docs"
+          },
+          "captcha": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BootstrapCaptcha"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

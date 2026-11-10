@@ -38,7 +38,8 @@
     "access_token_already_expired": "The sign-in took too long. Please try again.",
     "current_password_wrong": "The current password is wrong.",
     "root_cannot_delete_self": "The root account cannot be deleted.",
-    "account_delete_not_confirmed": "Enter your password to delete the account."
+    "account_delete_not_confirmed": "Enter your password to delete the account.",
+    "captcha_failed": "The check that you are not a robot did not pass. Please try again."
   },
   "validation": {
     "missing": "This field is required.",
@@ -59,7 +60,8 @@
     "bool_type": "Must be true or false.",
     "too_short": "Choose at least {min_length}.",
     "default_language_not_enabled": "The default language must be one of the enabled languages.",
-    "url_invalid": "Enter an address starting with https:// or http://."
+    "url_invalid": "Enter an address starting with https:// or http://.",
+    "captcha_not_configured": "The captcha keys are not set on the server: add CAPTCHA_PROVIDER, CAPTCHA_SITE_KEY and CAPTCHA_SECRET_KEY to .env and restart."
   },
   "forms": {
     "contact.title": "Contact us",
@@ -82,7 +84,9 @@
     "site.contact_phone": "Contact phone",
     "languages.title": "Languages",
     "languages.enabled": "Enabled languages",
-    "languages.default": "Default language"
+    "languages.default": "Default language",
+    "protection.title": "Protection",
+    "protection.captcha": "Captcha on forms and sign-up"
   },
   "mail": {
     "verify_email.subject": "Confirm your email for {site}",

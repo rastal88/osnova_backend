@@ -66,7 +66,7 @@ async def test_moderator_reads_but_cannot_change(auth_client):
 
     response = await client.get("/api/v1/admin/settings")
     assert response.status_code == 200, response.text
-    assert [group["name"] for group in response.json()] == ["site", "languages"]
+    assert [group["name"] for group in response.json()] == ["site", "languages", "protection"]
 
     response = await client.put("/api/v1/admin/settings/site", json={"name": "New"})
     assert response.status_code == 403

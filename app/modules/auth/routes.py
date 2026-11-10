@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.config import config
+from app.core.captcha import require_captcha
 from app.modules.auth.account import account_router
 from app.modules.auth.backend import auth_backend, fastapi_users
 from app.modules.auth.limits import limited, limiter  # noqa: F401  limiter: reset by tests
@@ -17,7 +18,9 @@ auth_router.include_router(
 )
 
 auth_router.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate), tags=["auth"], dependencies=limited
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    tags=["auth"],
+    dependencies=[*limited, Depends(require_captcha)],
 )
 
 auth_router.include_router(
