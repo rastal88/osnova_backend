@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     # Submissions per client IP and form, e.g. "5/minute" (empty: no limit)
     FORMS_RATE_LIMIT: str = "5/minute"
 
+    # Captcha on forms and sign-up (app/core/captcha.py): empty turns it off;
+    # "turnstile" is Cloudflare Turnstile and needs both keys
+    CAPTCHA_PROVIDER: Literal["", "turnstile"] = ""
+    CAPTCHA_SITE_KEY: str | None = None
+    CAPTCHA_SECRET_KEY: str | None = None
+
     # Database module: enabled when DATABASE_URL is set
     DATABASE_URL: str | None = None
     DB_ECHO: bool = False

@@ -29,6 +29,11 @@ All notable changes are documented here. The format follows
   lists (search, filters, sort) and stream every matching row; leads get a column per form
   field. `app/core/csv_export.py`: UTF-8 with a BOM, `;` or `,` by the request language
   (`delimiter` overrides), protection from spreadsheet formulas in the values.
+- Optional captcha (`app/core/captcha.py`): `CAPTCHA_PROVIDER=turnstile` (Cloudflare Turnstile)
+  with `CAPTCHA_SITE_KEY` / `CAPTCHA_SECRET_KEY` protects `POST /forms/{name}` and
+  `POST /auth/register` (token in `X-Captcha-Token`, 400 `captcha_failed`); `/bootstrap`
+  `captcha` tells the frontend. Off by default; root switches it in Admin → Settings →
+  Protection, and switching on without the keys is refused with a message.
 
 ### Changed
 - **Security:** `PATCH /auth/users/me` no longer changes the password or the email (it did

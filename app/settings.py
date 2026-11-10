@@ -9,6 +9,7 @@ secrets and capability flags stay in .env (app/config.py): they need a restart.
 from pydantic import Field
 
 from app.config import config
+from app.core.captcha import ProtectionSettings
 from app.core.languages import LanguageSettings
 from app.core.settings import OptionalEmail, OptionalPhone, SettingsGroup
 
@@ -21,4 +22,4 @@ class SiteSettings(SettingsGroup):
     contact_phone: OptionalPhone = ""
 
 
-GROUPS: tuple[type[SettingsGroup], ...] = (SiteSettings, LanguageSettings)
+GROUPS: tuple[type[SettingsGroup], ...] = (SiteSettings, LanguageSettings, ProtectionSettings)

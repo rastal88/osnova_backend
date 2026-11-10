@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.config import config
 from app.core.capabilities import capabilities, oauth_providers
+from app.core.captcha import captcha_active
 from app.core.languages import get_languages
 from app.core.settings import settings
 from app.settings import SiteSettings
@@ -34,6 +35,12 @@ class BootstrapFeatures(BaseModel):
     background_tasks: bool
 
 
+class BootstrapCaptcha(BaseModel):
+    provider: Literal["turnstile"]
+    # Public key for the widget
+    site_key: str
+
+
 class BootstrapResponse(BaseModel):
     application: BootstrapApplication
     profile: Literal["minimal", "standard", "scalable"]
@@ -43,6 +50,8 @@ class BootstrapResponse(BaseModel):
     auth_providers: list[str]
     # Interactive API docs are served at /docs (only with DEBUG)
     api_docs: bool
+    # Set when forms and sign-up need a captcha token (app/core/captcha.py)
+    captcha: BootstrapCaptcha | None = None
 
 
 def get_bootstrap_config() -> BootstrapResponse:
@@ -71,4 +80,9 @@ def get_bootstrap_config() -> BootstrapResponse:
         ),
         auth_providers=oauth_providers(config),
         api_docs=config.DEBUG,
+        captcha=(
+            BootstrapCaptcha(provider=config.CAPTCHA_PROVIDER, site_key=config.CAPTCHA_SITE_KEY)
+            if captcha_active()
+            else None
+        ),
     )

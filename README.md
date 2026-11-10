@@ -332,6 +332,7 @@ listed with comments in [`.env.example`](.env.example).
 | `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
 | `FORMS_DELIVERY`, `FORMS_FILE` | Form delivery stub: `log`, or `file` (also JSON lines in `FORMS_FILE`); with the admin, submissions are also stored as leads |
 | `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables |
+| `CAPTCHA_PROVIDER`, `CAPTCHA_SITE_KEY`, `CAPTCHA_SECRET_KEY` | Captcha on forms and sign-up: empty provider is off, `turnstile` is Cloudflare Turnstile with its two keys |
 | `DATABASE_URL`, `DB_ECHO` | Database (turns on the `db` module), SQL logging |
 | `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth: at least 32 characters, not the example value, or the app does not start) |
 | `AUTH_RATE_LIMIT` | Requests per client IP to each of sign-in, sign-up, password reset and email confirmation, e.g. `10/minute`; empty disables |
@@ -443,6 +444,16 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
   Docker). Another rule: `cleanup.py` in the module with `async def cleanup(session) -> int`
   and an entry in `JOBS` (`app/modules/db/cleanup.py`).
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
+- **Captcha (optional):** set `CAPTCHA_PROVIDER=turnstile` with `CAPTCHA_SITE_KEY` and
+  `CAPTCHA_SECRET_KEY` (Cloudflare dashboard → Turnstile; test keys are in `.env.example`).
+  `/bootstrap` then has `captcha: {provider, site_key}`, and `POST /forms/{name}` and
+  `POST /auth/register` need the widget's token in the `X-Captcha-Token` header (400
+  `captcha_failed` otherwise). The honeypot and rate limits stay. Root switches it off and on
+  without a restart in Admin → Settings → Protection (the keys stay in `.env`; switching on
+  without them is refused with a message). If Cloudflare cannot be reached, requests are let
+  through with a warning in the log. Protect another endpoint with
+  `Depends(require_captcha)`; another provider is a function in `PROVIDERS`
+  (`app/core/captcha.py`).
 - **Add a setting the owner can change:** a field (with a default) in a group in
   `app/settings.py`, or a new `SettingsGroup` added to `GROUPS`; labels in the `settings`
   section of `app/core/locales/*.json`. No migration and no frontend code: the admin form

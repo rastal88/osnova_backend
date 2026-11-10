@@ -145,8 +145,8 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] Sign out everywhere: sessions end after a password change or on request (JWT and Redis) *(be, fe)*
 - [x] Scheduled tasks: Celery beat in Compose; cleanup example (old notifications, never confirmed accounts) *(be)*
 - [x] HTML email layout (site name, button link) with the text version kept *(be)*
-- [~] CSV export of leads and users from the admin tables, with the current filters *(be, fe)* — backend done
-- [ ] Optional captcha for forms next to the honeypot (an interface, e.g. Cloudflare Turnstile; off by default) *(be, fe)*
+- [x] CSV export of leads and users from the admin tables, with the current filters *(be, fe)*
+- [~] Optional captcha for forms and sign-up next to the honeypot (Cloudflare Turnstile behind an interface; off by default, switched in the admin) *(be, fe)* — backend done
 
 ## Permissions (`v0.4.0`)
 - [ ] Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
@@ -156,6 +156,8 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [ ] Move the fixed roles (`root`, `moderator`, `user`) to the new model without breaking
   existing projects
 - [ ] Audit log of admin actions (who, what, when), shown in the admin
+- [ ] Decide what is configured in `.env` and what in the admin settings; access to areas of
+  the settings by permission
 
 ## Production and scalable (`v0.5.0`)
 - [ ] Security headers in nginx (HSTS, CSP, X-Frame-Options, Referrer-Policy) *(fe)*
