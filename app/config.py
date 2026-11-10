@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     APP_PROFILE: Literal["minimal", "standard", "scalable"] = "minimal"
     APP_HOST: str = "localhost"
     APP_PORT: int = 8000
+    # Development mode: serves /docs, /redoc and /openapi.json
     DEBUG: bool = False
 
     # Capabilities: each flag turns on a module from app/modules (see app/core/modules.py)
@@ -41,6 +42,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     AUTH_STRATEGY: Literal["jwt", "redis"] = "jwt"
     COOKIE_SECURE: bool = False
+    # Requests per client IP to each of sign-in, sign-up, password reset and email
+    # confirmation, e.g. "10/minute" (empty: no limit)
+    AUTH_RATE_LIMIT: str = "10/minute"
     # Sign-in with Google: both set turns it on. Authorized redirect URI in Google Cloud:
     # <FRONTEND_URL>/oauth/google/callback
     GOOGLE_CLIENT_ID: str | None = None

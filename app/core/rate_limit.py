@@ -10,6 +10,10 @@ import math
 import time
 from collections import deque
 
+from starlette.requests import Request
+
+from app.core.errors import AppError
+
 PERIODS: dict[str, int] = {"second": 1, "minute": 60, "hour": 3600, "day": 86400}
 # Keys whose hits have all expired are dropped once there are this many
 CLEANUP_AT = 10_000
@@ -55,3 +59,18 @@ class RateLimiter:
     def _cleanup(self, now: float):
         for key in [key for key, hits in self.hits.items() if hits[-1] <= now - self.window]:
             del self.hits[key]
+
+
+def client_address(request: Request) -> str:
+    # Behind a proxy the client address is correct only with uvicorn
+    # --proxy-headers and FORWARDED_ALLOW_IPS set to the proxy address
+    return request.client.host if request.client else "unknown"
+
+
+def check_limit(limiter: RateLimiter | None, key: str) -> None:
+    """Count a hit for `key`; over the limit raises 429 with Retry-After."""
+    if limiter is None:
+        return
+    retry_after = limiter.hit(key)
+    if retry_after is not None:
+        raise AppError(429, "too_many_requests", headers={"Retry-After": str(retry_after)})

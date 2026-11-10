@@ -12,8 +12,22 @@ from app.config import config
 from app.modules.auth.manager import get_user_manager
 from app.modules.auth.models import User
 
-if not config.SECRET_KEY:
-    raise RuntimeError("Auth module requires SECRET_KEY")
+MIN_SECRET_LENGTH = 32
+# Values from the docs that must never sign real tokens
+PLACEHOLDER_SECRETS = {"change-me"}
+
+
+def check_secret_key(value: str | None) -> None:
+    if not value:
+        raise RuntimeError("Auth module requires SECRET_KEY")
+    if value in PLACEHOLDER_SECRETS or len(value) < MIN_SECRET_LENGTH:
+        raise RuntimeError(
+            f"SECRET_KEY is the example value or shorter than {MIN_SECRET_LENGTH} characters. "
+            'Generate one: python -c "import secrets; print(secrets.token_urlsafe(48))"'
+        )
+
+
+check_secret_key(config.SECRET_KEY)
 
 lifetime_seconds = config.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 

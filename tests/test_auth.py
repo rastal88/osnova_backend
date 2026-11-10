@@ -119,3 +119,35 @@ async def test_create_superuser_gets_root_role(auth_client):
     login = await _login(client, "root@example.com", "password123")
     assert login.status_code == 204, login.text
     assert (await client.get("/api/v1/auth/users/me")).json()["role"] == "root"
+
+
+@pytest.mark.anyio
+async def test_sign_in_is_rate_limited(auth_client):
+    client, _ = auth_client
+    for _ in range(10):
+        assert (await _login(client, "nobody@example.com", "password123")).status_code == 400
+    response = await _login(client, "nobody@example.com", "password123")
+    assert response.status_code == 429
+    assert response.json()["code"] == "too_many_requests"
+    assert int(response.headers["Retry-After"]) > 0
+    # Other endpoints count on their own
+    response = await client.post("/api/v1/auth/forgot-password", json={"email": "a@example.com"})
+    assert response.status_code == 202
+
+
+@pytest.mark.parametrize("value", [None, "", "change-me", "short-key"])
+def test_weak_secret_key_stops_the_start(value):
+    from app.modules.auth.backend import check_secret_key
+
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        check_secret_key(value)
+    check_secret_key("x" * 32)
+
+
+def test_manage_py_keeps_createroot_as_a_command():
+    from typer.testing import CliRunner
+
+    from manage import app as cli
+
+    result = CliRunner().invoke(cli, ["createroot", "--help"])
+    assert result.exit_code == 0, result.output

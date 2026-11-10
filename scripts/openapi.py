@@ -27,7 +27,7 @@ ENV = {
     "AUTH_STRATEGY": "jwt",
     # Only to load the modules: nothing connects while the schema is built
     "DATABASE_URL": "postgresql+asyncpg://osnova:osnova@localhost/osnova",
-    "SECRET_KEY": "openapi-export",
+    "SECRET_KEY": "openapi-export-not-a-real-secret-key",
     # So the OAuth routes are in the schema
     "GOOGLE_CLIENT_ID": "openapi-export",
     "GOOGLE_CLIENT_SECRET": "openapi-export",

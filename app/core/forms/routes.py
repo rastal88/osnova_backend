@@ -18,7 +18,7 @@ from app.core.forms.schema import (
     describe,
 )
 from app.core.i18n import get_language, translate
-from app.core.rate_limit import RateLimiter, parse_limit
+from app.core.rate_limit import RateLimiter, check_limit, client_address, parse_limit
 from app.forms import FORMS
 
 logger = logging.getLogger(__name__)
@@ -38,17 +38,6 @@ def _get_form(name: str) -> Form:
     return form
 
 
-def _check_rate_limit(form: Form, request: Request):
-    if limiter is None:
-        return
-    # Behind a proxy the client address is correct only with uvicorn
-    # --proxy-headers and FORWARDED_ALLOW_IPS set to the proxy address
-    client = request.client.host if request.client else "unknown"
-    retry_after = limiter.hit(f"{form.name}:{client}")
-    if retry_after is not None:
-        raise AppError(429, "too_many_requests", headers={"Retry-After": str(retry_after)})
-
-
 @forms_router.get("/{name}")
 async def get_form(name: str) -> FormDescription:
     return describe(_get_form(name))
@@ -59,7 +48,7 @@ async def submit_form(
     request: Request, name: str, payload: dict[str, Any] = Body(...)
 ) -> FormSubmitResponse:
     form = _get_form(name)
-    _check_rate_limit(form, request)
+    check_limit(limiter, f"{form.name}:{client_address(request)}")
     success = FormSubmitResponse(message=translate(f"forms.{form.name}.success"))
 
     if payload.pop(HONEYPOT_FIELD, None):

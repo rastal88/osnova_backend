@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import smtplib
 import ssl
@@ -53,11 +54,26 @@ def deliver(message: EmailMessage) -> None:
     BACKENDS[config.MAIL_BACKEND](message)
 
 
-async def _in_thread(message: EmailMessage) -> None:
-    await run_in_threadpool(deliver, message)
+# Keeps background sends alive until they finish
+_running: set[asyncio.Task] = set()
 
 
-_dispatcher: Dispatcher = _in_thread
+async def _deliver_logged(message: EmailMessage) -> None:
+    try:
+        await run_in_threadpool(deliver, message)
+    except Exception:
+        logger.exception("Could not send email to %s", message.to)
+
+
+async def _in_background(message: EmailMessage) -> None:
+    """Send in a thread without waiting: a slow mail server does not delay the response,
+    and the response time does not tell whether an email was sent (password reset)."""
+    task = asyncio.create_task(_deliver_logged(message))
+    _running.add(task)
+    task.add_done_callback(_running.discard)
+
+
+_dispatcher: Dispatcher = _in_background
 
 
 def use_dispatcher(dispatcher: Dispatcher) -> None:

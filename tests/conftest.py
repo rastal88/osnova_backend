@@ -129,6 +129,8 @@ def reset_settings():
 @pytest.fixture(autouse=True)
 def reset_rate_limits():
     from app.core.forms.routes import limiter
+    from app.modules.auth.routes import limiter as auth_limiter
 
-    if limiter is not None:
-        limiter.hits.clear()
+    for item in (limiter, auth_limiter):
+        if item is not None:
+            item.hits.clear()

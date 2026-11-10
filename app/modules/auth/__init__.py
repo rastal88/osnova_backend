@@ -9,8 +9,23 @@ from fastapi import FastAPI
 
 
 def register(app: FastAPI):
+    import logging
+
+    from httpx_oauth.exceptions import HTTPXOAuthError
+
+    from app.core.errors import error_response
+
     from .backend import redis
     from .routes import auth_router
+
+    async def oauth_provider_error(request, exc: HTTPXOAuthError):
+        # E.g. the provider refused the token: the user can try again, it is not our 500
+        response = getattr(exc, "response", None)
+        detail = response.text[:300] if response is not None else ""
+        logging.getLogger(__name__).warning("OAuth provider error: %s %s", exc, detail)
+        return error_response(400, "oauth_provider_error")
+
+    app.add_exception_handler(HTTPXOAuthError, oauth_provider_error)
 
     if redis is not None:
         from app.core.readiness import add_check

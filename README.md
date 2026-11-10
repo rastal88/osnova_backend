@@ -241,7 +241,7 @@ make dev-all              # API + frontend dev server; Ctrl+C stops both
 ```
 
 - Frontend: `http://localhost:5173`
-- API: `http://localhost:8000/api/v1`, docs at `http://localhost:8000/docs`
+- API: `http://localhost:8000/api/v1`, docs at `http://localhost:8000/docs` (with `DEBUG=true`)
 
 `make dev` starts only the API (host and port from `APP_HOST` / `APP_PORT`). For the
 minimal profile alone `pip install -r requirements/base.txt` is enough.
@@ -251,7 +251,7 @@ minimal profile alone `pip install -r requirements/base.txt` is enough.
 ```bash
 # .env: DATABASE_URL=postgresql+asyncpg://osnova:osnova@localhost:5432/osnova
 #       AUTH_ENABLED=true, SECRET_KEY=<long random value>
-alembic upgrade head          # one initial migration: migrations/versions/0001_initial_schema.py
+alembic upgrade head          # every migration in migrations/versions
 python manage.py createroot   # first user with the root role
 ```
 
@@ -267,8 +267,13 @@ python manage.py createroot   # first user with the root role
    and restart. `/bootstrap` then lists `"google"` in `auth_providers`, and the sign-in page
    shows the button.
 
+No Google API has to be enabled: the email comes from the OpenID Connect userinfo
+endpoint, and only an email Google has confirmed is accepted.
+
 A new Google user gets an account with a confirmed email; an existing account with the
-same email is linked. Another provider: a client from `httpx_oauth.clients` in
+same email is linked. If that account never confirmed its email (anyone can sign up with
+someone else's address), it is taken over: it gets a new random password, so the one typed
+at sign-up stops working. Another provider: a client from `httpx_oauth.clients` in
 `app/modules/auth/oauth.py` and its keys in `app/config.py`.
 
 ---
@@ -321,14 +326,15 @@ listed with comments in [`.env.example`](.env.example).
 | Variable | Purpose |
 |---|---|
 | `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version, profile (`minimal` / `standard` / `scalable`); a mismatch with the setup is logged as a warning at start |
-| `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address, debug mode |
+| `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address; `DEBUG=true` serves `/docs`, `/redoc` and `/openapi.json` (off in production) |
 | `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
 | `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`); initial values, changed later in Admin → Settings |
 | `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
 | `FORMS_DELIVERY`, `FORMS_FILE` | Form delivery stub: `log`, or `file` (also JSON lines in `FORMS_FILE`); with the admin, submissions are also stored as leads |
 | `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables |
 | `DATABASE_URL`, `DB_ECHO` | Database (turns on the `db` module), SQL logging |
-| `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth) |
+| `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth: at least 32 characters, not the example value, or the app does not start) |
+| `AUTH_RATE_LIMIT` | Requests per client IP to each of sign-in, sign-up, password reset and email confirmation, e.g. `10/minute`; empty disables |
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (both set turns it on) |
 | `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
@@ -349,7 +355,7 @@ cookie consent), `POSTGRES_*`, `RUN_MIGRATIONS`, `FORWARDED_ALLOW_IPS`.
 
 ## API
 
-Prefix `/api/v1`. The full schema is in [`openapi.json`](openapi.json) and at `/docs`.
+Prefix `/api/v1`. The full schema is in [`openapi.json`](openapi.json) and at `/docs` (`DEBUG=true`).
 Errors share one format: `{ code, message, fields?, request_id? }`, with `message` in the
 user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 

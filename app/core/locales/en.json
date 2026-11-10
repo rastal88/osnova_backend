@@ -33,6 +33,7 @@
     "oauth_not_available_email": "The provider did not share your email address.",
     "oauth_user_already_exists": "An account with this email already exists.",
     "oauth_invalid_state": "The sign-in link has expired or was opened in another browser. Please try again.",
+    "oauth_provider_error": "Could not sign in with the provider. Please try again.",
     "access_token_decode_error": "The sign-in could not be confirmed. Please try again.",
     "access_token_already_expired": "The sign-in took too long. Please try again."
   },
