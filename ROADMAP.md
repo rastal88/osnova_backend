@@ -130,10 +130,20 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 ### S8. Release — after all
 - [x] Docs per profile; scalable profile: documented differences, readiness check (`/ready`)
 - [x] `make migrate` / `make createroot` for Docker; CORS headers on 500 responses
+- [x] Pre-release review: safe Google account linking, `SECRET_KEY` check, auth rate limits, background email, no personal data in logs, docs only with `DEBUG`
+- [ ] Pre-release review *(fe)*: nginx client IP and upload size; admin menu (Settings → General / Channels, Users under Overview); Client area opens Home, client dashboard removed
 - [ ] Release checklist (by hand, needs the owner's accounts):
   - [ ] Telegram: a real bot in Admin → Channels — **Test**, then a form submission arrives
   - [ ] Google: a real OAuth client — sign up a new user, sign in to an existing account by email
 - [ ] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
+
+## Next: permissions (`v0.3.0`)
+- Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
+  on the backend and one helper on the frontend, instead of role lists in the code
+- Roles as sets of permissions, edited in the admin; `root` keeps every permission
+- User groups: assign roles to a group, users get the roles of their groups
+- Migrate the fixed roles (`root`, `moderator`, `user`) to the new model without breaking
+  existing projects
 
 ## Later
 - All documentation, instructions and code comments in English (done for the backend)

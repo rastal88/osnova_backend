@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from urllib.parse import urlencode
 
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, InvalidPasswordException, UUIDIDMixin
+from fastapi_users import BaseUserManager, InvalidPasswordException, UUIDIDMixin, exceptions
 from starlette.responses import Response
 
 from app.config import config
@@ -74,6 +74,54 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
     async def on_after_reset_password(self, user: User, request: Request | None = None):
         logger.info("User %s has reset their password.", user.id)
+
+    async def oauth_callback(
+        self,
+        oauth_name: str,
+        access_token: str,
+        account_id: str,
+        account_email: str,
+        *args,
+        associate_by_email: bool = False,
+        **kwargs,
+    ) -> User:  # type: ignore[override]
+        """Sign-in with a provider (app/modules/auth/oauth.py).
+
+        Anyone can register an email they do not own, so an account whose email is not
+        confirmed is not simply linked: the provider has proved who owns the address,
+        so that account gets a new random password (the one typed at sign-up stops
+        working) and a confirmed email.
+        """
+        if associate_by_email:
+            try:
+                await self.get_by_oauth_account(oauth_name, account_id)
+            except exceptions.UserNotExists:
+                try:
+                    user = await self.get_by_email(account_email)
+                except exceptions.UserNotExists:
+                    pass
+                else:
+                    if not user.is_verified:
+                        password = self.password_helper.generate()
+                        await self.user_db.update(
+                            user,
+                            {
+                                "hashed_password": self.password_helper.hash(password),
+                                "is_verified": True,
+                            },
+                        )
+                        logger.info(
+                            "User %s: unconfirmed account taken over by %s", user.id, oauth_name
+                        )
+        return await super().oauth_callback(
+            oauth_name,
+            access_token,
+            account_id,
+            account_email,
+            *args,
+            associate_by_email=associate_by_email,
+            **kwargs,
+        )
 
     async def create_superuser(self, user_data: dict) -> User:
         """

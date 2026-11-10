@@ -1,4 +1,6 @@
+import asyncio
 import logging
+import threading
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -79,12 +81,40 @@ async def test_send_mail_logs_failures(caplog):
     async def broken(message):
         raise ConnectionError("mail server is down")
 
+    previous = sending._dispatcher
     use_dispatcher(broken)
     try:
         with caplog.at_level(logging.ERROR):
             await send_mail(EmailMessage(to="a@example.com", subject="Hi", text="Body"))
     finally:
-        use_dispatcher(sending._in_thread)
+        use_dispatcher(previous)
+    assert "Could not send email to a@example.com" in caplog.text
+
+
+@pytest.mark.anyio
+async def test_without_queue_mail_is_sent_after_returning(monkeypatch, caplog):
+    sent: list[EmailMessage] = []
+    release = threading.Event()
+
+    def slow(message: EmailMessage) -> None:
+        release.wait(5)
+        sent.append(message)
+
+    monkeypatch.setitem(sending.BACKENDS, "console", slow)
+    message = EmailMessage(to="a@example.com", subject="Hi", text="Body")
+    await sending._in_background(message)
+    assert sent == []  # returned before the mail server answered
+    release.set()
+    await asyncio.gather(*sending._running)
+    assert sent == [message]
+
+    def broken(message: EmailMessage) -> None:
+        raise ConnectionError("down")
+
+    monkeypatch.setitem(sending.BACKENDS, "console", broken)
+    with caplog.at_level(logging.ERROR):
+        await sending._in_background(message)
+        await asyncio.gather(*sending._running)
     assert "Could not send email to a@example.com" in caplog.text
 
 

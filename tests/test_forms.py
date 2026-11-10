@@ -3,7 +3,7 @@ import json
 import pytest
 
 from app.config import config
-from app.core.forms import Form, FormField
+from app.core.forms import Form, FormField, delivery
 from app.core.forms.schema import build_model
 from app.core.i18n import catalogs, translate
 from app.forms import FORMS
@@ -67,7 +67,9 @@ async def test_unknown_form(client):
 
 
 @pytest.mark.anyio
-async def test_submit_valid_form(client, caplog):
+async def test_submit_valid_form(client, caplog, monkeypatch):
+    # Without receivers (minimal profile) the log is where submissions go
+    monkeypatch.setattr(delivery, "receivers", [])
     caplog.set_level("INFO", logger="app.core.forms.delivery")
     response = await client.post(
         "/api/v1/forms/contact", json={**VALID, "name": "  Ann  ", "extra": "x"}, headers=RU
@@ -79,6 +81,16 @@ async def test_submit_valid_form(client, caplog):
     assert record["form"] == "contact"
     assert record["language"] == "ru"
     assert record["data"] == {**VALID, "name": "Ann"}
+
+
+@pytest.mark.anyio
+async def test_stored_submission_keeps_personal_data_out_of_the_log(client, caplog):
+    caplog.set_level("INFO", logger="app.core.forms.delivery")
+    response = await client.post("/api/v1/forms/contact", json=VALID)
+    assert response.status_code == 200
+    [message] = [r.getMessage() for r in caplog.records if r.name == "app.core.forms.delivery"]
+    assert message.startswith("Form submitted: contact (handed to")
+    assert VALID["email"] not in message
 
 
 @pytest.mark.anyio

@@ -37,3 +37,10 @@ def test_openapi_json_is_up_to_date():
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.anyio
+async def test_docs_are_served_in_debug(client):
+    # The test session runs with DEBUG=true; without it see test_modules.py
+    assert (await client.get("/docs")).status_code == 200
+    assert (await client.get("/openapi.json")).status_code == 200

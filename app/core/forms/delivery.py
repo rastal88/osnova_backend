@@ -3,7 +3,8 @@
 Every submission goes to the stub FORMS_DELIVERY: "log" writes it to the
 application log, "file" also appends it to FORMS_FILE as one JSON line.
 Modules add receivers (``add_receiver``): with the admin, the leads module
-stores submissions in the database and delivers them to the configured channels.
+stores submissions in the database and delivers them to the configured channels;
+then the log gets only the form name, so personal data stays out of the logs.
 """
 
 import json
@@ -25,6 +26,9 @@ Receiver = Callable[[dict, Request], Awaitable[None]]
 
 
 def _log(record: dict) -> None:
+    if receivers:
+        logger.info("Form submitted: %s (handed to %d receivers)", record["form"], len(receivers))
+        return
     logger.info("Form submitted: %s", json.dumps(record, ensure_ascii=False))
 
 

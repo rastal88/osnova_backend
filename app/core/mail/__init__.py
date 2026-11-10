@@ -7,10 +7,11 @@ app/core/locales/*.json, in the request language) and send it with
 - ``console`` (default): the message is written to the log — for development;
 - ``smtp``: sent through SMTP_HOST (standard library, no extra packages).
 
-By default ``send_mail`` sends in a thread; with the background tasks module it
-puts the message on the Celery queue instead (see app/modules/tasks), so a slow
-mail server never delays a response. Failures are logged, not raised: a reset or
-verification request must not fail because the mail server is down.
+By default ``send_mail`` starts sending in a thread and returns at once; with the
+background tasks module it puts the message on the Celery queue instead (see
+app/modules/tasks), which also retries. Either way a slow mail server never delays
+a response. Failures are logged, not raised: a reset or verification request must
+not fail because the mail server is down.
 """
 
 from app.core.mail.message import EmailMessage, render_mail

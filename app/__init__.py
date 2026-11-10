@@ -21,10 +21,15 @@ def create_app() -> FastAPI:
         for hook in reversed(shutdown_hooks):
             await hook()
 
+    # Interactive docs and the schema only in development: in production they map the API
+    docs = config.DEBUG
     app = FastAPI(
         title=config.APP_NAME,
         version=config.APP_VERSION,
         lifespan=lifespan,
+        docs_url="/docs" if docs else None,
+        redoc_url="/redoc" if docs else None,
+        openapi_url="/openapi.json" if docs else None,
     )
     add_middlewares(app)
     add_exception_handlers(app)

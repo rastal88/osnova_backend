@@ -10,6 +10,11 @@ from app.modules.db import get_async_session
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
+@app.callback()
+def main():
+    """Project commands: python manage.py <command> --help"""
+
+
 @app.command()
 def createroot(
     email: str = typer.Option(..., "--email", prompt=True, help="Email app's root"),
@@ -35,11 +40,6 @@ def createroot(
                 typer.echo(f"✅ Root {user.email} has been successfully created.")
 
     asyncio.run(_create_superuser())
-
-
-@app.command()
-def hello(name: str):
-    print(f"Hello {name}")
 
 
 if __name__ == "__main__":
