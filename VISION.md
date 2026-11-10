@@ -1,7 +1,7 @@
 # Osnova — what we are building
 
-> Agreed on 2026-11-07. It is the reference for the roadmap stages; [ROADMAP.md](ROADMAP.md)
-> tracks their status.
+> Agreed on 2026-11-07, the road to `v1.0.0` on 2026-11-10. It is the reference for the
+> roadmap stages; [ROADMAP.md](ROADMAP.md) tracks their status.
 
 ## 1. Purpose
 
@@ -13,8 +13,14 @@ the first weeks on layout, languages, forms, auth, admin, Docker and CI.
 **For whom:** a developer or a small team making sites and web applications: a landing
 page or a company site, an internal tool, a client portal, a SaaS with an admin area.
 
-**Done (MVP)** = the `minimal` and `standard` profiles work exactly as the docs say, and
-the template can be shown and offered to others.
+**MVP** (`v0.2.0`, reached) = the `minimal` and `standard` profiles work exactly as the docs
+say, and the template can be shown and offered to others.
+
+**Finished** (`v1.0.0`) = what about 90% of web projects of this kind need is in the template:
+every profile, including `scalable`, works as documented; an account manages itself; access
+is set with permissions; the app is ready for production (security headers, HTTPS, backups,
+error tracking); a new developer starts in minutes. After `v1.0.0` the template changes by
+community contributions and long use, not by a plan (section 8).
 
 ## 2. Principles
 
@@ -139,10 +145,14 @@ Redis, everything stateless (no local files or in-memory state that breaks with 
 - The menu can still be moved to the top or turned off in `src/config/navigation.ts`.
 - The admin area uses the same shell with its own menu.
 
-## 5. Not planned for MVP
+## 5. Not in the template
 
-Payments and cart, search, comments, real-time, CMS, charts, analytics dashboards,
-multi-tenancy, microservices. They can become separate capabilities later.
+Needed by some kinds of projects, not by nearly all of them, so they would only make the
+template heavier: payments and cart, full-text search (tables already search and filter),
+comments, real-time, a CMS or content pages, two-factor sign-in, image processing,
+analytics dashboards, multi-tenancy, microservices. They can become separate modules later,
+from the community or after long use. Reviewed on 2026-11-10: of the "maybe" group only a
+captcha made it in (section 8).
 
 ## 6. Decisions (2026-11-07)
 
@@ -169,3 +179,22 @@ Each stage is a few small PRs; ROADMAP tracks the items.
 | **S6. Files and notifications** | storage interface (local / S3-compatible); in-app notifications with a bell and a channel interface | S1 |
 | **S7. OAuth** | Google sign-in end-to-end, provider list in settings | S1 |
 | **S8. Release** | docs per profile, scalable differences, readiness check, `v0.2.0` | all |
+
+## 8. Road to `v1.0.0` (agreed 2026-11-10)
+
+What almost every project with users needs, then production, then publication. Each stage
+is a release; ROADMAP tracks the items.
+
+| Release | Content | Why it is basic |
+|---|---|---|
+| **`v0.3.0` Account and everyday tools** | change password, email and name; delete the account; sign out everywhere; scheduled tasks (Celery beat) with a cleanup example; HTML email layout; CSV export of leads and users; optional captcha next to the honeypot | a user area without self-service looks unfinished; deleting an account is a legal requirement (GDPR, 152-FZ); every live project collects data to clean and owners export leads to a spreadsheet |
+| **`v0.4.0` Permissions** | permissions as named actions, roles as sets of them edited in the admin, user groups, a smooth move from the fixed roles; an audit log of admin actions | three roles in the code stop fitting as soon as a team grows; "who did this?" comes with the second admin |
+| **`v0.5.0` Production and scalable** | security headers, HTTPS and a deployment guide, database backups (`make backup` / `make restore`), optional error tracking (Sentry when `SENTRY_DSN` is set), JSON logs, the form and auth rate limits in Redis, a check on 3 replicas in CI | every project is deployed; `scalable` is documented and must actually work with replicas |
+| **`v1.0.0` Publication** | all docs in English, a 10-minute quick start, `make strip` to remove unused modules, a demo (screenshots or a stand), a Docker smoke test of the whole stack in CI, an upgrade guide between versions, semver stability promise | a stranger can take it and trust it |
+
+Weight stays a rule for every stage: no new heavy dependency is loaded for a capability
+that is off; optional integrations (Sentry, captcha) are installed only when used.
+
+**After `v1.0.0`:** fixes, dependency updates and modules from section 5 when the community
+or real projects ask for them.
+
