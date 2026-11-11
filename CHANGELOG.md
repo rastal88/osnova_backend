@@ -29,6 +29,8 @@ All notable changes are documented here. The format follows
 - Access checks ask for permissions instead of role lists. Nothing changes for `root`,
   `moderator` and `user`.
 - The admin area opens with the `admin.access` permission (`areas` in `UserRead`).
+- Captcha: the check waits up to 3 seconds for the provider instead of 5, so an outage on
+  its side delays a form less (the request is still let through).
 
 ### Removed
 - `require_any_role` and `ADMIN_ROLES`: use `require("<permission>")`; `require_admin` stays.

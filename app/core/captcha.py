@@ -33,7 +33,8 @@ from app.core.settings import SettingsGroup, settings
 logger = logging.getLogger(__name__)
 
 HEADER = "X-Captcha-Token"
-TIMEOUT = 5
+# Seconds: when the provider is down, the visitor waits this long before being let through
+TIMEOUT = 3
 # Turnstile tokens are up to 2048 characters
 MAX_TOKEN_LENGTH = 2048
 TURNSTILE_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
