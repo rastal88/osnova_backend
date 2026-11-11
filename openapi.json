@@ -4837,6 +4837,10 @@
           "area_title": {
             "type": "string",
             "title": "Area Title"
+          },
+          "everyone": {
+            "type": "boolean",
+            "title": "Everyone"
           }
         },
         "type": "object",
@@ -4844,7 +4848,8 @@
           "name",
           "title",
           "area",
-          "area_title"
+          "area_title",
+          "everyone"
         ],
         "title": "PermissionRead"
       },

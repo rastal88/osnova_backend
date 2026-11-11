@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
 from app.modules.auth.encryption import EncryptedText
-from app.modules.auth.permissions import all_permissions
+from app.modules.auth.permissions import all_permissions, everyone_permissions
 from app.modules.auth.roles import Role
 from app.modules.db import Base, get_async_session
 
@@ -46,6 +46,15 @@ class RoleRecord(Base):
     permissions: Mapped[list[str]] = mapped_column(JSON, default=list)
     # root, moderator and user (see Role): cannot be deleted
     system: Mapped[bool] = mapped_column(default=False)
+
+
+def role_permissions(role: RoleRecord) -> set[str]:
+    """What a role gives, as stored (also of modules switched off now). The role of
+    every new account gives only permissions meant for everyone: staff permissions
+    stored there by mistake do nothing."""
+    if role.slug == Role.USER:
+        return set(everyone_permissions().intersection(role.permissions))
+    return set(role.permissions)
 
 
 group_roles = Table(
@@ -112,16 +121,22 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
 
     @property
-    def permissions(self) -> frozenset[str]:
-        """What the user may do: the permissions of their role and of the roles of
-        their groups; root may do everything."""
-        if self.role == Role.ROOT:
-            return all_permissions()
-        granted = set(self.role_record.permissions)
+    def held_permissions(self) -> frozenset[str]:
+        """Every permission of their role and of the roles of their groups, also those
+        of modules switched off now (they work again when the module is on)."""
+        held = role_permissions(self.role_record)
         for group in self.groups:
             for role in group.roles:
-                granted.update(role.permissions)
-        return all_permissions().intersection(granted)
+                held.update(role_permissions(role))
+        return frozenset(held)
+
+    @property
+    def permissions(self) -> frozenset[str]:
+        """What the user may do now: the held permissions of the enabled modules; root
+        may do everything."""
+        if self.role == Role.ROOT:
+            return all_permissions()
+        return all_permissions().intersection(self.held_permissions)
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):

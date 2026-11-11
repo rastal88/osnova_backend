@@ -1,11 +1,12 @@
 """Admin → Roles and groups, and giving them to users."""
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.i18n import catalogs
+from app.modules.auth import permissions
 from app.modules.auth.dependencies import users_with_permission
-from app.modules.auth.models import User
+from app.modules.auth.models import RoleRecord, User
 from app.modules.auth.permissions import all_permissions
 from tests.conftest import MODERATOR_PERMISSIONS, create_user, login
 
@@ -52,6 +53,7 @@ async def test_permissions_are_listed_with_texts(auth_client):
         "title": "Просмотр заявок",
         "area": "leads",
         "area_title": "Заявки",
+        "everyone": False,
     }
 
 
@@ -255,3 +257,76 @@ async def test_overview_counts_every_role(auth_client):
     await create_user(session_factory, "ann@example.com", "sales")
     overview = (await client.get(f"{ADMIN}/overview")).json()
     assert overview["users_by_role"] == {"moderator": 0, "root": 1, "user": 0, "sales": 1}
+
+
+async def test_the_sign_up_role_gets_no_staff_permissions(auth_client, monkeypatch):
+    """Everyone gets `user` at sign-up: a person becomes staff with another role or a
+    group, never by changing `user` for all of them."""
+    client, session_factory = await _root(auth_client)
+    await create_user(session_factory, "ann@example.com", "user")
+
+    response = await client.put(f"{ROLES}/user", json={"permissions": ["admin.access"]})
+    assert (response.status_code, response.json()["code"]) == (403, "role_user_staff")
+
+    # Stored there before this rule (or by hand in the database): it does nothing
+    async with session_factory() as session:
+        await session.execute(
+            update(RoleRecord)
+            .where(RoleRecord.slug == "user")
+            .values(permissions=["admin.access", "leads.read"])
+        )
+        await session.commit()
+    async with session_factory() as session:
+        readers = await users_with_permission(session, "leads.read")
+    assert {user.email for user in readers} == {"root@example.com"}
+    roles = {role["slug"]: role for role in (await client.get(ROLES)).json()}
+    assert roles["user"]["permissions"] == []
+
+    await _sign_in(client, "ann@example.com")
+    me = (await client.get(ME)).json()
+    assert (me["permissions"], me["areas"]) == ([], ["user"])
+    assert (await client.get(f"{ADMIN}/overview")).status_code == 403
+
+    # A permission of the user area may be given to everyone
+    monkeypatch.setattr(permissions, "_declared", {*permissions._declared, "files.share"})
+    monkeypatch.setattr(permissions, "_everyone", {"files.share"})
+    await _sign_in(client, "root@example.com")
+    listed = {item["name"]: item for item in (await client.get(f"{ADMIN}/permissions")).json()}
+    assert listed["files.share"]["everyone"] is True
+    assert listed["leads.read"]["everyone"] is False
+    response = await client.put(f"{ROLES}/user", json={"permissions": ["files.share"]})
+    assert response.status_code == 200, response.text
+    assert response.json()["permissions"] == ["files.share"]
+
+
+async def test_permissions_of_switched_off_modules_count(auth_client):
+    """A role keeps the permissions of a module that is off; whoever gives the role
+    must have them too, or it would hand them out once the module is on again."""
+    client, session_factory = await _root(auth_client)
+    manager = ["admin.access", "users.read", "users.roles", "roles.manage"]
+    await client.post(ROLES, json={"name": "Manager", "permissions": manager})
+    async with session_factory() as session:
+        session.add(
+            RoleRecord(slug="archive", name="Archive", permissions=["admin.access", "gone.read"])
+        )
+        await session.commit()
+    await create_user(session_factory, "boss@example.com", "manager")
+    await create_user(session_factory, "ann@example.com", "user")
+    ann = await _id(session_factory, "ann@example.com")
+
+    await _sign_in(client, "boss@example.com")
+    not_allowed = (403, "permission_not_allowed")
+    response = await client.patch(f"{USERS}/{ann}", json={"role": "archive"})
+    assert (response.status_code, response.json()["code"]) == not_allowed
+    response = await client.post(GROUPS, json={"name": "Old", "roles": ["archive"]})
+    assert (response.status_code, response.json()["code"]) == not_allowed
+    response = await client.put(f"{ROLES}/archive", json={"name": "Old archive"})
+    assert (response.status_code, response.json()["code"]) == not_allowed
+
+    # Root has every permission, also those
+    await _sign_in(client, "root@example.com")
+    response = await client.patch(f"{USERS}/{ann}", json={"role": "archive"})
+    assert response.status_code == 200, response.text
+    async with session_factory() as session:
+        stored = await session.get(RoleRecord, "archive")
+    assert stored.permissions == ["admin.access", "gone.read"]

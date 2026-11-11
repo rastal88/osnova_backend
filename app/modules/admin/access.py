@@ -6,9 +6,11 @@ of each user's own role. Everyone in the admin area sees them, changes need
 (``users.roles``).
 
 Rules: nobody hands out more than they have themselves, so a role or a group can
-be created, changed or removed only by someone who has every permission in it;
-root has every permission and is not edited; the three built-in roles are not
-renamed or deleted; a role that users have is not deleted.
+be created, changed or removed only by someone who has every permission in it
+(also those of modules switched off now); root has every permission and is not
+edited; the three built-in roles are not renamed or deleted; a role that users have
+is not deleted; the `user` role, given to every new account, holds no staff
+permissions (only those declared with ``everyone=True``).
 """
 
 import re
@@ -24,8 +26,15 @@ from app.core.errors import AppError
 from app.core.i18n import has_translation, translate
 from app.modules.admin.audit import Audit, audit_action, diff
 from app.modules.auth.dependencies import require
-from app.modules.auth.models import Group, RoleRecord, User, group_roles, user_groups
-from app.modules.auth.permissions import all_permissions, permission
+from app.modules.auth.models import (
+    Group,
+    RoleRecord,
+    User,
+    group_roles,
+    role_permissions,
+    user_groups,
+)
+from app.modules.auth.permissions import all_permissions, everyone_permissions, permission
 from app.modules.auth.roles import Role
 from app.modules.db import get_async_session
 
@@ -49,6 +58,8 @@ class PermissionRead(BaseModel):
     # The part before the dot, to show permissions in sections
     area: str
     area_title: str
+    # May be given to the role of every new account
+    everyone: bool
 
 
 class RoleRead(BaseModel):
@@ -93,14 +104,18 @@ def _text(key: str, fallback: str) -> str:
 
 
 def granted(role: RoleRecord) -> set[str]:
-    """The permissions of a role that exist with the enabled modules."""
+    """The permissions a role gives with the enabled modules (what the admin shows)."""
     if role.slug == Role.ROOT:
         return set(all_permissions())
-    return all_permissions().intersection(role.permissions)
+    return all_permissions().intersection(role_permissions(role))
 
 
 def check_covers(admin: User, permissions: Iterable[str]) -> None:
-    """Nobody hands out, changes or takes away more than they have themselves."""
+    """Nobody hands out, changes or takes away more than they have themselves; stored
+    permissions of modules switched off count too (they work again with the module).
+    Root has every permission, also those."""
+    if admin.role == Role.ROOT:
+        return
     if not admin.permissions.issuperset(permissions):
         raise AppError(403, "permission_not_allowed")
 
@@ -157,6 +172,7 @@ async def list_permissions() -> list[PermissionRead]:
                 title=_text(f"permissions.{name}", name),
                 area=area,
                 area_title=_text(f"permission_areas.{area}", area),
+                everyone=name in everyone_permissions(),
             )
         )
     return result
@@ -211,7 +227,7 @@ async def _editable_role(session: AsyncSession, slug: str, admin: User) -> RoleR
         raise AppError(404, "not_found")
     if role.slug == Role.ROOT:
         raise AppError(403, "role_protected")
-    check_covers(admin, granted(role))
+    check_covers(admin, role_permissions(role))
     return role
 
 
@@ -231,6 +247,9 @@ async def update_role(
         role.name = data.name
     if data.permissions is not None:
         permissions = _known(data.permissions)
+        if role.slug == Role.USER and not permissions <= everyone_permissions():
+            # Everyone gets it at sign-up: staff permissions go to a person instead
+            raise AppError(403, "role_user_staff")
         check_covers(admin, permissions)
         # Permissions of a module that is switched off stay with the role
         hidden = set(role.permissions) - all_permissions()
@@ -275,7 +294,7 @@ def _group_read(group: Group, users: int) -> GroupRead:
 
 def check_covers_roles(admin: User, roles: Iterable[RoleRecord]) -> None:
     for role in roles:
-        check_covers(admin, granted(role))
+        check_covers(admin, role_permissions(role))
 
 
 async def _name_is_free(session: AsyncSession, name: str, group: Group | None = None) -> None:

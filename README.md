@@ -409,7 +409,10 @@ Roles and groups are edited in the admin (`/admin/roles`, `/admin/groups`) and g
 users in Admin → Users.
 
 Nobody hands out more than they have: a role, a group or a user is changed only by someone
-who has every permission involved. `root` is not edited and is assigned only with
+who has every permission involved, also those a role keeps from a module that is switched
+off. The `user` role is given to everyone at sign-up, so it holds no staff permissions (only
+those declared with `permission("...", everyone=True)`): a person becomes staff with
+another role or a group in Admin → Users. `root` is not edited and is assigned only with
 `manage.py createroot`; the built-in roles are not renamed or deleted. A text for a new
 permission goes to the `permissions` and `permission_areas` sections of
 `app/core/locales/*.json` (without it the name is shown).

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
 from app.modules.auth.backend import fastapi_users
-from app.modules.auth.models import RoleRecord, User, group_roles, user_groups
+from app.modules.auth.models import RoleRecord, User, group_roles, role_permissions, user_groups
 from app.modules.auth.permissions import ADMIN_ACCESS, check_declared
 from app.modules.auth.roles import Role
 
@@ -33,7 +33,9 @@ async def users_with_permission(session: AsyncSession, permission: str) -> list[
     """Everyone whose role or group allows the action, e.g. to notify them."""
     check_declared(permission)
     roles = await session.scalars(select(RoleRecord))
-    slugs = {role.slug for role in roles if permission in role.permissions} | {Role.ROOT.value}
+    slugs = {role.slug for role in roles if permission in role_permissions(role)} | {
+        Role.ROOT.value
+    }
     through_groups = (
         select(user_groups.c.user_id)
         .join(group_roles, group_roles.c.group_id == user_groups.c.group_id)
