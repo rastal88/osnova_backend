@@ -14,7 +14,16 @@ All notable changes are documented here. The format follows
 - Table `roles` (migration `0009`): a role is a set of permissions. `root` has every
   permission, `moderator` starts with what it could do before, `user` has none.
 
+- Roles and groups in the admin API: `/admin/roles`, `/admin/groups` (changes need
+  `roles.manage`) and `/admin/permissions` with texts in the request language. A group
+  (migration `0010`) gives its roles to its users on top of their own role.
+- `PATCH /admin/users/{id}` gives any role except root and `groups`; `GET /admin/users` has
+  the `group` filter and returns each user's `groups`.
+- Nobody hands out more than they have: roles, groups and users are changed only by someone
+  who has every permission involved (`permission_not_allowed`).
+
 ### Changed
+- `/admin/overview` counts users for every role of the project, not only the built-in ones.
 - `users.role` is the slug of a role (a string with a foreign key) instead of a database
   enum; migration `0009` converts the stored values. In the API `role` is a string.
 - Access checks ask for permissions instead of role lists. Nothing changes for `root`,
