@@ -83,6 +83,15 @@ All notable changes are documented here. The format follows
   `app.modules.auth.dependencies.users_with_permission`.
 
 ### Fixed
+- **Security:** the `user` role, given to every new account, could get staff permissions in
+  Admin → Roles (e.g. `admin.access`), which would let everyone who signs up into the admin.
+  It now refuses them (`403 role_user_staff`; only permissions declared with
+  `everyone=True`, none in the template), and such permissions stored before do nothing.
+  A person becomes staff with another role or a group, as before.
+- Permissions a role keeps from a module that is switched off were not checked when the role
+  was given or changed, so someone without them could hand them out for later; they count
+  now (root has them all). `User.held_permissions`, `role_permissions(...)`;
+  `GET /admin/permissions` tells which ones are for everyone (`everyone`).
 - The Celery worker and `manage.py cleanup` use the settings saved in the admin (site name
   in emails, mail, retention): the worker loads them before a task, the cleanup before it runs.
 - Email copies of notifications (e.g. a new lead) went out in the language of the request that

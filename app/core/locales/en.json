@@ -41,6 +41,7 @@
     "account_delete_not_confirmed": "Enter your password to delete the account.",
     "captcha_failed": "The check that you are not a robot did not pass. Please try again.",
     "role_protected": "This role cannot be changed, deleted or given this way.",
+    "role_user_staff": "The role every new account gets cannot have staff permissions: give the person another role or a group instead.",
     "role_in_use": "Users have this role. Give them another one first.",
     "role_unknown": "There is no such role.",
     "group_unknown": "There is no such group.",

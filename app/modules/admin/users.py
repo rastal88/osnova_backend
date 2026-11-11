@@ -27,10 +27,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.csv_export import Delimiter, csv_response
 from app.core.errors import AppError
 from app.core.i18n import translate
-from app.modules.admin.access import check_covers, check_covers_roles, granted, roles_by_slug
+from app.modules.admin.access import check_covers, check_covers_roles, roles_by_slug
 from app.modules.admin.audit import Audit, audit_action, diff
 from app.modules.auth.dependencies import require
-from app.modules.auth.models import Group, User, user_groups
+from app.modules.auth.models import Group, User, role_permissions, user_groups
 from app.modules.auth.permissions import permission
 from app.modules.auth.roles import Role
 from app.modules.db import app_session, get_async_session
@@ -226,7 +226,7 @@ async def update_user(
         needed.add(USERS_ROLES)
     if not admin.permissions.issuperset(needed):
         raise AppError(403, "forbidden")
-    check_covers(admin, user.permissions)
+    check_covers(admin, user.held_permissions)
 
     if changes.is_active is not None and changes.is_active != user.is_active:
         user.is_active = changes.is_active
@@ -235,7 +235,7 @@ async def update_user(
     before = {"role": user.role, "groups": sorted(group.name for group in user.groups)}
     if changes.role is not None:
         (role,) = await roles_by_slug(session, [changes.role])
-        check_covers(admin, granted(role))
+        check_covers(admin, role_permissions(role))
         user.role = role.slug
     if changes.groups is not None:
         wanted = set(changes.groups)
