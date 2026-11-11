@@ -95,6 +95,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     last_login: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     # Shown instead of the email where a name reads better; optional
     name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Emails and notifications go in it (app.core.i18n.user_language); empty for
+    # accounts made before it existed: the request language then
+    language: Mapped[str | None] = mapped_column(String(10), nullable=True)
     # Sessions issued before this moment no longer sign in (sign out everywhere,
     # password change); see app/modules/auth/sessions.py
     sessions_valid_after: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

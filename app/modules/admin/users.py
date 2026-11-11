@@ -64,6 +64,7 @@ class AdminUser(BaseModel):
     id: uuid.UUID
     email: str
     name: str | None = None
+    language: str | None = None
     role: str
     # Ids of the groups the user is in
     groups: list[uuid.UUID] = []

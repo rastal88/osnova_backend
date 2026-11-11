@@ -67,6 +67,7 @@
     "bool_type": "Must be true or false.",
     "too_short": "Choose at least {min_length}.",
     "default_language_not_enabled": "The default language must be one of the enabled languages.",
+    "language_not_enabled": "Choose one of the enabled languages.",
     "url_invalid": "Enter an address starting with https:// or http://.",
     "captcha_not_configured": "The captcha keys are not set on the server: add CAPTCHA_PROVIDER, CAPTCHA_SITE_KEY and CAPTCHA_SECRET_KEY to .env and restart."
   },

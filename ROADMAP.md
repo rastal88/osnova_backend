@@ -157,8 +157,9 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] User groups: assign roles to a group, users get the roles of their groups *(be, fe)*
 - [x] Move the fixed roles (`root`, `moderator`, `user`) to the new model without breaking
   existing projects (migration `0009`)
-- [~] Audit log of admin actions (who, what, when), shown in the admin (done: the log and
-  `GET /admin/audit`; the page is in the frontend)
+- [x] Audit log of admin actions (who, what, when), shown in the admin *(be, fe)*
+- [~] The user's language: emails and notifications in it, chosen in the profile (done: the
+  backend; the profile is in the frontend)
 - [ ] Decide what is configured in `.env` and what in the admin settings; access to areas of
   the settings by permission
 

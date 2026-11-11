@@ -3348,6 +3348,17 @@
             ],
             "title": "Name"
           },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "role": {
             "type": "string",
             "title": "Role"
@@ -5033,6 +5044,17 @@
             ],
             "title": "Name"
           },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "permissions": {
             "items": {
               "type": "string"
@@ -5090,12 +5112,23 @@
               }
             ],
             "title": "Name"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "title": "UserUpdate",
-        "description": "PATCH /auth/users/me: only the name. Password and email change through\n/auth/me/*, which ask for the current password."
+        "description": "PATCH /auth/users/me: the name and the language. Password and email change\nthrough /auth/me/*, which ask for the current password."
       },
       "FieldError": {
         "properties": {
