@@ -5,15 +5,19 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.entities import EntityType, entity_types
-from app.core.settings import secret_fields
+from app.core.settings import keep_masked, mask_secrets, secret_fields
+from app.modules.auth.encryption import decrypt_fields, encrypt_fields
 from app.modules.auth.permissions import permission
 from app.modules.entities.models import Entity
 
 # Create, change and delete entities, send a test message through a channel
 ENTITIES_MANAGE = permission("entities.manage")
 
-# Sent instead of a stored secret; sent back unchanged, it keeps the stored value
-SECRET_MASK = "********"
+
+def plain_params(entity: Entity) -> dict[str, Any]:
+    """The stored parameters with secrets decrypted (app/modules/auth/encryption.py)."""
+    model = entity_types.get(entity.type)
+    return decrypt_fields(entity.params, secret_fields(model)) if model else dict(entity.params)
 
 
 def parse_params(entity: Entity) -> EntityType | None:
@@ -22,29 +26,25 @@ def parse_params(entity: Entity) -> EntityType | None:
     if model is None:
         return None
     try:
-        return model.model_validate(entity.params)
+        return model.model_validate(plain_params(entity))
     except ValidationError:
         return None
 
 
 def masked(entity: Entity) -> dict[str, Any]:
+    """Parameters for the API: secrets as SECRET_MASK."""
     model = entity_types.get(entity.type)
-    secrets = secret_fields(model) if model else set()
-    return {
-        key: (SECRET_MASK if key in secrets and value else value)
-        for key, value in entity.params.items()
-    }
+    return mask_secrets(model, entity.params) if model else dict(entity.params)
 
 
 def validate_params(
     model: type[EntityType], params: dict[str, Any], stored: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    """Validated parameters; a masked secret keeps the stored one. Raises ValidationError."""
-    params = dict(params)
-    for key in secret_fields(model):
-        if params.get(key) == SECRET_MASK:
-            params[key] = (stored or {}).get(key, "")
-    return model.model_validate(params).model_dump(mode="json")
+    """Parameters to store: validated, a masked secret keeps the stored one, secrets
+    encrypted. Raises ValidationError."""
+    secrets = secret_fields(model)
+    plain = keep_masked(model, params, decrypt_fields(stored or {}, secrets))
+    return encrypt_fields(model.model_validate(plain).model_dump(mode="json"), secrets)
 
 
 async def enabled_entities(session: AsyncSession, group: str) -> list[tuple[Entity, EntityType]]:

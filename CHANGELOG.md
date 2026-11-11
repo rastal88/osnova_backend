@@ -39,6 +39,18 @@ All notable changes are documented here. The format follows
   admin users list. Old accounts have none and get the request language.
 - `user_language(...)` (`app/core/i18n.py`): the user's own language while it is enabled, else
   the request language.
+- Stored secrets are encrypted: `Secret` parameters of entities (Telegram bot token, webhook
+  secret), `Secret` settings and the OAuth tokens (`access_token`, `refresh_token`). Fernet
+  with a key derived from `SECRET_KEY` (HKDF), stored as `enc:...`; values stored before are
+  read as they are. Migration `0013` encrypts what is already stored (downgrade decrypts).
+  `app/modules/auth/encryption.py`: `encrypt` / `decrypt`, `encrypt_fields` /
+  `decrypt_fields`, the `EncryptedText` column type. New dependency `cryptography` in
+  `requirements/auth.txt` (not in the minimal profile).
+- `OLD_SECRET_KEYS` and `python manage.py rotate-secrets`: change `SECRET_KEY` without losing
+  the stored secrets.
+- `SECRET_MASK`, `mask_secrets`, `keep_masked` in `app.core.settings`: settings `Secret`
+  fields are masked in the admin API like entity secrets, and the mask sent back keeps the
+  stored value.
 
 ### Changed
 - `/admin/overview` counts users for every role of the project, not only the built-in ones.

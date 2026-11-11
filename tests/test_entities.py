@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy import select
 
+from app.modules.auth.encryption import decrypt
 from app.modules.entities.models import Entity
 from tests.conftest import create_user, login
 
@@ -59,11 +60,15 @@ async def test_secrets_are_masked_and_kept(auth_client):
         json={"params": {"bot_token": "********", "chat_id": "-200"}, "enabled": False},
     )
     assert response.status_code == 200, response.text
-    assert await _stored_params(session_factory) == {"bot_token": "123:abc", "chat_id": "-200"}
+    stored = await _stored_params(session_factory)
+    # Stored encrypted (app/modules/auth/encryption.py)
+    assert stored["chat_id"] == "-200"
+    assert stored["bot_token"].startswith("enc:")
+    assert decrypt(stored["bot_token"]) == "123:abc"
 
     new_token = {"params": {"bot_token": "9:z", "chat_id": "1"}}
     await client.put(f"{ENTITIES}/{created['id']}", json=new_token)
-    assert (await _stored_params(session_factory))["bot_token"] == "9:z"
+    assert decrypt((await _stored_params(session_factory))["bot_token"]) == "9:z"
 
     listed = (await client.get(ENTITIES, params={"group": "lead_channels"})).json()
     assert [item["params"]["bot_token"] for item in listed] == ["********"]

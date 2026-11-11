@@ -158,8 +158,9 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] Move the fixed roles (`root`, `moderator`, `user`) to the new model without breaking
   existing projects (migration `0009`)
 - [x] Audit log of admin actions (who, what, when), shown in the admin *(be, fe)*
-- [~] The user's language: emails and notifications in it, chosen in the profile (done: the
-  backend; the profile is in the frontend)
+- [x] The user's language: emails and notifications in it, chosen in the profile *(be, fe)*
+- [x] Stored secrets encrypted (channel tokens, OAuth tokens, secret settings), with a way to
+  change `SECRET_KEY` (`OLD_SECRET_KEYS`, `manage.py rotate-secrets`)
 - [ ] Decide what is configured in `.env` and what in the admin settings; access to areas of
   the settings by permission
 

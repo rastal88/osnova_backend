@@ -222,7 +222,7 @@ osnova_backend/
 ├── docker-compose.yml     # base compose, safe for minimal
 ├── docker-compose.datastores.yml  # adds PostgreSQL + Redis (standard / scalable)
 ├── Makefile               # all commands: make help
-└── manage.py              # CLI: createroot, cleanup
+└── manage.py              # CLI: createroot, cleanup, rotate-secrets
 ```
 
 ---
@@ -335,7 +335,8 @@ listed with comments in [`.env.example`](.env.example).
 | `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables |
 | `CAPTCHA_PROVIDER`, `CAPTCHA_SITE_KEY`, `CAPTCHA_SECRET_KEY` | Captcha on forms and sign-up: empty provider is off, `turnstile` is Cloudflare Turnstile with its two keys |
 | `DATABASE_URL`, `DB_ECHO` | Database (turns on the `db` module), SQL logging |
-| `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth: at least 32 characters, not the example value, or the app does not start) |
+| `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth: at least 32 characters, not the example value, or the app does not start); stored secrets are encrypted with a key derived from `SECRET_KEY` |
+| `OLD_SECRET_KEYS` | Previous `SECRET_KEY` values (comma-separated) while stored secrets are moved to the new one, see [Development](#development) |
 | `AUTH_RATE_LIMIT` | Requests per client IP to each of sign-in, sign-up, password reset and email confirmation, e.g. `10/minute`; empty disables |
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (both set turns it on) |
@@ -492,6 +493,13 @@ permission goes to the `permissions` and `permission_areas` sections of
   (`app/modules/admin/audit.py`), and its text in the `audit` section of
   `app/core/locales/*.json`. Records older than `AUDIT_KEEP_DAYS` (365) go with the nightly
   cleanup.
+- **Stored secrets:** `Secret` fields of entities (channel tokens) and settings, and OAuth
+  tokens are stored encrypted (Fernet, a key derived from `SECRET_KEY`, `enc:` prefix;
+  `app/modules/auth/encryption.py`); APIs send `********` instead and a `********` sent back
+  keeps the stored value. To change `SECRET_KEY`: put the old value into `OLD_SECRET_KEYS`,
+  set the new one, restart, run `python manage.py rotate-secrets`, then empty
+  `OLD_SECRET_KEYS`. Without the old key the secrets are lost (logged, read as empty): enter
+  them again in the admin. Sessions and email links signed with the old key end anyway.
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
 - **Captcha (optional):** set `CAPTCHA_PROVIDER=turnstile` with `CAPTCHA_SITE_KEY` and
   `CAPTCHA_SECRET_KEY` (Cloudflare dashboard → Turnstile; test keys are in `.env.example`).
