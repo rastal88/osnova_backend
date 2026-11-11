@@ -1,7 +1,8 @@
 # Roadmap
 
 Osnova was released in two steps, **minimal** (`v0.1.0`) and **standard** (`v0.2.0`, MVP);
-the road to the finished template (`v1.0.0`) is in [VISION.md](VISION.md#8-road-to-v100-agreed-2026-11-10).
+`v0.3.0` added account self-service and everyday tools. The road to the finished template
+(`v1.0.0`) is in [VISION.md](VISION.md#8-road-to-v100-agreed-2026-11-10).
 
 Legend: `[x]` done · `[~]` partly done · `[ ]` not started.
 Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova_frontend),
@@ -139,14 +140,14 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
   - [x] Google: a real OAuth client — sign up a new user, sign in to an existing account by email
 - [x] `v0.2.0`: versions, changelogs, tags and GitHub releases in both repositories
 
-## Account and everyday tools (`v0.3.0`)
+## Account and everyday tools (`v0.3.0`, released 2026-11-11)
 - [x] Profile: change name, email (confirmed again) and password *(be, fe)*
 - [x] Delete the account with its data (files, notifications); root cannot delete itself *(be, fe)*
 - [x] Sign out everywhere: sessions end after a password change or on request (JWT and Redis) *(be, fe)*
 - [x] Scheduled tasks: Celery beat in Compose; cleanup example (old notifications, never confirmed accounts) *(be)*
 - [x] HTML email layout (site name, button link) with the text version kept *(be)*
 - [x] CSV export of leads and users from the admin tables, with the current filters *(be, fe)*
-- [~] Optional captcha for forms and sign-up next to the honeypot (Cloudflare Turnstile behind an interface; off by default, switched in the admin) *(be, fe)* — backend done
+- [x] Optional captcha for forms and sign-up next to the honeypot (Cloudflare Turnstile behind an interface; off by default, switched in the admin) *(be, fe)*
 
 ## Permissions (`v0.4.0`)
 - [ ] Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
