@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 JOBS: dict[str, str] = {
     "notifications": "app.modules.notifications.cleanup",
     "auth": "app.modules.auth.cleanup",
+    "admin": "app.modules.admin.cleanup",
 }
 
 

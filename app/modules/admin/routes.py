@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.admin.access import access_router
+from app.modules.admin.audit import audit_router
 from app.modules.admin.users import users_router
 from app.modules.auth.dependencies import require_admin
 from app.modules.auth.models import RoleRecord, User
@@ -38,3 +39,4 @@ async def admin_overview(session: AsyncSession = Depends(get_async_session)) -> 
 
 admin_router.include_router(users_router)
 admin_router.include_router(access_router)
+admin_router.include_router(audit_router)

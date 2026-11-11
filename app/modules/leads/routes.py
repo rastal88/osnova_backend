@@ -22,6 +22,7 @@ from app.core.errors import AppError
 from app.core.forms.schema import FormDescription, describe
 from app.core.i18n import get_language, translate
 from app.forms import FORMS
+from app.modules.admin.audit import Audit, audit_action
 from app.modules.auth.dependencies import require
 from app.modules.auth.models import User
 from app.modules.auth.permissions import ADMIN_ACCESS
@@ -36,6 +37,10 @@ logger = logging.getLogger(__name__)
 
 leads_router = APIRouter(dependencies=[Depends(require(ADMIN_ACCESS, LEADS_READ))])
 manage = [Depends(require(LEADS_MANAGE))]
+
+LEADS_UPDATE = audit_action("leads.update")
+LEADS_DELETE = audit_action("leads.delete")
+LEADS_EXPORT_ACTION = audit_action("leads.export")
 
 SORT_COLUMNS = {"created_at": Lead.created_at, "form": Lead.form, "status": Lead.status}
 LeadSort = Literal[tuple(f"{sign}{name}" for name in SORT_COLUMNS for sign in ("", "-"))]  # type: ignore[valid-type]
@@ -203,9 +208,14 @@ async def export_leads(
     status: str | None = Query(None, description="Comma-separated: new, done"),
     delimiter: Delimiter | None = Query(None, description="Default: by the request language"),
     admin: User = Depends(require(LEADS_EXPORT)),
+    audit: Audit = Depends(),
+    session: AsyncSession = Depends(get_async_session),
 ) -> StreamingResponse:
     """Every lead the list shows with this query, as a CSV file: a column per field of
     the chosen forms (all forms without the filter), answers as the visitor saw them."""
+    filters = {"q": q.strip(), "form": form, "status": status}
+    audit(LEADS_EXPORT_ACTION, changes={key: value for key, value in filters.items() if value})
+    await session.commit()
     names = _values(form, tuple(item.name for item in FORMS))
     forms = {item.name: describe(item) for item in FORMS if not names or item.name in names}
     # Field name -> label; forms that share a field name share the column
@@ -269,9 +279,16 @@ async def _get_lead(session: AsyncSession, lead_id: uuid.UUID) -> Lead:
 
 @leads_router.patch("/{lead_id}", dependencies=manage)
 async def update_lead(
-    lead_id: uuid.UUID, changes: LeadUpdate, session: AsyncSession = Depends(get_async_session)
+    lead_id: uuid.UUID,
+    changes: LeadUpdate,
+    audit: Audit = Depends(),
+    session: AsyncSession = Depends(get_async_session),
 ) -> LeadRead:
     lead = await _get_lead(session, lead_id)
+    if lead.status != changes.status:
+        # The form, not the answers: the log keeps no personal data of visitors
+        status = [lead.status, changes.status]
+        audit(LEADS_UPDATE, target_id=lead.id, target=lead.form, changes={"status": status})
     lead.status = changes.status
     await session.commit()
     return LeadRead.model_validate(lead, from_attributes=True)
@@ -279,9 +296,13 @@ async def update_lead(
 
 @leads_router.delete("/{lead_id}", status_code=204, dependencies=manage)
 async def delete_lead(
-    lead_id: uuid.UUID, session: AsyncSession = Depends(get_async_session)
+    lead_id: uuid.UUID,
+    audit: Audit = Depends(),
+    session: AsyncSession = Depends(get_async_session),
 ) -> Response:
     """Removes the submission and its personal data for good."""
-    await session.delete(await _get_lead(session, lead_id))
+    lead = await _get_lead(session, lead_id)
+    await session.delete(lead)
+    audit(LEADS_DELETE, target_id=lead.id, target=lead.form)
     await session.commit()
     return Response(status_code=204)

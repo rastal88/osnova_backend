@@ -7,6 +7,7 @@ from sqlalchemy import select, update
 from typer.testing import CliRunner
 
 from app.config import config
+from app.modules.admin.models import AuditRecord
 from app.modules.auth.models import User
 from app.modules.db import cleanup
 from app.modules.notifications.models import Notification
@@ -59,7 +60,7 @@ async def test_old_read_notifications_are_removed(cleanup_session, monkeypatch):
         )
         await session.commit()
 
-    assert await cleanup.run_cleanup() == {"notifications": 1, "auth": 0}
+    assert await cleanup.run_cleanup() == {"notifications": 1, "auth": 0, "admin": 0}
 
     async with cleanup_session() as session:
         kinds = set(await session.scalars(select(Notification.kind)))
@@ -98,6 +99,29 @@ async def test_never_confirmed_accounts_are_removed_when_asked(cleanup_session, 
 
 
 @pytest.mark.anyio
+async def test_old_audit_records_are_removed(cleanup_session, monkeypatch):
+    async with cleanup_session() as session:
+        session.add_all(
+            [
+                AuditRecord(actor_email="root@example.com", action=action, created_at=_ago(age))
+                for action, age in (("roles.create", 400), ("roles.update", 300))
+            ]
+        )
+        await session.commit()
+
+    assert (await cleanup.run_cleanup())["admin"] == 1
+    async with cleanup_session() as session:
+        assert list(await session.scalars(select(AuditRecord.action))) == ["roles.update"]
+
+    # 0 keeps everything
+    monkeypatch.setattr(config, "AUDIT_KEEP_DAYS", 0)
+    async with cleanup_session() as session:
+        await session.execute(update(AuditRecord).values(created_at=_ago(1000)))
+        await session.commit()
+    assert (await cleanup.run_cleanup())["admin"] == 0
+
+
+@pytest.mark.anyio
 async def test_failed_job_does_not_stop_the_others(cleanup_session, monkeypatch, caplog):
     from app.modules.notifications import cleanup as notifications_cleanup
 
@@ -105,7 +129,7 @@ async def test_failed_job_does_not_stop_the_others(cleanup_session, monkeypatch,
         raise RuntimeError("boom")
 
     monkeypatch.setattr(notifications_cleanup, "cleanup", broken)
-    assert await cleanup.run_cleanup() == {"auth": 0}
+    assert await cleanup.run_cleanup() == {"auth": 0, "admin": 0}
     assert "Cleanup of notifications failed" in caplog.text
 
 

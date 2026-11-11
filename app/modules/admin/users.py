@@ -28,6 +28,7 @@ from app.core.csv_export import Delimiter, csv_response
 from app.core.errors import AppError
 from app.core.i18n import translate
 from app.modules.admin.access import check_covers, check_covers_roles, granted, roles_by_slug
+from app.modules.admin.audit import Audit, audit_action, diff
 from app.modules.auth.dependencies import require
 from app.modules.auth.models import Group, User, user_groups
 from app.modules.auth.permissions import permission
@@ -40,6 +41,11 @@ USERS_READ = permission("users.read")
 USERS_EXPORT = permission("users.export")
 USERS_BLOCK = permission("users.block")
 USERS_ROLES = permission("users.roles")
+
+USERS_BLOCK_ACTION = audit_action("users.block")
+USERS_UNBLOCK_ACTION = audit_action("users.unblock")
+USERS_ACCESS_ACTION = audit_action("users.access")
+USERS_EXPORT_ACTION = audit_action("users.export")
 
 users_router = APIRouter(prefix="/users", dependencies=[Depends(require(USERS_READ))])
 
@@ -162,8 +168,13 @@ async def export_users(
     group: str | None = Query(None, description="Comma-separated group ids"),
     delimiter: Delimiter | None = Query(None, description="Default: by the request language"),
     admin: User = Depends(require(USERS_EXPORT)),
+    audit: Audit = Depends(),
+    session: AsyncSession = Depends(get_async_session),
 ) -> StreamingResponse:
     """Every user the list shows with this query, as a CSV file."""
+    filters = {"q": q.strip(), "role": role, "status": status, "group": group}
+    audit(USERS_EXPORT_ACTION, changes={key: value for key, value in filters.items() if value})
+    await session.commit()
     statement = (
         select(User).where(*_conditions(q, role, status, group)).order_by(_order(sort), User.email)
     )
@@ -196,6 +207,7 @@ async def update_user(
     user_id: uuid.UUID,
     changes: AdminUserUpdate,
     admin: User = Depends(require(USERS_READ)),
+    audit: Audit = Depends(),
     session: AsyncSession = Depends(get_async_session),
 ) -> AdminUser:
     user = await session.get(User, user_id)
@@ -215,8 +227,11 @@ async def update_user(
         raise AppError(403, "forbidden")
     check_covers(admin, user.permissions)
 
-    if changes.is_active is not None:
+    if changes.is_active is not None and changes.is_active != user.is_active:
         user.is_active = changes.is_active
+        action = USERS_UNBLOCK_ACTION if changes.is_active else USERS_BLOCK_ACTION
+        audit(action, target_id=user.id, target=user.email)
+    before = {"role": user.role, "groups": sorted(group.name for group in user.groups)}
     if changes.role is not None:
         (role,) = await roles_by_slug(session, [changes.role])
         check_covers(admin, granted(role))
@@ -229,5 +244,8 @@ async def update_user(
         for group in groups:
             check_covers_roles(admin, group.roles)
         user.groups = groups
+    after = {"role": user.role, "groups": sorted(group.name for group in user.groups)}
+    if access_changes := diff(before, after):
+        audit(USERS_ACCESS_ACTION, target_id=user.id, target=user.email, changes=access_changes)
     await session.commit()
     return AdminUser.model_validate(user, from_attributes=True)

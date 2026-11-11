@@ -153,7 +153,8 @@
     "leads": "Leads",
     "entities": "Channels",
     "settings": "Settings",
-    "files": "Files"
+    "files": "Files",
+    "audit": "Audit log"
   },
   "permissions": {
     "admin.access": "Open the admin area",
@@ -167,6 +168,26 @@
     "leads.export": "Export the leads to CSV",
     "entities.manage": "Create and change delivery channels",
     "settings.manage": "Change the settings",
-    "files.manage": "Open and delete files of other users"
+    "files.manage": "Open and delete files of other users",
+    "audit.read": "View the audit log"
+  },
+  "audit": {
+    "users.block": "User blocked",
+    "users.unblock": "User unblocked",
+    "users.access": "Role or groups of a user changed",
+    "users.export": "Users exported to CSV",
+    "roles.create": "Role created",
+    "roles.update": "Role changed",
+    "roles.delete": "Role deleted",
+    "groups.create": "Group created",
+    "groups.update": "Group changed",
+    "groups.delete": "Group deleted",
+    "settings.update": "Settings changed",
+    "entities.create": "Channel created",
+    "entities.update": "Channel changed",
+    "entities.delete": "Channel deleted",
+    "leads.update": "Lead status changed",
+    "leads.delete": "Lead deleted",
+    "leads.export": "Leads exported to CSV"
   }
 }
