@@ -33,6 +33,12 @@ All notable changes are documented here. The format follows
   first). Modules declare actions with `audit_action(...)` and record them with the `Audit`
   dependency (`app/modules/admin/audit.py`).
 - `AUDIT_KEEP_DAYS` (365): the nightly cleanup removes older records (0 keeps them).
+- The user's language (`users.language`, migration `0012`): set to the request language at
+  sign-up (also with Google), changed with `PATCH /auth/users/me` (`language`, one of the
+  enabled languages, else the field error `language_not_enabled`); in `UserRead` and in the
+  admin users list. Old accounts have none and get the request language.
+- `user_language(...)` (`app/core/i18n.py`): the user's own language while it is enabled, else
+  the request language.
 
 ### Changed
 - `/admin/overview` counts users for every role of the project, not only the built-in ones.
@@ -48,6 +54,12 @@ All notable changes are documented here. The format follows
 - `require_any_role` and `ADMIN_ROLES`: use `require("<permission>")`; `require_admin` stays.
 - `users_with_roles` in the notifications service: use
   `app.modules.auth.dependencies.users_with_permission`.
+
+### Fixed
+- Email copies of notifications (e.g. a new lead) went out in the language of the request that
+  caused them (the visitor's), now each recipient gets them in their own language.
+- Account emails (confirm email, password reset, email change) and their links use the user's
+  language instead of the request one.
 
 ## [0.3.0] - 2026-11-11
 

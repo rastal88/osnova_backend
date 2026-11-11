@@ -32,6 +32,12 @@ def get_language() -> str:
     return current_language.get() or get_languages().default
 
 
+def user_language(preferred: str | None) -> str:
+    """The language for a message to someone: their own when it is still enabled, else
+    the request language (or the default outside a request)."""
+    return preferred if preferred in get_languages().codes else get_language()
+
+
 def resolve_language(accept_language: str | None) -> str:
     """Pick the best enabled language from an Accept-Language header."""
     enabled = get_languages()

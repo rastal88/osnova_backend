@@ -369,7 +369,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET | `/ready` | Readiness: the database, Redis sessions and the task broker of the enabled modules answer; 503 otherwise | always |
 | GET | `/forms/{name}` | Form description for the frontend (fields, labels, rules) | always |
 | POST | `/forms/{name}` | Validate and deliver a form; `422` with per-field errors | always |
-| — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users; `PATCH /auth/users/me` changes only the name | `AUTH_ENABLED` |
+| — | `/auth/*` | Sign-up, sign-in, sign-out, password reset, verification, users; `PATCH /auth/users/me` changes only the name and the `language` (one of the enabled) | `AUTH_ENABLED` |
 | — | `/auth/me/*` | The user's own account, each with the current password: `POST password` (other sessions end), `POST email` (confirmed again, the old address is told), `POST sign-out-everywhere`, `DELETE` (with files and notifications; root cannot) | `AUTH_ENABLED` |
 | GET | `/auth/google/authorize`, `/auth/google/callback` | Sign-in with Google (`authorization_url`, then the callback signs in) | `GOOGLE_CLIENT_*` set |
 | GET | `/user/*` | User area: any signed-in user (example: `/user/summary`) | `AUTH_ENABLED` |
@@ -382,7 +382,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET / POST / PUT / DELETE | `/admin/roles`, `/admin/roles/{slug}`, `/admin/groups`, `/admin/groups/{id}`, `/admin/permissions` | Roles (sets of permissions), groups (roles for several users) and the list of permissions with texts; changes need `roles.manage` | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes need `settings.manage` | `ADMIN_ENABLED` |
 | GET | `/admin/audit`, `/admin/audit/actions` | Audit log of admin actions (`audit.read`): search `q` (who / target), filters `action`, `actor`, `since` / `until` (days, UTC), `sort`, pages; the actions with texts | `ADMIN_ENABLED` |
-| GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language, unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
+| GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language (their email copies in the recipient's language), unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
 | POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and `files.manage`; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
 
 ---

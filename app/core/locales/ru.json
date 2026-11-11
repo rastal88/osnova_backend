@@ -67,6 +67,7 @@
     "bool_type": "Должно быть true или false.",
     "too_short": "Выберите хотя бы {min_length}.",
     "default_language_not_enabled": "Язык по умолчанию должен быть среди включённых.",
+    "language_not_enabled": "Выберите один из включённых языков.",
     "url_invalid": "Введите адрес, начинающийся с https:// или http://.",
     "captcha_not_configured": "На сервере не заданы ключи капчи: добавьте CAPTCHA_PROVIDER, CAPTCHA_SITE_KEY и CAPTCHA_SECRET_KEY в .env и перезапустите."
   },
