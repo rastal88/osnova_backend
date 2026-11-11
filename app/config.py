@@ -47,6 +47,9 @@ class Settings(BaseSettings):
 
     # Auth module
     SECRET_KEY: str | None = None
+    # Previous SECRET_KEY values, comma-separated: stored secrets encrypted with them
+    # still open until `manage.py rotate-secrets` (app/modules/auth/encryption.py)
+    OLD_SECRET_KEYS: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     AUTH_STRATEGY: Literal["jwt", "redis"] = "jwt"

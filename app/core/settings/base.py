@@ -1,7 +1,7 @@
 """Base of a settings group and field types for settings."""
 
 import re
-from typing import Annotated, ClassVar
+from typing import Annotated, Any, ClassVar
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 from pydantic_core import PydanticCustomError
@@ -50,6 +50,27 @@ def secret_fields(model: type[BaseModel]) -> set[str]:
         for name, info in model.model_fields.items()
         if isinstance(info.json_schema_extra, dict) and info.json_schema_extra.get("secret")
     }
+
+
+# Sent instead of a stored secret; sent back unchanged, it keeps the stored value
+SECRET_MASK = "********"
+
+
+def mask_secrets(model: type[BaseModel], values: dict[str, Any]) -> dict[str, Any]:
+    """Values for an API answer: a set secret is replaced by SECRET_MASK."""
+    secret = secret_fields(model)
+    return {key: SECRET_MASK if key in secret and value else value for key, value in values.items()}
+
+
+def keep_masked(
+    model: type[BaseModel], data: dict[str, Any], stored: dict[str, Any]
+) -> dict[str, Any]:
+    """Incoming values: a secret sent back as SECRET_MASK keeps the stored (plain) one."""
+    result = dict(data)
+    for key in secret_fields(model):
+        if result.get(key) == SECRET_MASK:
+            result[key] = stored.get(key, "")
+    return result
 
 
 class SettingsGroup(BaseModel):

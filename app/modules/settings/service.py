@@ -6,7 +6,8 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.settings import SettingsGroup, settings
+from app.core.settings import SettingsGroup, keep_masked, secret_fields, settings
+from app.modules.auth.encryption import decrypt_fields, encrypt_fields
 from app.modules.settings.models import SettingsRecord
 from app.settings import GROUPS
 
@@ -24,7 +25,7 @@ async def load_settings(session: AsyncSession) -> None:
             settings.set(group())
             continue
         try:
-            settings.set(group.model_validate(stored[name]))
+            settings.set(group.model_validate(decrypt_fields(stored[name], secret_fields(group))))
         except ValidationError:
             # E.g. a language removed from the code: fall back to the defaults
             logger.warning("Stored settings '%s' are invalid, using defaults", name)
@@ -37,15 +38,18 @@ async def save_settings(
     data: dict[str, Any],
     before_commit: Callable[[SettingsGroup, SettingsGroup], None] | None = None,
 ) -> SettingsGroup:
-    """Validate (missing fields keep their current values), store and apply.
-    ``before_commit(old, new)`` runs in the same transaction (e.g. the audit log)."""
+    """Validate (missing fields keep their current values, a masked secret keeps the
+    stored one), store with secrets encrypted and apply. ``before_commit(old, new)`` runs
+    in the same transaction (e.g. the audit log)."""
     old = settings.get(group)
-    value = group.model_validate({**old.model_dump(), **data})
+    current = old.model_dump()
+    value = group.model_validate({**current, **keep_masked(group, data, current)})
+    values = encrypt_fields(value.model_dump(mode="json"), secret_fields(group))
     record = await session.get(SettingsRecord, group.group)
     if record is None:
-        session.add(SettingsRecord(group=group.group, values=value.model_dump(mode="json")))
+        session.add(SettingsRecord(group=group.group, values=values))
     else:
-        record.values = value.model_dump(mode="json")
+        record.values = values
     if before_commit is not None:
         before_commit(old, value)
     await session.commit()

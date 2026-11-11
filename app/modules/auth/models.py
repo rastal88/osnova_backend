@@ -12,6 +12,7 @@ from sqlalchemy import JSON, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
+from app.modules.auth.encryption import EncryptedText
 from app.modules.auth.permissions import all_permissions
 from app.modules.auth.roles import Role
 from app.modules.db import Base, get_async_session
@@ -21,6 +22,10 @@ class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
     """An external account (e.g. Google) the user signs in with."""
 
     __tablename__ = "oauth_accounts"
+
+    # The provider's tokens are stored encrypted (migration 0013)
+    access_token: Mapped[str] = mapped_column(EncryptedText, nullable=False)
+    refresh_token: Mapped[str | None] = mapped_column(EncryptedText, nullable=True)
 
     # The base class points at a table named "user"; ours is "users"
     @declared_attr

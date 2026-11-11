@@ -18,7 +18,7 @@ from app.modules.admin.audit import Audit, audit_action, diff
 from app.modules.auth.dependencies import require, require_admin
 from app.modules.db import get_async_session
 from app.modules.entities.models import Entity
-from app.modules.entities.service import ENTITIES_MANAGE, masked, validate_params
+from app.modules.entities.service import ENTITIES_MANAGE, masked, plain_params, validate_params
 
 # Everyone in the admin area sees the entities; changing them is a permission.
 entities_router = APIRouter(dependencies=[Depends(require_admin)])
@@ -34,7 +34,8 @@ def _state(entity: Entity) -> dict[str, Any]:
     return {
         "name": entity.name,
         "enabled": entity.enabled,
-        **{f"params.{key}": value for key, value in (entity.params or {}).items()},
+        # Plain values: an encrypted secret differs after every save
+        **{f"params.{key}": value for key, value in plain_params(entity).items()},
     }
 
 

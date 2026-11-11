@@ -7,3 +7,5 @@ python-multipart==0.0.33
 # OAuth sign-in (Google): used only when a provider is configured
 httpx-oauth==0.16.1
 typer==0.20.0
+# Encryption of stored secrets: channel tokens, OAuth tokens (app/modules/auth/encryption.py)
+cryptography==50.0.2

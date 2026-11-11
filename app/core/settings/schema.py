@@ -22,7 +22,7 @@ from pydantic.fields import FieldInfo
 from app.core.forms.schema import FieldType, FormFieldDescription
 from app.core.i18n import translate
 from app.core.patterns import EMAIL_PATTERN, PHONE_PATTERN
-from app.core.settings.base import SettingsGroup
+from app.core.settings.base import SettingsGroup, mask_secrets
 
 
 class SettingsGroupDescription(BaseModel):
@@ -89,6 +89,7 @@ def describe_group(group: type[SettingsGroup], value: SettingsGroup) -> Settings
                 describe_field(name, info, f"settings.{group.group}", group.option_labels(name))
                 for name, info in group.model_fields.items()
             ],
-            "values": value.model_dump(mode="json"),
+            # Secrets are never sent back in clear
+            "values": mask_secrets(group, value.model_dump(mode="json")),
         }
     )
