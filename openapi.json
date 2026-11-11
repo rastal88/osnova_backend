@@ -1204,6 +1204,24 @@
               "title": "Status"
             },
             "description": "Comma-separated: active, blocked"
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated group ids",
+              "title": "Group"
+            },
+            "description": "Comma-separated group ids"
           }
         ],
         "responses": {
@@ -1314,6 +1332,24 @@
             "description": "Comma-separated: active, blocked"
           },
           {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated group ids",
+              "title": "Group"
+            },
+            "description": "Comma-separated group ids"
+          },
+          {
             "name": "delimiter",
             "in": "query",
             "required": false,
@@ -1397,6 +1433,377 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/permissions": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Permissions",
+        "description": "Every permission of the enabled modules, with texts in the request language.",
+        "operationId": "list_permissions_api_v1_admin_permissions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PermissionRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Permissions Api V1 Admin Permissions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/roles": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Roles",
+        "operationId": "list_roles_api_v1_admin_roles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoleRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Roles Api V1 Admin Roles Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create Role",
+        "operationId": "create_role_api_v1_admin_roles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/roles/{slug}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Role",
+        "operationId": "update_role_api_v1_admin_roles__slug__put",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete Role",
+        "operationId": "delete_role_api_v1_admin_roles__slug__delete",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/groups": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Groups",
+        "operationId": "list_groups_api_v1_admin_groups_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GroupRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Groups Api V1 Admin Groups Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create Group",
+        "operationId": "create_group_api_v1_admin_groups_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/groups/{group_id}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Group",
+        "operationId": "update_group_api_v1_admin_groups__group_id__put",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete Group",
+        "operationId": "delete_group_api_v1_admin_groups__group_id__delete",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -2708,9 +3115,6 @@
             "additionalProperties": {
               "type": "integer"
             },
-            "propertyNames": {
-              "$ref": "#/components/schemas/Role"
-            },
             "type": "object",
             "title": "Users By Role"
           }
@@ -2748,6 +3152,15 @@
           "role": {
             "type": "string",
             "title": "Role"
+          },
+          "groups": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Groups",
+            "default": []
           },
           "is_active": {
             "type": "boolean",
@@ -2831,17 +3244,28 @@
           "role": {
             "anyOf": [
               {
-                "type": "string",
-                "enum": [
-                  "user",
-                  "moderator"
-                ]
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Role"
+          },
+          "groups": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Groups"
           }
         },
         "type": "object",
@@ -3561,6 +3985,94 @@
         ],
         "title": "FormSubmitResponse"
       },
+      "GroupCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "GroupCreate"
+      },
+      "GroupRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "users": {
+            "type": "integer",
+            "title": "Users"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "roles",
+          "users"
+        ],
+        "title": "GroupRead"
+      },
+      "GroupUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "title": "GroupUpdate"
+      },
       "HealthResponse": {
         "properties": {
           "status": {
@@ -3876,6 +4388,34 @@
         ],
         "title": "PasswordChange"
       },
+      "PermissionRead": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "area": {
+            "type": "string",
+            "title": "Area"
+          },
+          "area_title": {
+            "type": "string",
+            "title": "Area Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "title",
+          "area",
+          "area_title"
+        ],
+        "title": "PermissionRead"
+      },
       "ReadyResponse": {
         "properties": {
           "status": {
@@ -3910,6 +4450,98 @@
         ],
         "title": "Role",
         "description": "The roles every project starts with; more are rows of the \"roles\" table.\n\nroot has every permission and is not edited, user is given at sign-up."
+      },
+      "RoleCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "RoleCreate"
+      },
+      "RoleRead": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "system": {
+            "type": "boolean",
+            "title": "System"
+          },
+          "users": {
+            "type": "integer",
+            "title": "Users"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "permissions",
+          "system",
+          "users"
+        ],
+        "title": "RoleRead"
+      },
+      "RoleUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "permissions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "title": "RoleUpdate"
       },
       "SettingsGroupDescription": {
         "properties": {

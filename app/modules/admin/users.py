@@ -6,8 +6,10 @@ descending) and filters by column key with comma-separated values.
 CSV file of everything that matches.
 
 Permissions: users.read (the list), users.export, users.block (block / unblock),
-users.roles (change a role, and block someone who has a role other than "user").
-Nobody changes their own account or the root user; there is one root.
+users.roles (give a role and groups; also needed to block someone who has a role
+other than "user" or is in a group).
+Nobody changes their own account or the root user (there is one root), and nobody
+gives or manages more than they have themselves (app/modules/admin/access.py).
 """
 
 import logging
@@ -18,15 +20,16 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.csv_export import Delimiter, csv_response
 from app.core.errors import AppError
 from app.core.i18n import translate
+from app.modules.admin.access import check_covers, check_covers_roles, granted, roles_by_slug
 from app.modules.auth.dependencies import require
-from app.modules.auth.models import User
+from app.modules.auth.models import Group, User, user_groups
 from app.modules.auth.permissions import permission
 from app.modules.auth.roles import Role
 from app.modules.db import app_session, get_async_session
@@ -56,10 +59,17 @@ class AdminUser(BaseModel):
     email: str
     name: str | None = None
     role: str
+    # Ids of the groups the user is in
+    groups: list[uuid.UUID] = []
     is_active: bool
     is_verified: bool
     date_created: datetime | None
     last_login: datetime | None
+
+    @field_validator("groups", mode="before")
+    @classmethod
+    def _ids(cls, value) -> list:
+        return [getattr(group, "id", group) for group in value]
 
 
 class AdminUserPage(BaseModel):
@@ -69,8 +79,10 @@ class AdminUserPage(BaseModel):
 
 class AdminUserUpdate(BaseModel):
     is_active: bool | None = None
-    # Root is assigned only with `manage.py createroot`
-    role: Literal[Role.USER, Role.MODERATOR] | None = None
+    # The slug of a role; root is assigned only with `manage.py createroot`
+    role: str | None = None
+    # Replaces the user's groups
+    groups: list[uuid.UUID] | None = None
 
 
 def _values(raw: str | None, allowed: tuple[str, ...]) -> list[str]:
@@ -78,7 +90,19 @@ def _values(raw: str | None, allowed: tuple[str, ...]) -> list[str]:
     return [value for value in (raw or "").split(",") if value in allowed]
 
 
-def _conditions(q: str, role: str | None, status: str | None) -> list[ColumnElement[bool]]:
+def _uuids(raw: str | None) -> list[uuid.UUID]:
+    result = []
+    for value in (raw or "").split(","):
+        try:
+            result.append(uuid.UUID(value))
+        except ValueError:
+            continue
+    return result
+
+
+def _conditions(
+    q: str, role: str | None, status: str | None, group: str | None = None
+) -> list[ColumnElement[bool]]:
     """What the list and the export show."""
     conditions: list[ColumnElement[bool]] = []
     if search := q.strip():
@@ -89,6 +113,9 @@ def _conditions(q: str, role: str | None, status: str | None) -> list[ColumnElem
         )
     if roles := [value for value in (role or "").split(",") if value]:
         conditions.append(User.role.in_(roles))
+    if groups := _uuids(group):
+        members = select(user_groups.c.user_id).where(user_groups.c.group_id.in_(groups))
+        conditions.append(User.id.in_(members))
     if statuses := _values(status, ("active", "blocked")):
         conditions.append(User.is_active.in_([item == "active" for item in statuses]))
     return conditions
@@ -107,9 +134,10 @@ async def list_users(
     sort: UserSort = "-date_created",  # type: ignore[valid-type]
     role: str | None = Query(None, description="Comma-separated roles"),
     status: str | None = Query(None, description="Comma-separated: active, blocked"),
+    group: str | None = Query(None, description="Comma-separated group ids"),
     session: AsyncSession = Depends(get_async_session),
 ) -> AdminUserPage:
-    conditions = _conditions(q, role, status)
+    conditions = _conditions(q, role, status, group)
     total = await session.scalar(select(func.count()).select_from(User).where(*conditions))
     result = await session.scalars(
         select(User)
@@ -131,11 +159,14 @@ async def export_users(
     sort: UserSort = "-date_created",  # type: ignore[valid-type]
     role: str | None = Query(None, description="Comma-separated roles"),
     status: str | None = Query(None, description="Comma-separated: active, blocked"),
+    group: str | None = Query(None, description="Comma-separated group ids"),
     delimiter: Delimiter | None = Query(None, description="Default: by the request language"),
     admin: User = Depends(require(USERS_EXPORT)),
 ) -> StreamingResponse:
     """Every user the list shows with this query, as a CSV file."""
-    statement = select(User).where(*_conditions(q, role, status)).order_by(_order(sort), User.email)
+    statement = (
+        select(User).where(*_conditions(q, role, status, group)).order_by(_order(sort), User.email)
+    )
     yes_no = {True: translate("export.yes"), False: translate("export.no")}
 
     async def rows() -> AsyncIterator[list[Any]]:
@@ -174,17 +205,29 @@ async def update_user(
         raise AppError(403, "admin_cannot_change_self")
     if user.role == Role.ROOT:
         raise AppError(403, "admin_root_protected")
+    access = changes.role is not None or changes.groups is not None
     needed = set()
     if changes.is_active is not None:
         needed.add(USERS_BLOCK)
-    if changes.role is not None or user.role != Role.USER:
+    if access or user.role != Role.USER or user.groups:
         needed.add(USERS_ROLES)
     if not admin.permissions.issuperset(needed):
         raise AppError(403, "forbidden")
+    check_covers(admin, user.permissions)
 
     if changes.is_active is not None:
         user.is_active = changes.is_active
     if changes.role is not None:
-        user.role = changes.role.value
+        (role,) = await roles_by_slug(session, [changes.role])
+        check_covers(admin, granted(role))
+        user.role = role.slug
+    if changes.groups is not None:
+        wanted = set(changes.groups)
+        groups = list(await session.scalars(select(Group).where(Group.id.in_(wanted))))
+        if len(groups) != len(wanted):
+            raise AppError(400, "group_unknown")
+        for group in groups:
+            check_covers_roles(admin, group.roles)
+        user.groups = groups
     await session.commit()
     return AdminUser.model_validate(user, from_attributes=True)

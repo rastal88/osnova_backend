@@ -153,9 +153,10 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [~] Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
   on the backend (done: `require(...)`) and one helper on the frontend, instead of role lists
   in the code
-- [~] Roles as sets of permissions (done: table `roles`), edited in the admin; `root` keeps
-  every permission
-- [ ] User groups: assign roles to a group, users get the roles of their groups
+- [~] Roles as sets of permissions, edited in the admin (done: the API; the page is in the
+  frontend); `root` keeps every permission
+- [~] User groups: assign roles to a group, users get the roles of their groups (done: the
+  API; the page is in the frontend)
 - [x] Move the fixed roles (`root`, `moderator`, `user`) to the new model without breaking
   existing projects (migration `0009`)
 - [ ] Audit log of admin actions (who, what, when), shown in the admin

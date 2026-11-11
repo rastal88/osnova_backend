@@ -1,7 +1,7 @@
-"""Admin module: the admin area API for the ROOT and MODERATOR roles.
+"""Admin module: the admin area API for users with the admin.access permission.
 
 Enabled by ADMIN_ENABLED. Requires the auth module. Every endpoint added to
-``admin_router`` is closed to other roles.
+``admin_router`` is closed to everyone else.
 """
 
 from fastapi import FastAPI

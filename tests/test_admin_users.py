@@ -69,7 +69,7 @@ async def test_root_blocks_and_changes_role(auth_client):
 
     # There is one root: it is not assigned here
     response = await client.patch(f"{USERS}/{bob}", json={"role": "root"})
-    assert response.status_code == 422
+    assert (response.status_code, response.json()["code"]) == (403, "role_protected")
 
 
 @pytest.mark.anyio

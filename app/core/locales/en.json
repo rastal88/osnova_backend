@@ -39,7 +39,14 @@
     "current_password_wrong": "The current password is wrong.",
     "root_cannot_delete_self": "The root account cannot be deleted.",
     "account_delete_not_confirmed": "Enter your password to delete the account.",
-    "captcha_failed": "The check that you are not a robot did not pass. Please try again."
+    "captcha_failed": "The check that you are not a robot did not pass. Please try again.",
+    "role_protected": "This role cannot be changed, deleted or given this way.",
+    "role_in_use": "Users have this role. Give them another one first.",
+    "role_unknown": "There is no such role.",
+    "group_unknown": "There is no such group.",
+    "permission_unknown": "There is no such permission.",
+    "permission_not_allowed": "You cannot give or manage permissions you do not have yourself.",
+    "name_taken": "This name is already taken."
   },
   "validation": {
     "missing": "This field is required.",
@@ -138,5 +145,28 @@
     "status": "Status",
     "language": "Language",
     "other": "Other"
+  },
+  "permission_areas": {
+    "admin": "Admin area",
+    "users": "Users",
+    "roles": "Roles and groups",
+    "leads": "Leads",
+    "entities": "Channels",
+    "settings": "Settings",
+    "files": "Files"
+  },
+  "permissions": {
+    "admin.access": "Open the admin area",
+    "users.read": "See the users",
+    "users.export": "Export the users to CSV",
+    "users.block": "Block and unblock users",
+    "users.roles": "Give roles and groups to users",
+    "roles.manage": "Create and change roles and groups",
+    "leads.read": "See the leads",
+    "leads.manage": "Change the status of leads and delete them",
+    "leads.export": "Export the leads to CSV",
+    "entities.manage": "Create and change delivery channels",
+    "settings.manage": "Change the settings",
+    "files.manage": "Open and delete files of other users"
   }
 }

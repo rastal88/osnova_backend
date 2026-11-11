@@ -8,7 +8,7 @@ from fastapi_users_db_sqlalchemy import (
     SQLAlchemyUserDatabase,
 )
 from fastapi_users_db_sqlalchemy.generics import GUID
-from sqlalchemy import JSON, DateTime, ForeignKey, String
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
@@ -43,6 +43,39 @@ class RoleRecord(Base):
     system: Mapped[bool] = mapped_column(default=False)
 
 
+group_roles = Table(
+    "group_roles",
+    Base.metadata,
+    Column("group_id", GUID, ForeignKey("groups.id", ondelete="CASCADE"), primary_key=True),
+    Column("role", String(50), ForeignKey("roles.slug", ondelete="CASCADE"), primary_key=True),
+)
+
+user_groups = Table(
+    "user_groups",
+    Base.metadata,
+    Column("user_id", GUID, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "group_id",
+        GUID,
+        ForeignKey("groups.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    ),
+)
+
+
+class Group(Base):
+    """People who get the same roles on top of their own, e.g. a department."""
+
+    __tablename__ = "groups"
+
+    id: Mapped[uuid.UUID] = mapped_column(GUID, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(100), unique=True)
+    roles: Mapped[list[RoleRecord]] = relationship(
+        secondary=group_roles, lazy="selectin", order_by=RoleRecord.slug
+    )
+
+
 class User(SQLAlchemyBaseUserTableUUID, Base):
     __tablename__ = "users"
 
@@ -51,6 +84,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     # Loaded with the user: every request checks the permissions
     role_record: Mapped[RoleRecord] = relationship(lazy="selectin")
+    groups: Mapped[list[Group]] = relationship(
+        secondary=user_groups, lazy="selectin", order_by=Group.name
+    )
     date_created: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
@@ -69,10 +105,15 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     @property
     def permissions(self) -> frozenset[str]:
-        """What the user may do; root may do everything."""
+        """What the user may do: the permissions of their role and of the roles of
+        their groups; root may do everything."""
         if self.role == Role.ROOT:
             return all_permissions()
-        return all_permissions().intersection(self.role_record.permissions)
+        granted = set(self.role_record.permissions)
+        for group in self.groups:
+            for role in group.roles:
+                granted.update(role.permissions)
+        return all_permissions().intersection(granted)
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):

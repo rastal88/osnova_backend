@@ -378,7 +378,8 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET / POST / PUT / DELETE | `/admin/entities`, `/admin/entities/{id}`, `/admin/entities/types` | Configurable entities (e.g. lead channels) with form descriptions; secrets masked; changes need `entities.manage` | `ADMIN_ENABLED` |
 | POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`entities.manage`) | `ADMIN_ENABLED` |
 | GET | `/admin/users/export`, `/admin/leads/export` | CSV file of everything the list shows with the same `q`, filters and `sort` (no pages); `delimiter=comma` / `semicolon`, by the request language when not given | `ADMIN_ENABLED` |
-| GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (`users.block`), change role (`users.roles`, also needed to block someone with a role other than `user`) | `ADMIN_ENABLED` |
+| GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; filter `group`; block / unblock (`users.block`), give a role and groups (`users.roles`, also needed to block someone with a role other than `user` or in a group) | `ADMIN_ENABLED` |
+| GET / POST / PUT / DELETE | `/admin/roles`, `/admin/roles/{slug}`, `/admin/groups`, `/admin/groups/{id}`, `/admin/permissions` | Roles (sets of permissions), groups (roles for several users) and the list of permissions with texts; changes need `roles.manage` | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes need `settings.manage` | `ADMIN_ENABLED` |
 | GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language, unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
 | POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and `files.manage`; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
@@ -399,14 +400,24 @@ router = APIRouter(dependencies=[Depends(require(ADMIN_ACCESS, ORDERS_READ))])
 ```
 
 A role is a row of the `roles` table with a set of permissions; a user has one role
-(`users.role`). Three roles come with the template: `root` always has every permission,
-`user` has none and is given at sign-up, `moderator` starts with the ones below.
+(`users.role`). A group gives its roles to everyone in it, on top of their own role: what a
+user may do is the sum. Three roles come with the template: `root` always has every
+permission, `user` has none and is given at sign-up, `moderator` starts with the ones below.
+Roles and groups are edited in the admin (`/admin/roles`, `/admin/groups`) and given to
+users in Admin → Users.
+
+Nobody hands out more than they have: a role, a group or a user is changed only by someone
+who has every permission involved. `root` is not edited and is assigned only with
+`manage.py createroot`; the built-in roles are not renamed or deleted. A text for a new
+permission goes to the `permissions` and `permission_areas` sections of
+`app/core/locales/*.json` (without it the name is shown).
 
 | Permission | Allows | `moderator` |
 |---|---|---|
 | `admin.access` | open the admin area | yes |
 | `users.read`, `users.export`, `users.block` | the users list, its CSV, block / unblock | yes |
-| `users.roles` | change a role; block users who have a role other than `user` | |
+| `users.roles` | give roles and groups to users; block users who have a role other than `user` or are in a group | |
+| `roles.manage` | create and change roles and groups | |
 | `leads.read`, `leads.manage`, `leads.export` | leads: see, mark and delete, CSV | yes |
 | `entities.manage` | create and change entities (lead channels), send a test message | |
 | `settings.manage` | change the settings | |
