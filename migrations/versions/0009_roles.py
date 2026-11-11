@@ -46,12 +46,15 @@ def upgrade() -> None:
             {"slug": "user", "name": "User", "permissions": [], "system": True},
         ],
     )
-    # The enum stored the names: ROOT, MODERATOR, USER
+    # The enum stored the names: ROOT, MODERATOR, USER. A database created before the
+    # migrations may have a default on the column: it holds the enum type and is not
+    # used (the application sets the role).
     op.alter_column(
         "users",
         "role",
         type_=sa.String(length=50),
         existing_nullable=False,
+        server_default=None,
         postgresql_using="lower(role::text)",
     )
     sa.Enum(name="role").drop(op.get_bind())
