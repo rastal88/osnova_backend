@@ -6,6 +6,11 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-11
+
+Account and everyday tools: account self-service, scheduled tasks with a cleanup, HTML
+emails, CSV export, optional captcha.
+
 ### Added
 - Account self-service, every change asks for the current password: `POST /auth/me/password`
   (other sessions end, this one gets a new cookie), `POST /auth/me/email` (confirmed again; the
@@ -259,6 +264,7 @@ First release: the `minimal` profile.
 - Fixed path traversal in file download/upload.
 - Password reset tokens are no longer logged outside `DEBUG`.
 
-[Unreleased]: https://github.com/rastal88/osnova_backend/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/rastal88/osnova_backend/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rastal88/osnova_backend/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rastal88/osnova_backend/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rastal88/osnova_backend/releases/tag/v0.1.0
