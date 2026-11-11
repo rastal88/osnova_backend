@@ -51,6 +51,9 @@ async def test_describe_form(client):
         "max_length": 100,
         "pattern": None,
         "options": [],
+        "min_value": None,
+        "max_value": None,
+        "help": None,
     }
     assert fields["email"]["pattern"]
     assert fields["consent"]["required"] is True

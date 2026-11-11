@@ -7,8 +7,9 @@ from email.message import EmailMessage as MimeMessage
 
 from fastapi.concurrency import run_in_threadpool
 
-from app.config import config
 from app.core.mail.message import EmailMessage
+from app.core.mail.settings import MailSettings
+from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -26,25 +27,26 @@ def _console(message: EmailMessage) -> None:
 
 
 def _smtp(message: EmailMessage) -> None:
+    current = settings.get(MailSettings)
     mime = MimeMessage()
-    mime["From"] = config.MAIL_FROM
+    mime["From"] = current.from_address
     mime["To"] = message.to
     mime["Subject"] = message.subject
     mime.set_content(message.text)
     if message.html:
         mime.add_alternative(message.html, subtype="html")
 
-    address = (config.SMTP_HOST, config.SMTP_PORT)
-    if config.SMTP_SECURITY == "ssl":
+    address = (current.smtp_host, current.smtp_port)
+    if current.smtp_security == "ssl":
         context = ssl.create_default_context()
-        client = smtplib.SMTP_SSL(*address, timeout=config.SMTP_TIMEOUT, context=context)
+        client = smtplib.SMTP_SSL(*address, timeout=current.smtp_timeout, context=context)
     else:
-        client = smtplib.SMTP(*address, timeout=config.SMTP_TIMEOUT)
+        client = smtplib.SMTP(*address, timeout=current.smtp_timeout)
     with client:
-        if config.SMTP_SECURITY == "starttls":
+        if current.smtp_security == "starttls":
             client.starttls(context=ssl.create_default_context())
-        if config.SMTP_USERNAME:
-            client.login(config.SMTP_USERNAME, config.SMTP_PASSWORD or "")
+        if current.smtp_username:
+            client.login(current.smtp_username, current.smtp_password)
         client.send_message(mime)
 
 
@@ -52,8 +54,8 @@ BACKENDS: dict[str, Backend] = {"console": _console, "smtp": _smtp}
 
 
 def deliver(message: EmailMessage) -> None:
-    """Send now, in this thread, with MAIL_BACKEND (raises on failure)."""
-    BACKENDS[config.MAIL_BACKEND](message)
+    """Send now, in this thread, as set in Admin → Settings → Mail (raises on failure)."""
+    BACKENDS[settings.get(MailSettings).backend](message)
 
 
 # Keeps background sends alive until they finish

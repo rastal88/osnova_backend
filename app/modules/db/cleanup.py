@@ -29,6 +29,11 @@ async def run_cleanup() -> dict[str, int]:
     enabled = {spec.name for spec in resolve_enabled(config)}
     removed: dict[str, int] = {}
     async with standalone_session() as session:
+        if "settings" in enabled:
+            # The periods are set in Admin → Settings → Retention (cron has no other way)
+            from app.modules.settings.service import load_settings
+
+            await load_settings(session)
         for name, path in JOBS.items():
             if name not in enabled:
                 continue

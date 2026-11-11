@@ -36,6 +36,7 @@ FieldType = Literal[
     "email",
     "tel",
     "password",
+    "number",
     "select",
     "multiselect",
     "checkbox",
@@ -160,6 +161,11 @@ class FormFieldDescription(BaseModel):
     max_length: int | None
     pattern: str | None
     options: list[FormFieldOption]
+    # Numbers: the allowed range
+    min_value: int | None = None
+    max_value: int | None = None
+    # A hint shown under the field
+    help: str | None = None
 
 
 class FormDescription(BaseModel):

@@ -17,13 +17,14 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import config
 from app.core.errors import AppError
+from app.core.settings import settings
 from app.modules.auth.dependencies import current_user
 from app.modules.auth.models import User
 from app.modules.auth.permissions import permission
 from app.modules.db import get_async_session
 from app.modules.files.models import FileRecord
+from app.modules.files.settings import FilesSettings
 from app.modules.files.storage import get_storage
 
 # Open and delete files of other users
@@ -31,14 +32,12 @@ FILES_MANAGE = permission("files.manage")
 
 files_router = APIRouter(dependencies=[Depends(current_user)])
 
-MAX_SIZE = config.FILES_MAX_SIZE_MB * 1024 * 1024
 CHUNK_SIZE = 1024 * 1024
 # Kept in memory up to this size, then in a temporary file
 SPOOL_SIZE = 1024 * 1024
 CONTENT_TYPE = re.compile(r"^[a-z0-9][a-z0-9.+-]*/[a-z0-9][a-z0-9.+-]*$")
 # Shown in the browser; everything else is downloaded
 INLINE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"}
-ALLOWED = tuple(item.strip() for item in config.FILES_ALLOWED_TYPES.split(",") if item.strip())
 
 
 class FileRead(BaseModel):
@@ -84,8 +83,10 @@ async def upload_file(
     user: User = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> FileRead:
+    # Admin → Settings → Files
+    limits = settings.get(FilesSettings)
     content_type = _content_type(file)
-    if ALLOWED and not any(content_type.startswith(item) for item in ALLOWED):
+    if limits.allowed and not any(content_type.startswith(item) for item in limits.allowed):
         raise AppError(415, "file_type_not_allowed")
 
     size = 0
@@ -93,8 +94,8 @@ async def upload_file(
     with SpooledTemporaryFile(max_size=SPOOL_SIZE) as buffer:
         while chunk := await file.read(CHUNK_SIZE):
             size += len(chunk)
-            if size > MAX_SIZE:
-                raise AppError(413, "file_too_large", max_mb=config.FILES_MAX_SIZE_MB)
+            if size > limits.max_size_mb * 1024 * 1024:
+                raise AppError(413, "file_too_large", max_mb=limits.max_size_mb)
             digest.update(chunk)
             buffer.write(chunk)
 

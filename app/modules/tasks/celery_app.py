@@ -2,6 +2,7 @@ from importlib.util import find_spec
 
 from celery import Celery
 from celery.schedules import crontab
+from celery.signals import task_prerun
 
 from app.config import config
 
@@ -29,6 +30,18 @@ celery_app.conf.update(
     broker_transport_options={"max_retries": 0},
     task_publish_retry_policy={"max_retries": 2, "interval_start": 0, "interval_step": 0.2},
 )
+
+
+@task_prerun.connect
+def load_admin_settings(**_) -> None:
+    """Settings changed in the admin (mail, retention, site name) reach the worker too."""
+    from app.core.modules import resolve_enabled
+
+    if "settings" in {spec.name for spec in resolve_enabled(config)}:
+        from app.modules.settings.service import refresh_stored_settings
+
+        refresh_stored_settings()
+
 
 # Tasks on a schedule, sent by `celery beat` (one instance: the `beat` service in Docker
 # Compose). Times are UTC. Add an entry with the task name and a crontab or seconds.

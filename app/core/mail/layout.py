@@ -11,7 +11,6 @@ from string import Template
 
 from app.core.i18n import get_language, translate
 from app.core.settings import settings
-from app.settings import SiteSettings
 
 _DIR = Path(__file__).parent
 LAYOUT = Template((_DIR / "layout.html").read_text(encoding="utf-8"))
@@ -50,6 +49,9 @@ def render_html(
                         fallback=escape(translate("mail.link_fallback", language)),
                     )
                 )
+    # Imported here: app.settings lists the mail settings of this package
+    from app.settings import SiteSettings
+
     site = settings.get(SiteSettings).name
     return LAYOUT.substitute(
         language=escape(language),

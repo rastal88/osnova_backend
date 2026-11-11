@@ -332,24 +332,24 @@ listed with comments in [`.env.example`](.env.example).
 | `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`); initial values, changed later in Admin → Settings |
 | `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
 | `FORMS_DELIVERY`, `FORMS_FILE` | Form delivery stub: `log`, or `file` (also JSON lines in `FORMS_FILE`); with the admin, submissions are also stored as leads |
-| `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables |
-| `CAPTCHA_PROVIDER`, `CAPTCHA_SITE_KEY`, `CAPTCHA_SECRET_KEY` | Captcha on forms and sign-up: empty provider is off, `turnstile` is Cloudflare Turnstile with its two keys |
+| `FORMS_RATE_LIMIT` | Submissions per client IP and form, e.g. `5/minute`; empty disables. Admin → Settings → Protection |
+| `CAPTCHA_PROVIDER`, `CAPTCHA_SITE_KEY`, `CAPTCHA_SECRET_KEY` | Captcha on forms and sign-up: empty provider is off, `turnstile` is Cloudflare Turnstile with its two keys. Admin → Settings → Protection |
 | `DATABASE_URL`, `DB_ECHO` | Database (turns on the `db` module), SQL logging |
 | `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing and lifetime (`SECRET_KEY` required with auth: at least 32 characters, not the example value, or the app does not start); stored secrets are encrypted with a key derived from `SECRET_KEY` |
 | `OLD_SECRET_KEYS` | Previous `SECRET_KEY` values (comma-separated) while stored secrets are moved to the new one, see [Development](#development) |
-| `AUTH_RATE_LIMIT` | Requests per client IP to each of sign-in, sign-up, password reset and email confirmation, e.g. `10/minute`; empty disables |
+| `AUTH_RATE_LIMIT` | Requests per client IP to each of sign-in, sign-up, password reset and email confirmation, e.g. `10/minute`; empty disables. Admin → Settings → Protection |
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (both set turns it on) |
 | `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
-| `NOTIFICATIONS_CHANNELS` | Where notifications go besides the bell: `in_app` (default), `in_app,email` |
+| `NOTIFICATIONS_CHANNELS` | Where notifications go besides the bell: `in_app` (default), `in_app,email`. Admin → Settings → Notifications |
 | `SETTINGS_REFRESH_SECONDS` | How often each process reloads settings changed in the admin (default `30`) |
-| `FILES_STORAGE`, `FILES_DIR`, `FILES_MAX_SIZE_MB`, `FILES_ALLOWED_TYPES` | `local` (folder `FILES_DIR`) or `s3`; size limit; allowed MIME types or prefixes (empty: any) |
+| `FILES_STORAGE`, `FILES_DIR`, `FILES_MAX_SIZE_MB`, `FILES_ALLOWED_TYPES` | `local` (folder `FILES_DIR`) or `s3`; size limit and allowed MIME types or prefixes (empty: any): Admin → Settings → Files |
 | `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_LINK_SECONDS` | S3-compatible bucket for `FILES_STORAGE=s3`; lifetime of download links |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
-| `NOTIFICATIONS_KEEP_DAYS`, `UNVERIFIED_ACCOUNT_DAYS`, `AUDIT_KEEP_DAYS` | Nightly cleanup: days to keep read notifications (90), never confirmed accounts (0 = keep) and audit log records (365) |
+| `NOTIFICATIONS_KEEP_DAYS`, `UNVERIFIED_ACCOUNT_DAYS`, `AUDIT_KEEP_DAYS` | Nightly cleanup: days to keep read notifications (90), never confirmed accounts (0 = keep) and audit log records (365). Admin → Settings → Data retention |
 | `FRONTEND_URL` | Public address of the frontend, for links in emails |
-| `MAIL_BACKEND`, `MAIL_FROM` | `console` (log, default) or `smtp`; sender address |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SECURITY`, `SMTP_TIMEOUT` | SMTP server; `starttls` (default), `ssl` or `none` |
+| `MAIL_BACKEND`, `MAIL_FROM` | `console` (log, default) or `smtp`; sender address. Admin → Settings → Mail |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SECURITY`, `SMTP_TIMEOUT` | SMTP server; `starttls` (default), `ssl` or `none`. Admin → Settings → Mail (the password stored encrypted) |
 
 Docker Compose only: `FRONTEND_PORT`, `SITE_URL` (public origin for canonical links,
 link previews and `sitemap.xml`), `ANALYTICS_SCRIPT` (frontend analytics, loaded only after
@@ -381,7 +381,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET | `/admin/users/export`, `/admin/leads/export` | CSV file of everything the list shows with the same `q`, filters and `sort` (no pages); `delimiter=comma` / `semicolon`, by the request language when not given | `ADMIN_ENABLED` |
 | GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; filter `group`; block / unblock (`users.block`), give a role and groups (`users.roles`, also needed to block someone with a role other than `user` or in a group) | `ADMIN_ENABLED` |
 | GET / POST / PUT / DELETE | `/admin/roles`, `/admin/roles/{slug}`, `/admin/groups`, `/admin/groups/{id}`, `/admin/permissions` | Roles (sets of permissions), groups (roles for several users) and the list of permissions with texts; changes need `roles.manage` | `ADMIN_ENABLED` |
-| GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes need `settings.manage` | `ADMIN_ENABLED` |
+| GET / PUT / POST | `/admin/settings`, `/admin/settings/{group}`, `/admin/settings/mail/test` | Settings groups with form descriptions and `editable`; a group is changed with `settings.<group>`, groups with secrets (mail, protection) are shown only with it; a test email to yourself with the saved mail settings | `ADMIN_ENABLED` |
 | GET | `/admin/audit`, `/admin/audit/actions` | Audit log of admin actions (`audit.read`): search `q` (who / target), filters `action`, `actor`, `since` / `until` (days, UTC), `sort`, pages; the actions with texts | `ADMIN_ENABLED` |
 | GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language (their email copies in the recipient's language), unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
 | POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and `files.manage`; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
@@ -422,7 +422,7 @@ permission goes to the `permissions` and `permission_areas` sections of
 | `roles.manage` | create and change roles and groups | |
 | `leads.read`, `leads.manage`, `leads.export` | leads: see, mark and delete, CSV | yes |
 | `entities.manage` | create and change entities (lead channels), send a test message | |
-| `settings.manage` | change the settings | |
+| `settings.<group>` | change one settings group (`site`, `languages`, `mail`, `protection`, `retention`, `files`, `notifications`); see the groups with secrets | |
 | `files.manage` | open and delete files of other users | yes |
 | `audit.read` | read the audit log | |
 
@@ -464,7 +464,8 @@ permission goes to the `permissions` and `permission_areas` sections of
   (`app/modules/notifications/service.py`) with texts `notifications.<kind>.title` / `.body`
   in the locales; they are translated when read. Example: new leads in
   `app/modules/leads/service.py`. Another channel (Telegram...): a function in
-  `app/modules/notifications/channels.py`, listed in `NOTIFICATIONS_CHANNELS`.
+  `app/modules/notifications/channels.py`: it becomes an option in Admin → Settings →
+  Notifications.
 - **Add a configurable entity:** a Pydantic model with `@entity_type` (`app/core/entities.py`;
   `type`, `group`, fields with defaults) and labels in the `entities` section of the
   locales. It is stored in the shared `entities` table and edited in the admin without a
@@ -480,10 +481,9 @@ permission goes to the `permissions` and `permission_areas` sections of
   Examples: `export_users` (`app/modules/admin/users.py`), `export_leads`
   (`app/modules/leads/routes.py`).
 - **Clean old data:** every night at 03:30 UTC the `maintenance.cleanup` task removes read
-  notifications older than `NOTIFICATIONS_KEEP_DAYS` (90), audit log records older than
-  `AUDIT_KEEP_DAYS` (365) and, when
-  `UNVERIFIED_ACCOUNT_DAYS` is set, accounts that never confirmed the email and never
-  signed in. Without Celery run `python manage.py cleanup` from cron (`make cleanup` in
+  notifications, audit log records and (when set) accounts that never confirmed the email
+  and never signed in, after the days set in Admin → Settings → Data retention (90, 365 and
+  off at first). Without Celery run `python manage.py cleanup` from cron (`make cleanup` in
   Docker). Another rule: `cleanup.py` in the module with `async def cleanup(session) -> int`
   and an entry in `JOBS` (`app/modules/db/cleanup.py`).
 - **Audit log:** admin actions are recorded with who, when, from which IP and what changed
@@ -491,7 +491,7 @@ permission goes to the `permissions` and `permission_areas` sections of
   `NAME = audit_action("orders.cancel")`, then `audit: Audit = Depends()` in the endpoint and
   `audit(NAME, target_id=..., target=..., changes=diff(before, after))` before the commit
   (`app/modules/admin/audit.py`), and its text in the `audit` section of
-  `app/core/locales/*.json`. Records older than `AUDIT_KEEP_DAYS` (365) go with the nightly
+  `app/core/locales/*.json`. Records older than Admin → Settings → Data retention says (365 days) go with the nightly
   cleanup.
 - **Stored secrets:** `Secret` fields of entities (channel tokens) and settings, and OAuth
   tokens are stored encrypted (Fernet, a key derived from `SECRET_KEY`, `enc:` prefix;
@@ -500,9 +500,18 @@ permission goes to the `permissions` and `permission_areas` sections of
   set the new one, restart, run `python manage.py rotate-secrets`, then empty
   `OLD_SECRET_KEYS`. Without the old key the secrets are lost (logged, read as empty): enter
   them again in the admin. Sessions and email links signed with the old key end anyway.
+- **Settings in the admin:** a group is a `SettingsGroup` in `app/settings.py` (or in a
+  module's `settings.py` with `GROUPS`, shown only with the module), its texts in the
+  `settings` section of `app/core/locales/*.json` (`<group>.<field>.help` for a hint) and
+  the permission `settings.<group>`, declared automatically. Values from `.env` are the
+  initial ones (`Field(default_factory=lambda: config.X)`); a saved group wins. `Secret`
+  fields are stored encrypted and sent as `********`. Every process reloads changed
+  settings after `SETTINGS_REFRESH_SECONDS`; the Celery worker before a task, the nightly
+  cleanup before it runs.
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
-- **Captcha (optional):** set `CAPTCHA_PROVIDER=turnstile` with `CAPTCHA_SITE_KEY` and
-  `CAPTCHA_SECRET_KEY` (Cloudflare dashboard → Turnstile; test keys are in `.env.example`).
+- **Captcha (optional):** set the keys in Admin → Settings → Protection and switch it on
+  (Cloudflare dashboard → Turnstile; test keys are in `.env.example`, where
+  `CAPTCHA_PROVIDER`, `CAPTCHA_SITE_KEY` and `CAPTCHA_SECRET_KEY` give the initial values).
   `/bootstrap` then has `captcha: {provider, site_key}`, and `POST /forms/{name}` and
   `POST /auth/register` need the widget's token in the `X-Captcha-Token` header (400
   `captcha_failed` otherwise). The honeypot and rate limits stay. Root switches it off and on

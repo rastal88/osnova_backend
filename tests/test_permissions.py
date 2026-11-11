@@ -56,7 +56,7 @@ async def test_me_lists_permissions(auth_client, role, expected):
     me = (await client.get(ME)).json()
     assert me["role"] == role
     assert me["permissions"] == expected
-    assert "settings.manage" in all_permissions()
+    assert "settings.mail" in all_permissions()
 
 
 async def test_role_from_the_database_allows_only_its_actions(auth_client):
@@ -103,6 +103,6 @@ async def test_users_with_permission(auth_client):
         await create_user(session_factory, f"{role}@example.com", role)
     async with session_factory() as session:
         readers = await users_with_permission(session, "leads.read")
-        managers = await users_with_permission(session, "settings.manage")
+        managers = await users_with_permission(session, "settings.mail")
     assert {user.role for user in readers} == {"root", "moderator", "sales"}
     assert {user.role for user in managers} == {"root"}
