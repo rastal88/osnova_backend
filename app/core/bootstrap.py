@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from app.config import config
 from app.core.capabilities import capabilities, oauth_providers
-from app.core.captcha import captcha_active
+from app.core.captcha import ProtectionSettings, captcha_active
 from app.core.languages import get_languages
 from app.core.settings import settings
 from app.settings import SiteSettings
@@ -56,6 +56,7 @@ class BootstrapResponse(BaseModel):
 
 def get_bootstrap_config() -> BootstrapResponse:
     site = settings.get(SiteSettings)
+    protection = settings.get(ProtectionSettings)
     languages = get_languages()
     return BootstrapResponse(
         application=BootstrapApplication(
@@ -81,7 +82,9 @@ def get_bootstrap_config() -> BootstrapResponse:
         auth_providers=oauth_providers(config),
         api_docs=config.DEBUG,
         captcha=(
-            BootstrapCaptcha(provider=config.CAPTCHA_PROVIDER, site_key=config.CAPTCHA_SITE_KEY)
+            BootstrapCaptcha(
+                provider=protection.captcha_provider, site_key=protection.captcha_site_key
+            )
             if captcha_active()
             else None
         ),

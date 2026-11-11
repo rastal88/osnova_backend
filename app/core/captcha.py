@@ -1,8 +1,8 @@
 """Optional captcha for public forms and sign-up, next to the honeypot and rate limits.
 
-Off by default. Set CAPTCHA_PROVIDER ("turnstile": Cloudflare Turnstile) with
-CAPTCHA_SITE_KEY and CAPTCHA_SECRET_KEY to turn it on; the owner can switch it off
-and on again in the admin (Admin → Settings → Protection). The frontend learns the
+Off by default. The keys are set in Admin → Settings → Protection (the secret key is
+stored encrypted) and the captcha is switched on there; CAPTCHA_PROVIDER,
+CAPTCHA_SITE_KEY and CAPTCHA_SECRET_KEY in .env are the initial values. The frontend learns the
 provider and the site key from /bootstrap, shows the widget and sends its token in
 the X-Captcha-Token header; ``require_captcha`` checks it on the server (standard
 library only). Protect another endpoint with ``Depends(require_captcha)``.
@@ -20,15 +20,17 @@ import logging
 import urllib.parse
 import urllib.request
 from collections.abc import Callable
+from typing import Literal
 
 from fastapi import Request
 from fastapi.concurrency import run_in_threadpool
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_core import PydanticCustomError
 
-from app.config import Settings, config
+from app.config import config
 from app.core.errors import AppError
-from app.core.settings import SettingsGroup, settings
+from app.core.rate_limit import RateLimit
+from app.core.settings import Secret, SettingsGroup, settings
 
 logger = logging.getLogger(__name__)
 
@@ -58,35 +60,54 @@ def _turnstile(secret: str, token: str) -> bool:
 PROVIDERS: dict[str, Verifier] = {"turnstile": _turnstile}
 
 
-def captcha_configured(values: Settings = config) -> bool:
-    return bool(values.CAPTCHA_PROVIDER and values.CAPTCHA_SITE_KEY and values.CAPTCHA_SECRET_KEY)
+def _env_configured() -> bool:
+    return bool(config.CAPTCHA_PROVIDER and config.CAPTCHA_SITE_KEY and config.CAPTCHA_SECRET_KEY)
 
 
 class ProtectionSettings(SettingsGroup):
+    """Admin → Settings → Protection: the captcha and the rate limits. The values in .env
+    are the initial ones."""
+
     group = "protection"
 
+    captcha_provider: Literal[tuple(PROVIDERS)] = Field(  # type: ignore[valid-type]
+        default_factory=lambda: config.CAPTCHA_PROVIDER or "turnstile"
+    )
+    captcha_site_key: str = Field(
+        default_factory=lambda: config.CAPTCHA_SITE_KEY or "", max_length=200
+    )
+    captcha_secret_key: Secret = Field(default_factory=lambda: config.CAPTCHA_SECRET_KEY or "")
     # On as soon as the keys are set; the owner can switch it off without a restart
-    captcha: bool = Field(default_factory=captcha_configured)
+    captcha: bool = Field(default_factory=_env_configured)
+    # Submissions per client IP and form, sign-in / sign-up attempts per IP; empty: no limit
+    forms_rate_limit: RateLimit = Field(default_factory=lambda: config.FORMS_RATE_LIMIT)
+    auth_rate_limit: RateLimit = Field(default_factory=lambda: config.AUTH_RATE_LIMIT)
 
     @field_validator("captcha")
     @classmethod
-    def _needs_keys(cls, value: bool) -> bool:
-        if value and not captcha_configured():
+    def _needs_keys(cls, value: bool, info: ValidationInfo) -> bool:
+        keys = info.data.get("captcha_site_key"), info.data.get("captcha_secret_key")
+        if value and not all(keys):
             raise PydanticCustomError("captcha_not_configured", "Captcha keys are not set")
         return value
 
 
+def captcha_configured() -> bool:
+    current = settings.get(ProtectionSettings)
+    return bool(current.captcha_site_key and current.captcha_secret_key)
+
+
 def captcha_active() -> bool:
-    """Configured in .env and not switched off in the admin."""
+    """The keys are set and the captcha is switched on (Admin → Settings → Protection)."""
     return captcha_configured() and settings.get(ProtectionSettings).captcha
 
 
 def check_captcha_config() -> None:
-    """At start: a provider without its keys protects nothing."""
-    if config.CAPTCHA_PROVIDER and not captcha_configured():
+    """At start: a provider in .env without its keys protects nothing."""
+    if config.CAPTCHA_PROVIDER and not _env_configured():
         logger.warning(
             "CAPTCHA_PROVIDER=%s, but CAPTCHA_SITE_KEY or CAPTCHA_SECRET_KEY is not set: "
-            "the captcha is off.",
+            "the captcha is off until the keys are set in Admin → Settings → Protection.",
             config.CAPTCHA_PROVIDER,
         )
 
@@ -98,9 +119,10 @@ async def require_captcha(request: Request) -> None:
     token = request.headers.get(HEADER, "").strip()
     if not token or len(token) > MAX_TOKEN_LENGTH:
         raise AppError(400, "captcha_failed")
-    verify = PROVIDERS[config.CAPTCHA_PROVIDER]
+    current = settings.get(ProtectionSettings)
+    verify = PROVIDERS[current.captcha_provider]
     try:
-        accepted = await run_in_threadpool(verify, config.CAPTCHA_SECRET_KEY or "", token)
+        accepted = await run_in_threadpool(verify, current.captcha_secret_key, token)
     except (OSError, ValueError):
         logger.warning("Captcha provider is unreachable, request let through", exc_info=True)
         return

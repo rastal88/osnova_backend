@@ -48,6 +48,18 @@ All notable changes are documented here. The format follows
   `requirements/auth.txt` (not in the minimal profile).
 - `OLD_SECRET_KEYS` and `python manage.py rotate-secrets`: change `SECRET_KEY` without losing
   the stored secrets.
+- More settings in the admin (the `.env` values are the initial ones, a saved group wins):
+  **Mail** (sending, sender, SMTP server, password stored encrypted), **Protection** (captcha
+  provider and keys next to the switch, rate limits of forms and sign-in), **Data retention**
+  (days for notifications, never confirmed accounts, audit log); with their modules
+  **Files** (size, types) and **Notifications** (channels). A module's groups live in its
+  `settings.py` (`GROUPS`).
+- `POST /admin/settings/mail/test`: a test email to yourself with the saved mail settings,
+  the mail server's error in the answer.
+- Settings fields: `int` is described as `number` with `min_value` / `max_value`, and a field
+  may have a hint (`help`, from `<group>.<field>.help`). Groups carry `editable`.
+- `LimitFromSetting` and the `RateLimit` field type (`app/core/rate_limit.py`): a limit read at
+  every request, so a change in the admin works without a restart.
 - `SECRET_MASK`, `mask_secrets`, `keep_masked` in `app.core.settings`: settings `Secret`
   fields are masked in the admin API like entity secrets, and the mask sent back keeps the
   stored value.
@@ -63,11 +75,16 @@ All notable changes are documented here. The format follows
   its side delays a form less (the request is still let through).
 
 ### Removed
+- The `settings.manage` permission: one permission per settings group, `settings.<group>`
+  (`settings.site`, `settings.mail`, ...). Migration `0014` gives roles that had it every
+  group; groups with secrets (mail, protection) are shown only to those who may change them.
 - `require_any_role` and `ADMIN_ROLES`: use `require("<permission>")`; `require_admin` stays.
 - `users_with_roles` in the notifications service: use
   `app.modules.auth.dependencies.users_with_permission`.
 
 ### Fixed
+- The Celery worker and `manage.py cleanup` use the settings saved in the admin (site name
+  in emails, mail, retention): the worker loads them before a task, the cleanup before it runs.
 - Email copies of notifications (e.g. a new lead) went out in the language of the request that
   caused them (the visitor's), now each recipient gets them in their own language.
 - Account emails (confirm email, password reset, email change) and their links use the user's

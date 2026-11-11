@@ -11,6 +11,7 @@ from app.modules.admin.models import AuditRecord
 from app.modules.auth.models import User
 from app.modules.db import cleanup
 from app.modules.notifications.models import Notification
+from app.modules.settings.models import SettingsRecord
 from app.modules.tasks.celery_app import celery_app
 from app.modules.tasks.tasks import cleanup_task
 from tests.conftest import create_user
@@ -119,6 +120,18 @@ async def test_old_audit_records_are_removed(cleanup_session, monkeypatch):
         await session.execute(update(AuditRecord).values(created_at=_ago(1000)))
         await session.commit()
     assert (await cleanup.run_cleanup())["admin"] == 0
+
+
+@pytest.mark.anyio
+async def test_periods_come_from_the_admin(cleanup_session):
+    """Cron and the worker have no web middleware: the cleanup loads the settings itself."""
+    async with cleanup_session() as session:
+        session.add(SettingsRecord(group="retention", values={"audit_days": 1}))
+        old = AuditRecord(actor_email="root@example.com", action="roles.create", created_at=_ago(2))
+        session.add(old)
+        await session.commit()
+
+    assert (await cleanup.run_cleanup())["admin"] == 1
 
 
 @pytest.mark.anyio

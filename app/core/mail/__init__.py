@@ -2,10 +2,11 @@
 
 Build a message with ``render_mail`` (texts from the "mail" section of
 app/core/locales/*.json, in the request language) and send it with
-``await send_mail(message)``. MAIL_BACKEND picks the delivery:
+``await send_mail(message)``. Admin → Settings → Mail (MailSettings; MAIL_* and SMTP_*
+in .env are the initial values) picks the delivery:
 
 - ``console`` (default): the text is written to the log — for development;
-- ``smtp``: sent through SMTP_HOST (standard library, no extra packages).
+- ``smtp``: sent through the SMTP server (standard library, no extra packages).
 
 Messages carry the text and an HTML version in one layout (layout.html: site name,
 heading, a button for the link). ``render_mail`` builds both; for a message made

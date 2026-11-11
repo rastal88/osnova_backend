@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
 from app.config import config
-from app.core.captcha import require_captcha
+from app.core.captcha import ProtectionSettings, require_captcha
 from app.core.errors import AppError
 from app.core.forms.delivery import deliver, make_record, receivers
 from app.core.forms.schema import (
@@ -19,15 +19,17 @@ from app.core.forms.schema import (
     describe,
 )
 from app.core.i18n import get_language, translate
-from app.core.rate_limit import RateLimiter, check_limit, client_address, parse_limit
+from app.core.rate_limit import LimitFromSetting, check_limit, client_address, parse_limit
+from app.core.settings import settings
 from app.forms import FORMS
 
 logger = logging.getLogger(__name__)
 
 forms_by_name: dict[str, Form] = {form.name: form for form in FORMS}
 
-rate_limit = parse_limit(config.FORMS_RATE_LIMIT)
-limiter = RateLimiter(*rate_limit) if rate_limit else None
+# A wrong value in .env stops the start; later the limit comes from the admin
+parse_limit(config.FORMS_RATE_LIMIT)
+limiter = LimitFromSetting(lambda: settings.get(ProtectionSettings).forms_rate_limit)
 
 forms_router = APIRouter(prefix="/forms", tags=["Forms"])
 

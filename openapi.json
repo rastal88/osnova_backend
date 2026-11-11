@@ -2763,7 +2763,7 @@
           "Admin"
         ],
         "summary": "List Settings",
-        "description": "Every group with its form description and current values.",
+        "description": "The groups the user may see, with their form description and current values.",
         "operationId": "list_settings_api_v1_admin_settings_get",
         "responses": {
           "200": {
@@ -2776,6 +2776,33 @@
                   },
                   "type": "array",
                   "title": "Response List Settings Api V1 Admin Settings Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/settings/mail/test": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Test Mail",
+        "description": "Send a test email to the signed-in user now, with the saved mail settings; the\nanswer carries the error of the mail server.",
+        "operationId": "test_mail_api_v1_admin_settings_mail_test_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailTestResult"
                 }
               }
             }
@@ -4231,6 +4258,7 @@
               "email",
               "tel",
               "password",
+              "number",
               "select",
               "multiselect",
               "checkbox",
@@ -4285,6 +4313,39 @@
             },
             "type": "array",
             "title": "Options"
+          },
+          "min_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Value"
+          },
+          "max_value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Value"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Help"
           }
         },
         "type": "object",
@@ -4622,6 +4683,31 @@
         ],
         "title": "LeadUpdate"
       },
+      "MailTestResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "error"
+        ],
+        "title": "MailTestResult"
+      },
       "NotificationPage": {
         "properties": {
           "items": {
@@ -4910,6 +4996,11 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Values"
+          },
+          "editable": {
+            "type": "boolean",
+            "title": "Editable",
+            "default": false
           }
         },
         "type": "object",

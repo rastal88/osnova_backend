@@ -3,7 +3,9 @@ import io
 import pytest
 from fastapi import UploadFile
 
+from app.core.settings import settings
 from app.modules.files import routes as file_routes
+from app.modules.files.settings import FilesSettings
 from tests.conftest import create_user, login
 
 FILES = "/api/v1/files"
@@ -92,15 +94,17 @@ async def test_only_owner_and_admins_reach_a_file(auth_client):
 
 
 @pytest.mark.anyio
-async def test_size_and_type_limits(auth_client, monkeypatch):
+async def test_size_and_type_limits(auth_client):
     client, _ = await _user(auth_client)
 
-    monkeypatch.setattr(file_routes, "MAX_SIZE", 5)
-    response = await client.post(FILES, files={"file": ("a.txt", b"123456", "text/plain")})
+    # Admin → Settings → Files
+    settings.set(FilesSettings(max_size_mb=1))
+    big = b"x" * (1024 * 1024 + 1)
+    response = await client.post(FILES, files={"file": ("a.txt", big, "text/plain")})
     assert response.status_code == 413
     assert response.json()["code"] == "file_too_large"
 
-    monkeypatch.setattr(file_routes, "ALLOWED", ("image/", "application/pdf"))
+    settings.set(FilesSettings(allowed_types="image/, application/pdf"))
     response = await client.post(FILES, files={"file": ("a.txt", b"1", "text/plain")})
     assert response.status_code == 415
     assert response.json()["code"] == "file_type_not_allowed"

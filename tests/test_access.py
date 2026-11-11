@@ -199,7 +199,7 @@ async def test_nobody_gives_more_than_they_have(auth_client):
     # Roles: only with permissions the manager has
     response = await client.post(ROLES, json={"name": "Leads", "permissions": ["leads.read"]})
     assert (response.status_code, response.json()["code"]) == not_allowed
-    response = await client.put(f"{ROLES}/helper", json={"permissions": ["settings.manage"]})
+    response = await client.put(f"{ROLES}/helper", json={"permissions": ["settings.mail"]})
     assert (response.status_code, response.json()["code"]) == not_allowed
     response = await client.put(f"{ROLES}/moderator", json={"permissions": []})
     assert (response.status_code, response.json()["code"]) == not_allowed

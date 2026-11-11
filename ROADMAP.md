@@ -161,8 +161,9 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] The user's language: emails and notifications in it, chosen in the profile *(be, fe)*
 - [x] Stored secrets encrypted (channel tokens, OAuth tokens, secret settings), with a way to
   change `SECRET_KEY` (`OLD_SECRET_KEYS`, `manage.py rotate-secrets`)
-- [ ] Decide what is configured in `.env` and what in the admin settings; access to areas of
-  the settings by permission
+- [~] Decide what is configured in `.env` and what in the admin settings; access to areas of
+  the settings by permission (done: mail, captcha keys, rate limits, data retention, files,
+  notifications moved to the admin with `settings.<group>`; the page is in the frontend)
 
 ## Production and scalable (`v0.5.0`)
 - [ ] Security headers in nginx (HSTS, CSP, X-Frame-Options, Referrer-Policy) *(fe)*

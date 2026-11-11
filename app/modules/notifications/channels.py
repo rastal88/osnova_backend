@@ -1,8 +1,9 @@
-"""Where notifications go besides the bell: NOTIFICATIONS_CHANNELS="in_app,email".
+"""Where notifications go besides the bell: chosen in Admin → Settings → Notifications
+(NOTIFICATIONS_CHANNELS in .env is the initial value).
 
 The in-app channel (the `notifications` table) is always on. A channel is an
 async function ``(user, kind, params, link) -> None``; add one to CHANNELS
-(e.g. Telegram with a chat id stored for the user) and list it in the setting.
+(e.g. Telegram with a chat id stored for the user): it becomes an option of the setting.
 Channels must not raise: a failure is logged and the others still run.
 """
 
@@ -36,8 +37,8 @@ CHANNELS: dict[str, Channel] = {"email": email_channel}
 
 
 def enabled_channels() -> list[Channel]:
-    names = [name.strip() for name in config.NOTIFICATIONS_CHANNELS.split(",") if name.strip()]
-    unknown = [name for name in names if name != "in_app" and name not in CHANNELS]
-    if unknown:
-        logger.warning("Unknown NOTIFICATIONS_CHANNELS: %s", ", ".join(unknown))
-    return [CHANNELS[name] for name in names if name in CHANNELS]
+    """The channels chosen in Admin → Settings → Notifications."""
+    from app.core.settings import settings
+    from app.modules.notifications.settings import NotificationSettings
+
+    return [CHANNELS[name] for name in settings.get(NotificationSettings).channels]

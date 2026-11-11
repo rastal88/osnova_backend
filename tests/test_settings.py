@@ -66,10 +66,20 @@ async def test_moderator_reads_but_cannot_change(auth_client):
 
     response = await client.get("/api/v1/admin/settings")
     assert response.status_code == 200, response.text
-    assert [group["name"] for group in response.json()] == ["site", "languages", "protection"]
+    groups = response.json()
+    # Groups with secrets (mail, protection) only for those who may change them
+    assert [group["name"] for group in groups] == [
+        "site",
+        "languages",
+        "retention",
+        "files",
+        "notifications",
+    ]
+    assert not any(group["editable"] for group in groups)
 
     response = await client.put("/api/v1/admin/settings/site", json={"name": "New"})
     assert response.status_code == 403
+    assert (await client.put("/api/v1/admin/settings/mail", json={})).status_code == 403
 
 
 @pytest.mark.anyio

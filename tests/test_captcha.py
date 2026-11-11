@@ -98,8 +98,19 @@ async def test_root_switches_it_off_and_on_in_the_admin(auth_client, turnstile):
 
     groups = {group["name"]: group for group in (await client.get(SETTINGS)).json()}
     assert groups["protection"]["title"] == "Protection"
-    assert groups["protection"]["values"] == {"captcha": True}
-    assert groups["protection"]["fields"][0]["type"] == "checkbox"
+    assert groups["protection"]["values"] == {
+        "captcha_provider": "turnstile",
+        "captcha_site_key": "site-key",
+        # Never sent back in clear
+        "captcha_secret_key": "********",
+        "captcha": True,
+        "forms_rate_limit": "5/minute",
+        "auth_rate_limit": "10/minute",
+    }
+    fields = {field["name"]: field for field in groups["protection"]["fields"]}
+    assert fields["captcha"]["type"] == "checkbox"
+    assert fields["captcha_secret_key"]["type"] == "password"
+    assert fields["forms_rate_limit"]["help"]
 
     response = await client.put(f"{SETTINGS}/protection", json={"captcha": False})
     assert response.status_code == 200, response.text
@@ -126,7 +137,7 @@ async def test_switching_on_without_keys_says_so(auth_client, monkeypatch):
     (field,) = response.json()["fields"]
     assert field["field"] == "captcha"
     assert field["code"] == "captcha_not_configured"
-    assert "CAPTCHA_SECRET_KEY" in field["message"]
+    assert "ключ" in field["message"]
 
     # Switching it off is always allowed
     response = await client.put(f"{SETTINGS}/protection", json={"captcha": False})
