@@ -6,6 +6,12 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-11
+
+Permissions and control: permissions as named actions, roles and groups edited in the
+admin, an audit log, the user's language for emails, encrypted secrets, and the settings
+the owner changes moved from `.env` to the admin.
+
 ### Added
 - Permissions: named actions (`leads.read`, `users.block`, ...) declared by the modules with
   `permission(...)` and checked by one dependency, `require(...)`
@@ -357,7 +363,8 @@ First release: the `minimal` profile.
 - Fixed path traversal in file download/upload.
 - Password reset tokens are no longer logged outside `DEBUG`.
 
-[Unreleased]: https://github.com/rastal88/osnova_backend/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/rastal88/osnova_backend/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/rastal88/osnova_backend/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rastal88/osnova_backend/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rastal88/osnova_backend/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rastal88/osnova_backend/releases/tag/v0.1.0

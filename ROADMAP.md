@@ -1,8 +1,8 @@
 # Roadmap
 
 Osnova was released in two steps, **minimal** (`v0.1.0`) and **standard** (`v0.2.0`, MVP);
-`v0.3.0` added account self-service and everyday tools. The road to the finished template
-(`v1.0.0`) is in [VISION.md](VISION.md#8-road-to-v100-agreed-2026-11-10).
+`v0.3.0` added account self-service and everyday tools, `v0.4.0` permissions. The road to
+the finished template (`v1.0.0`) is in [VISION.md](VISION.md#8-road-to-v100-agreed-2026-11-10).
 
 Legend: `[x]` done · `[~]` partly done · `[ ]` not started.
 Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova_frontend),
@@ -149,7 +149,7 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] CSV export of leads and users from the admin tables, with the current filters *(be, fe)*
 - [x] Optional captcha for forms and sign-up next to the honeypot (Cloudflare Turnstile behind an interface; off by default, switched in the admin) *(be, fe)*
 
-## Permissions (`v0.4.0`)
+## Permissions (`v0.4.0`, released 2026-11-11)
 - [x] Permissions as named actions (e.g. `leads.read`, `users.block`) checked by one dependency
   on the backend (`require(...)`) and one helper on the frontend (`can`), instead of role lists
   in the code *(be, fe)*
@@ -161,9 +161,9 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] The user's language: emails and notifications in it, chosen in the profile *(be, fe)*
 - [x] Stored secrets encrypted (channel tokens, OAuth tokens, secret settings), with a way to
   change `SECRET_KEY` (`OLD_SECRET_KEYS`, `manage.py rotate-secrets`)
-- [~] Decide what is configured in `.env` and what in the admin settings; access to areas of
-  the settings by permission (done: mail, captcha keys, rate limits, data retention, files,
-  notifications moved to the admin with `settings.<group>`; the page is in the frontend)
+- [x] Decide what is configured in `.env` and what in the admin settings; access to areas of
+  the settings by permission: mail, captcha keys, rate limits, data retention, files and
+  notifications moved to the admin, each group with `settings.<group>` *(be, fe)*
 
 ## Production and scalable (`v0.5.0`)
 - [ ] Security headers in nginx (HSTS, CSP, X-Frame-Options, Referrer-Policy) *(fe)*
