@@ -28,12 +28,35 @@ import pytest  # noqa: E402
 from fastapi import Depends  # noqa: E402
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
+from sqlalchemy import insert  # noqa: E402
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from app import create_app  # noqa: E402
-from app.modules.auth.models import OAuthAccount, User, get_user_db  # noqa: E402
+from app.modules.auth.models import OAuthAccount, RoleRecord, User, get_user_db  # noqa: E402
 from app.modules.db import Base, get_async_session  # noqa: E402
+
+# The rows migration 0009 creates (tests build the tables from the models)
+MODERATOR_PERMISSIONS = [
+    "admin.access",
+    "users.read",
+    "users.export",
+    "users.block",
+    "leads.read",
+    "leads.manage",
+    "leads.export",
+    "files.manage",
+]
+SYSTEM_ROLES = [
+    {"slug": "root", "name": "Root", "permissions": [], "system": True},
+    {
+        "slug": "moderator",
+        "name": "Moderator",
+        "permissions": MODERATOR_PERMISSIONS,
+        "system": True,
+    },
+    {"slug": "user", "name": "User", "permissions": [], "system": True},
+]
 
 
 @pytest.fixture
@@ -56,6 +79,7 @@ async def database(tmp_path, monkeypatch):
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(insert(RoleRecord), SYSTEM_ROLES)
 
     yield async_sessionmaker(engine, expire_on_commit=False)
     await engine.dispose()

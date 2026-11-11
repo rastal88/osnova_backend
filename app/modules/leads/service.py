@@ -31,12 +31,14 @@ async def store_lead(record: dict, request: Request) -> None:
 
 
 async def _notify_admins(session, lead: Lead) -> None:
-    """Example of a notification: admins get a bell item that opens Admin → Leads."""
-    from app.modules.auth.roles import ADMIN_ROLES
-    from app.modules.notifications.service import notify, users_with_roles
+    """Example of a notification: whoever reads leads gets a bell item that opens
+    Admin → Leads."""
+    from app.modules.auth.dependencies import users_with_permission
+    from app.modules.leads.permissions import LEADS_READ
+    from app.modules.notifications.service import notify
 
     params = {"summary": _summary(lead.data)}
-    admins = await users_with_roles(session, *ADMIN_ROLES)
+    admins = await users_with_permission(session, LEADS_READ)
     await notify(session, admins, "lead_new", params, link="/admin/leads")
 
 

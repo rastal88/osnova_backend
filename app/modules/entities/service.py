@@ -6,7 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.entities import EntityType, entity_types
 from app.core.settings import secret_fields
+from app.modules.auth.permissions import permission
 from app.modules.entities.models import Entity
+
+# Create, change and delete entities, send a test message through a channel
+ENTITIES_MANAGE = permission("entities.manage")
 
 # Sent instead of a stored secret; sent back unchanged, it keeps the stored value
 SECRET_MASK = "********"

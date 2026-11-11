@@ -2,11 +2,10 @@ import logging
 from collections.abc import Iterable
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.models import User
-from app.modules.auth.roles import Role
 from app.modules.notifications.channels import enabled_channels
 from app.modules.notifications.models import Notification
 
@@ -39,7 +38,3 @@ async def notify(
 async def delete_user_notifications(session: AsyncSession, user: User) -> None:
     """Account deletion (app/modules/auth/hooks.py)."""
     await session.execute(delete(Notification).where(Notification.user_id == user.id))
-
-
-async def users_with_roles(session: AsyncSession, *roles: Role) -> list[User]:
-    return list(await session.scalars(select(User).where(User.role.in_(roles))))

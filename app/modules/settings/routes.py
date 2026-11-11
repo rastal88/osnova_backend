@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError
 from app.core.settings import SettingsGroup, settings
 from app.core.settings.schema import SettingsGroupDescription, describe_group
-from app.modules.auth.dependencies import require_admin, require_any_role
-from app.modules.auth.roles import Role
+from app.modules.auth.dependencies import require, require_admin
+from app.modules.auth.permissions import permission
 from app.modules.db import get_async_session
 from app.modules.settings.service import groups_by_name, save_settings
 
-# Admin roles can see the settings; only root changes them.
+SETTINGS_MANAGE = permission("settings.manage")
+
+# Everyone in the admin area sees the settings; changing them is a permission.
 settings_router = APIRouter(dependencies=[Depends(require_admin)])
 
 
@@ -30,7 +32,7 @@ async def list_settings() -> list[SettingsGroupDescription]:
     return [describe_group(group, settings.get(group)) for group in groups_by_name.values()]
 
 
-@settings_router.put("/{name}", dependencies=[Depends(require_any_role(Role.ROOT))])
+@settings_router.put("/{name}", dependencies=[Depends(require(SETTINGS_MANAGE))])
 async def update_settings(
     name: str,
     payload: dict[str, Any] = Body(...),

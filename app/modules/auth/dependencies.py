@@ -1,20 +1,37 @@
 from fastapi import Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
 from app.modules.auth.backend import fastapi_users
-from app.modules.auth.models import User
-from app.modules.auth.roles import ADMIN_ROLES, Role
+from app.modules.auth.models import RoleRecord, User
+from app.modules.auth.permissions import ADMIN_ACCESS, check_declared
+from app.modules.auth.roles import Role
 
 current_user = fastapi_users.current_user(active=True)
 
 
-def require_any_role(*roles: Role):
-    async def role_checker(user: User = Depends(current_user)):
-        if user.role not in roles:
+def require(*permissions: str):
+    """Dependency: the signed-in user has every one of these permissions.
+
+    Returns the user, so it also works as ``user: User = Depends(require(...))``.
+    """
+    check_declared(*permissions)
+
+    async def permission_checker(user: User = Depends(current_user)) -> User:
+        if not user.permissions.issuperset(permissions):
             raise AppError(403, "forbidden")
         return user
 
-    return role_checker
+    return permission_checker
 
 
-require_admin = require_any_role(*ADMIN_ROLES)
+require_admin = require(ADMIN_ACCESS)
+
+
+async def users_with_permission(session: AsyncSession, permission: str) -> list[User]:
+    """Everyone whose role allows the action, e.g. to notify them."""
+    check_declared(permission)
+    roles = await session.scalars(select(RoleRecord))
+    slugs = {role.slug for role in roles if permission in role.permissions} | {Role.ROOT.value}
+    return list(await session.scalars(select(User).where(User.role.in_(slugs))))

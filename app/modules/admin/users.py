@@ -5,9 +5,9 @@ descending) and filters by column key with comma-separated values.
 `GET /admin/users/export` takes the same query without pages and answers with a
 CSV file of everything that matches.
 
-Rules: nobody changes their own account or the root user; only root changes
-roles (to user or moderator: there is one root); a moderator blocks and
-unblocks ordinary users only.
+Permissions: users.read (the list), users.export, users.block (block / unblock),
+users.roles (change a role, and block someone who has a role other than "user").
+Nobody changes their own account or the root user; there is one root.
 """
 
 import logging
@@ -25,14 +25,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.csv_export import Delimiter, csv_response
 from app.core.errors import AppError
 from app.core.i18n import translate
-from app.modules.auth.dependencies import require_admin
+from app.modules.auth.dependencies import require
 from app.modules.auth.models import User
+from app.modules.auth.permissions import permission
 from app.modules.auth.roles import Role
 from app.modules.db import app_session, get_async_session
 
 logger = logging.getLogger(__name__)
 
-users_router = APIRouter(prefix="/users")
+USERS_READ = permission("users.read")
+USERS_EXPORT = permission("users.export")
+USERS_BLOCK = permission("users.block")
+USERS_ROLES = permission("users.roles")
+
+users_router = APIRouter(prefix="/users", dependencies=[Depends(require(USERS_READ))])
 
 SORT_COLUMNS = {
     "email": User.email,
@@ -49,7 +55,7 @@ class AdminUser(BaseModel):
     id: uuid.UUID
     email: str
     name: str | None = None
-    role: Role
+    role: str
     is_active: bool
     is_verified: bool
     date_created: datetime | None
@@ -81,8 +87,8 @@ def _conditions(q: str, role: str | None, status: str | None) -> list[ColumnElem
         conditions.append(
             or_(User.email.ilike(pattern, escape="\\"), User.name.ilike(pattern, escape="\\"))
         )
-    if roles := _values(role, tuple(item.value for item in Role)):
-        conditions.append(User.role.in_([Role(item) for item in roles]))
+    if roles := [value for value in (role or "").split(",") if value]:
+        conditions.append(User.role.in_(roles))
     if statuses := _values(status, ("active", "blocked")):
         conditions.append(User.is_active.in_([item == "active" for item in statuses]))
     return conditions
@@ -126,7 +132,7 @@ async def export_users(
     role: str | None = Query(None, description="Comma-separated roles"),
     status: str | None = Query(None, description="Comma-separated: active, blocked"),
     delimiter: Delimiter | None = Query(None, description="Default: by the request language"),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require(USERS_EXPORT)),
 ) -> StreamingResponse:
     """Every user the list shows with this query, as a CSV file."""
     statement = select(User).where(*_conditions(q, role, status)).order_by(_order(sort), User.email)
@@ -142,7 +148,7 @@ async def export_users(
                 yield [
                     user.email,
                     user.name,
-                    user.role.value,
+                    user.role,
                     yes_no[user.is_active],
                     yes_no[user.is_verified],
                     user.date_created,
@@ -158,7 +164,7 @@ async def export_users(
 async def update_user(
     user_id: uuid.UUID,
     changes: AdminUserUpdate,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require(USERS_READ)),
     session: AsyncSession = Depends(get_async_session),
 ) -> AdminUser:
     user = await session.get(User, user_id)
@@ -168,12 +174,17 @@ async def update_user(
         raise AppError(403, "admin_cannot_change_self")
     if user.role == Role.ROOT:
         raise AppError(403, "admin_root_protected")
-    if admin.role != Role.ROOT and (changes.role is not None or user.role != Role.USER):
+    needed = set()
+    if changes.is_active is not None:
+        needed.add(USERS_BLOCK)
+    if changes.role is not None or user.role != Role.USER:
+        needed.add(USERS_ROLES)
+    if not admin.permissions.issuperset(needed):
         raise AppError(403, "forbidden")
 
     if changes.is_active is not None:
         user.is_active = changes.is_active
     if changes.role is not None:
-        user.role = changes.role
+        user.role = changes.role.value
     await session.commit()
     return AdminUser.model_validate(user, from_attributes=True)
