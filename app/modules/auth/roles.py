@@ -1,7 +1,15 @@
+from collections.abc import Collection
 from enum import Enum
+
+from app.modules.auth.permissions import ADMIN_ACCESS
 
 
 class Role(str, Enum):
+    """The roles every project starts with; more are rows of the "roles" table.
+
+    root has every permission and is not edited, user is given at sign-up.
+    """
+
     ROOT = "root"
     MODERATOR = "moderator"
     USER = "user"
@@ -14,12 +22,9 @@ class Area(str, Enum):
     USER = "user"
 
 
-# Roles that work in the admin area; they can also use the user area.
-ADMIN_ROLES = (Role.ROOT, Role.MODERATOR)
-
-
-def user_areas(role: Role, admin_enabled: bool) -> list[Area]:
-    """Areas open to a role; the first one is where the user lands after sign-in."""
-    if admin_enabled and role in ADMIN_ROLES:
+def user_areas(permissions: Collection[str], admin_enabled: bool) -> list[Area]:
+    """Areas open with these permissions; the first one is where the user lands after
+    sign-in. Whoever works in the admin area can also use the user area."""
+    if admin_enabled and ADMIN_ACCESS in permissions:
         return [Area.ADMIN, Area.USER]
     return [Area.USER]

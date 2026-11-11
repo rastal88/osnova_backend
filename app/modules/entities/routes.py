@@ -13,15 +13,14 @@ from app.core.errors import AppError
 from app.core.forms.schema import FormFieldDescription
 from app.core.i18n import translate
 from app.core.settings.schema import describe_field
-from app.modules.auth.dependencies import require_admin, require_any_role
-from app.modules.auth.roles import Role
+from app.modules.auth.dependencies import require, require_admin
 from app.modules.db import get_async_session
 from app.modules.entities.models import Entity
-from app.modules.entities.service import masked, validate_params
+from app.modules.entities.service import ENTITIES_MANAGE, masked, validate_params
 
-# Admin roles see the entities; only root changes them.
+# Everyone in the admin area sees the entities; changing them is a permission.
 entities_router = APIRouter(dependencies=[Depends(require_admin)])
-root_only = [Depends(require_any_role(Role.ROOT))]
+manage = [Depends(require(ENTITIES_MANAGE))]
 
 
 class EntityTypeDescription(BaseModel):
@@ -109,7 +108,7 @@ async def list_entities(
     return [read(entity) for entity in rows]
 
 
-@entities_router.post("", status_code=201, dependencies=root_only)
+@entities_router.post("", status_code=201, dependencies=manage)
 async def create_entity(
     data: EntityCreate, session: AsyncSession = Depends(get_async_session)
 ) -> EntityRead:
@@ -131,7 +130,7 @@ async def _get(session: AsyncSession, entity_id: uuid.UUID) -> Entity:
     return entity
 
 
-@entities_router.put("/{entity_id}", dependencies=root_only)
+@entities_router.put("/{entity_id}", dependencies=manage)
 async def update_entity(
     entity_id: uuid.UUID, data: EntityUpdate, session: AsyncSession = Depends(get_async_session)
 ) -> EntityRead:
@@ -146,7 +145,7 @@ async def update_entity(
     return read(entity)
 
 
-@entities_router.delete("/{entity_id}", status_code=204, dependencies=root_only)
+@entities_router.delete("/{entity_id}", status_code=204, dependencies=manage)
 async def delete_entity(
     entity_id: uuid.UUID, session: AsyncSession = Depends(get_async_session)
 ) -> Response:

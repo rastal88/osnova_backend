@@ -21,10 +21,13 @@ from app.config import config
 from app.core.errors import AppError
 from app.modules.auth.dependencies import current_user
 from app.modules.auth.models import User
-from app.modules.auth.roles import ADMIN_ROLES
+from app.modules.auth.permissions import permission
 from app.modules.db import get_async_session
 from app.modules.files.models import FileRecord
 from app.modules.files.storage import get_storage
+
+# Open and delete files of other users
+FILES_MANAGE = permission("files.manage")
 
 files_router = APIRouter(dependencies=[Depends(current_user)])
 
@@ -132,7 +135,7 @@ async def list_files(
 
 async def _own_file(file_id: uuid.UUID, user: User, session: AsyncSession) -> FileRecord:
     file = await session.get(FileRecord, file_id)
-    if file is None or (file.owner_id != user.id and user.role not in ADMIN_ROLES):
+    if file is None or (file.owner_id != user.id and FILES_MANAGE not in user.permissions):
         # Same answer for someone else's file: its existence is not revealed
         raise AppError(404, "file_not_found")
     return file

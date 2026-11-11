@@ -9,7 +9,7 @@ from app.modules.auth.models import User
 from app.modules.auth.roles import Role
 from app.modules.db import get_async_session
 
-# Every endpoint of the admin area requires an admin role (see ADMIN_ROLES).
+# Every endpoint of the admin area requires the admin.access permission.
 admin_router = APIRouter(dependencies=[Depends(require_admin)])
 
 

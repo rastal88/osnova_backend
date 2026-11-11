@@ -82,7 +82,8 @@ not a complete integration:
 | Tool | What you get |
 |---|---|
 | Users | sign-up, sign-in (cookie, JWT or Redis sessions), email confirmation, password reset, Google |
-| Areas | public, user (any signed-in user) and admin (`root`, `moderator`) with guards on both sides |
+| Areas | public, user (any signed-in user) and admin (the `admin.access` permission) with guards on both sides |
+| Permissions | named actions (`leads.read`, `users.block`) checked by `require(...)`; roles are sets of them in the database, `root` has all |
 | Admin | overview, users (search, block, role), leads, delivery channels, settings |
 | Settings | typed groups edited in the admin (site, languages), no migration per field |
 | Leads | form submissions stored, delivered to email / Telegram / webhook by a task |
@@ -372,17 +373,44 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | — | `/auth/me/*` | The user's own account, each with the current password: `POST password` (other sessions end), `POST email` (confirmed again, the old address is told), `POST sign-out-everywhere`, `DELETE` (with files and notifications; root cannot) | `AUTH_ENABLED` |
 | GET | `/auth/google/authorize`, `/auth/google/callback` | Sign-in with Google (`authorization_url`, then the callback signs in) | `GOOGLE_CLIENT_*` set |
 | GET | `/user/*` | User area: any signed-in user (example: `/user/summary`) | `AUTH_ENABLED` |
-| GET | `/admin/*` | Admin area: `root` and `moderator` (`/admin/overview`) | `ADMIN_ENABLED` |
+| GET | `/admin/*` | Admin area: the `admin.access` permission (`/admin/overview`); its sections ask for their own permissions, see [Permissions](#permissions) | `ADMIN_ENABLED` |
 | GET / PATCH / DELETE | `/admin/leads`, `/admin/leads/{id}`, `/admin/leads/forms` | Form submissions: search `q` in the data, filters `form` / `status`, `sort`, pages; mark `new` / `done`; delete | `ADMIN_ENABLED` |
-| GET / POST / PUT / DELETE | `/admin/entities`, `/admin/entities/{id}`, `/admin/entities/types` | Configurable entities (e.g. lead channels) with form descriptions; secrets masked; changes by `root` | `ADMIN_ENABLED` |
-| POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`root`) | `ADMIN_ENABLED` |
+| GET / POST / PUT / DELETE | `/admin/entities`, `/admin/entities/{id}`, `/admin/entities/types` | Configurable entities (e.g. lead channels) with form descriptions; secrets masked; changes need `entities.manage` | `ADMIN_ENABLED` |
+| POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`entities.manage`) | `ADMIN_ENABLED` |
 | GET | `/admin/users/export`, `/admin/leads/export` | CSV file of everything the list shows with the same `q`, filters and `sort` (no pages); `delimiter=comma` / `semicolon`, by the request language when not given | `ADMIN_ENABLED` |
-| GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (moderator: ordinary users), change role (root) | `ADMIN_ENABLED` |
-| GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes by `root` only | `ADMIN_ENABLED` |
+| GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; block / unblock (`users.block`), change role (`users.roles`, also needed to block someone with a role other than `user`) | `ADMIN_ENABLED` |
+| GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes need `settings.manage` | `ADMIN_ENABLED` |
 | GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language, unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
-| POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and admins; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
+| POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and `files.manage`; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
 
 ---
+
+### Permissions
+
+A permission is a named action. A module declares its own and asks for them with one
+dependency; `GET /auth/users/me` lists the user's `permissions` for the frontend.
+
+```python
+from app.modules.auth.dependencies import require
+from app.modules.auth.permissions import ADMIN_ACCESS, permission
+
+ORDERS_READ = permission("orders.read")
+router = APIRouter(dependencies=[Depends(require(ADMIN_ACCESS, ORDERS_READ))])
+```
+
+A role is a row of the `roles` table with a set of permissions; a user has one role
+(`users.role`). Three roles come with the template: `root` always has every permission,
+`user` has none and is given at sign-up, `moderator` starts with the ones below.
+
+| Permission | Allows | `moderator` |
+|---|---|---|
+| `admin.access` | open the admin area | yes |
+| `users.read`, `users.export`, `users.block` | the users list, its CSV, block / unblock | yes |
+| `users.roles` | change a role; block users who have a role other than `user` | |
+| `leads.read`, `leads.manage`, `leads.export` | leads: see, mark and delete, CSV | yes |
+| `entities.manage` | create and change entities (lead channels), send a test message | |
+| `settings.manage` | change the settings | |
+| `files.manage` | open and delete files of other users | yes |
 
 ## Development
 

@@ -22,18 +22,20 @@ from app.core.errors import AppError
 from app.core.forms.schema import FormDescription, describe
 from app.core.i18n import get_language, translate
 from app.forms import FORMS
-from app.modules.auth.dependencies import require_admin, require_any_role
+from app.modules.auth.dependencies import require
 from app.modules.auth.models import User
-from app.modules.auth.roles import Role
+from app.modules.auth.permissions import ADMIN_ACCESS
 from app.modules.db import app_session, get_async_session
 from app.modules.entities.models import Entity
-from app.modules.entities.service import parse_params
+from app.modules.entities.service import ENTITIES_MANAGE, parse_params
 from app.modules.leads.channels import GROUP, LeadMessage
 from app.modules.leads.models import Lead, LeadStatus
+from app.modules.leads.permissions import LEADS_EXPORT, LEADS_MANAGE, LEADS_READ
 
 logger = logging.getLogger(__name__)
 
-leads_router = APIRouter(dependencies=[Depends(require_admin)])
+leads_router = APIRouter(dependencies=[Depends(require(ADMIN_ACCESS, LEADS_READ))])
+manage = [Depends(require(LEADS_MANAGE))]
 
 SORT_COLUMNS = {"created_at": Lead.created_at, "form": Lead.form, "status": Lead.status}
 LeadSort = Literal[tuple(f"{sign}{name}" for name in SORT_COLUMNS for sign in ("", "-"))]  # type: ignore[valid-type]
@@ -124,9 +126,7 @@ async def lead_stats(
     )
 
 
-@leads_router.post(
-    "/channels/{channel_id}/test", dependencies=[Depends(require_any_role(Role.ROOT))]
-)
+@leads_router.post("/channels/{channel_id}/test", dependencies=[Depends(require(ENTITIES_MANAGE))])
 async def test_channel(
     channel_id: uuid.UUID, session: AsyncSession = Depends(get_async_session)
 ) -> ChannelTestResult:
@@ -202,7 +202,7 @@ async def export_leads(
     form: str | None = Query(None, description="Comma-separated form names"),
     status: str | None = Query(None, description="Comma-separated: new, done"),
     delimiter: Delimiter | None = Query(None, description="Default: by the request language"),
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require(LEADS_EXPORT)),
 ) -> StreamingResponse:
     """Every lead the list shows with this query, as a CSV file: a column per field of
     the chosen forms (all forms without the filter), answers as the visitor saw them."""
@@ -267,7 +267,7 @@ async def _get_lead(session: AsyncSession, lead_id: uuid.UUID) -> Lead:
     return lead
 
 
-@leads_router.patch("/{lead_id}")
+@leads_router.patch("/{lead_id}", dependencies=manage)
 async def update_lead(
     lead_id: uuid.UUID, changes: LeadUpdate, session: AsyncSession = Depends(get_async_session)
 ) -> LeadRead:
@@ -277,7 +277,7 @@ async def update_lead(
     return LeadRead.model_validate(lead, from_attributes=True)
 
 
-@leads_router.delete("/{lead_id}", status_code=204)
+@leads_router.delete("/{lead_id}", status_code=204, dependencies=manage)
 async def delete_lead(
     lead_id: uuid.UUID, session: AsyncSession = Depends(get_async_session)
 ) -> Response:

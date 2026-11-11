@@ -148,7 +148,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         user = await self.create(user_create)
         user = await self.user_db.update(
             user,
-            {"role": Role.ROOT, "is_superuser": True, "is_active": True},
+            {"role": Role.ROOT.value, "is_superuser": True, "is_active": True},
         )
         return user
 

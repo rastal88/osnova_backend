@@ -6,6 +6,26 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Permissions: named actions (`leads.read`, `users.block`, ...) declared by the modules with
+  `permission(...)` and checked by one dependency, `require(...)`
+  (`app/modules/auth/permissions.py`, README → Permissions). `UserRead` lists the user's
+  `permissions`.
+- Table `roles` (migration `0009`): a role is a set of permissions. `root` has every
+  permission, `moderator` starts with what it could do before, `user` has none.
+
+### Changed
+- `users.role` is the slug of a role (a string with a foreign key) instead of a database
+  enum; migration `0009` converts the stored values. In the API `role` is a string.
+- Access checks ask for permissions instead of role lists. Nothing changes for `root`,
+  `moderator` and `user`.
+- The admin area opens with the `admin.access` permission (`areas` in `UserRead`).
+
+### Removed
+- `require_any_role` and `ADMIN_ROLES`: use `require("<permission>")`; `require_admin` stays.
+- `users_with_roles` in the notifications service: use
+  `app.modules.auth.dependencies.users_with_permission`.
+
 ## [0.3.0] - 2026-11-11
 
 Account and everyday tools: account self-service, scheduled tasks with a cleanup, HTML

@@ -2746,7 +2746,8 @@
             "title": "Name"
           },
           "role": {
-            "$ref": "#/components/schemas/Role"
+            "type": "string",
+            "title": "Role"
           },
           "is_active": {
             "type": "boolean",
@@ -3907,7 +3908,8 @@
           "moderator",
           "user"
         ],
-        "title": "Role"
+        "title": "Role",
+        "description": "The roles every project starts with; more are rows of the \"roles\" table.\n\nroot has every permission and is not edited, user is given at sign-up."
       },
       "SettingsGroupDescription": {
         "properties": {
@@ -4050,7 +4052,8 @@
             "default": false
           },
           "role": {
-            "$ref": "#/components/schemas/Role"
+            "type": "string",
+            "title": "Role"
           },
           "name": {
             "anyOf": [
@@ -4062,6 +4065,14 @@
               }
             ],
             "title": "Name"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions",
+            "default": []
           },
           "areas": {
             "items": {

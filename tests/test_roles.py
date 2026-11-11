@@ -1,14 +1,15 @@
-from app.modules.auth.roles import Area, Role, user_areas
+from app.modules.auth.permissions import ADMIN_ACCESS
+from app.modules.auth.roles import Area, user_areas
 
 
-def test_admin_roles_land_in_admin():
-    for role in (Role.ROOT, Role.MODERATOR):
-        assert user_areas(role, admin_enabled=True) == [Area.ADMIN, Area.USER]
+def test_admin_access_lands_in_admin():
+    assert user_areas({ADMIN_ACCESS, "leads.read"}, admin_enabled=True) == [Area.ADMIN, Area.USER]
 
 
-def test_user_sees_only_client_area():
-    assert user_areas(Role.USER, admin_enabled=True) == [Area.USER]
+def test_without_admin_access_only_the_user_area():
+    assert user_areas({"leads.read"}, admin_enabled=True) == [Area.USER]
+    assert user_areas(set(), admin_enabled=True) == [Area.USER]
 
 
-def test_no_admin_area_without_admin_module():
-    assert user_areas(Role.ROOT, admin_enabled=False) == [Area.USER]
+def test_admin_disabled_leaves_only_the_user_area():
+    assert user_areas({ADMIN_ACCESS}, admin_enabled=False) == [Area.USER]
