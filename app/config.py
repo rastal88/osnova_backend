@@ -82,6 +82,8 @@ class Settings(BaseSettings):
     NOTIFICATIONS_KEEP_DAYS: int = 90
     # Accounts that never confirmed the email are removed this many days after sign-up
     UNVERIFIED_ACCOUNT_DAYS: int = 0
+    # Records of the admin audit log are removed this many days after the action
+    AUDIT_KEEP_DAYS: int = 365
 
     # Settings module: seconds before a process reloads settings changed in the admin
     SETTINGS_REFRESH_SECONDS: int = 30

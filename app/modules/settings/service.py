@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import ValidationError
@@ -31,16 +32,22 @@ async def load_settings(session: AsyncSession) -> None:
 
 
 async def save_settings(
-    session: AsyncSession, group: type[SettingsGroup], data: dict[str, Any]
+    session: AsyncSession,
+    group: type[SettingsGroup],
+    data: dict[str, Any],
+    before_commit: Callable[[SettingsGroup, SettingsGroup], None] | None = None,
 ) -> SettingsGroup:
-    """Validate (missing fields keep their current values), store and apply."""
-    current = settings.get(group).model_dump()
-    value = group.model_validate({**current, **data})
+    """Validate (missing fields keep their current values), store and apply.
+    ``before_commit(old, new)`` runs in the same transaction (e.g. the audit log)."""
+    old = settings.get(group)
+    value = group.model_validate({**old.model_dump(), **data})
     record = await session.get(SettingsRecord, group.group)
     if record is None:
         session.add(SettingsRecord(group=group.group, values=value.model_dump(mode="json")))
     else:
         record.values = value.model_dump(mode="json")
+    if before_commit is not None:
+        before_commit(old, value)
     await session.commit()
     settings.set(value)
     return value

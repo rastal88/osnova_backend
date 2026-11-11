@@ -22,6 +22,18 @@ All notable changes are documented here. The format follows
 - Nobody hands out more than they have: roles, groups and users are changed only by someone
   who has every permission involved (`permission_not_allowed`).
 
+- Audit log of admin actions (table `audit_log`, migration `0011`): who, when, from which IP,
+  what and what changed (`{field: [before, after]}`), stored in the same transaction as the
+  change. Recorded: block / unblock and role or groups of a user, roles and groups, settings,
+  channels (entities), lead status and delete, CSV exports with their filters. Secret values
+  are never stored, only that they changed; leads are named by the form, without the data of
+  visitors. A record keeps the email when the account is deleted.
+- `GET /admin/audit` (search, filters by action, who and days, sort, pages) and
+  `GET /admin/audit/actions`, with the new permission `audit.read` (only `root` has it at
+  first). Modules declare actions with `audit_action(...)` and record them with the `Audit`
+  dependency (`app/modules/admin/audit.py`).
+- `AUDIT_KEEP_DAYS` (365): the nightly cleanup removes older records (0 keeps them).
+
 ### Changed
 - `/admin/overview` counts users for every role of the project, not only the built-in ones.
 - `users.role` is the slug of a role (a string with a foreign key) instead of a database

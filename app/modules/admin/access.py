@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
 from app.core.i18n import has_translation, translate
+from app.modules.admin.audit import Audit, audit_action, diff
 from app.modules.auth.dependencies import require
 from app.modules.auth.models import Group, RoleRecord, User, group_roles, user_groups
 from app.modules.auth.permissions import all_permissions, permission
@@ -30,6 +31,13 @@ from app.modules.db import get_async_session
 
 # Create, change and delete roles and groups
 ROLES_MANAGE = permission("roles.manage")
+
+ROLES_CREATE = audit_action("roles.create")
+ROLES_UPDATE = audit_action("roles.update")
+ROLES_DELETE = audit_action("roles.delete")
+GROUPS_CREATE = audit_action("groups.create")
+GROUPS_UPDATE = audit_action("groups.update")
+GROUPS_DELETE = audit_action("groups.delete")
 
 access_router = APIRouter()
 manage = Depends(require(ROLES_MANAGE))
@@ -178,6 +186,7 @@ async def list_roles(session: AsyncSession = Depends(get_async_session)) -> list
 async def create_role(
     data: RoleCreate,
     admin: User = manage,
+    audit: Audit = Depends(),
     session: AsyncSession = Depends(get_async_session),
 ) -> RoleRead:
     permissions = _known(data.permissions)
@@ -186,6 +195,12 @@ async def create_role(
         slug=await _slug(session, data.name), name=data.name, permissions=sorted(permissions)
     )
     session.add(role)
+    audit(
+        ROLES_CREATE,
+        target_id=role.slug,
+        target=role.name,
+        changes=diff({}, {"name": role.name, "permissions": role.permissions}),
+    )
     await session.commit()
     return await _role_read(session, role)
 
@@ -205,9 +220,11 @@ async def update_role(
     slug: str,
     data: RoleUpdate,
     admin: User = manage,
+    audit: Audit = Depends(),
     session: AsyncSession = Depends(get_async_session),
 ) -> RoleRead:
     role = await _editable_role(session, slug, admin)
+    before = {"name": role.name, "permissions": list(role.permissions)}
     if data.name is not None and data.name != role.name:
         if role.system:
             raise AppError(403, "role_protected")
@@ -218,6 +235,8 @@ async def update_role(
         # Permissions of a module that is switched off stay with the role
         hidden = set(role.permissions) - all_permissions()
         role.permissions = sorted(permissions | hidden)
+    if changes := diff(before, {"name": role.name, "permissions": role.permissions}):
+        audit(ROLES_UPDATE, target_id=role.slug, target=role.name, changes=changes)
     await session.commit()
     return await _role_read(session, role)
 
@@ -226,6 +245,7 @@ async def update_role(
 async def delete_role(
     slug: str,
     admin: User = manage,
+    audit: Audit = Depends(),
     session: AsyncSession = Depends(get_async_session),
 ) -> Response:
     role = await _editable_role(session, slug, admin)
@@ -235,6 +255,7 @@ async def delete_role(
         raise AppError(409, "role_in_use")
     await session.execute(delete(group_roles).where(group_roles.c.role == role.slug))
     await session.delete(role)
+    audit(ROLES_DELETE, target_id=role.slug, target=role.name)
     await session.commit()
     return Response(status_code=204)
 
@@ -274,6 +295,7 @@ async def list_groups(session: AsyncSession = Depends(get_async_session)) -> lis
 async def create_group(
     data: GroupCreate,
     admin: User = manage,
+    audit: Audit = Depends(),
     session: AsyncSession = Depends(get_async_session),
 ) -> GroupRead:
     await _name_is_free(session, data.name)
@@ -281,6 +303,13 @@ async def create_group(
     check_covers_roles(admin, roles)
     group = Group(name=data.name, roles=roles)
     session.add(group)
+    await session.flush()
+    audit(
+        GROUPS_CREATE,
+        target_id=group.id,
+        target=group.name,
+        changes=diff({}, {"name": group.name, "roles": sorted(role.slug for role in group.roles)}),
+    )
     await session.commit()
     return _group_read(group, 0)
 
@@ -298,9 +327,11 @@ async def update_group(
     group_id: uuid.UUID,
     data: GroupUpdate,
     admin: User = manage,
+    audit: Audit = Depends(),
     session: AsyncSession = Depends(get_async_session),
 ) -> GroupRead:
     group = await _editable_group(session, group_id, admin)
+    before = {"name": group.name, "roles": sorted(role.slug for role in group.roles)}
     if data.name is not None and data.name != group.name:
         await _name_is_free(session, data.name, group)
         group.name = data.name
@@ -308,6 +339,9 @@ async def update_group(
         roles = await roles_by_slug(session, data.roles)
         check_covers_roles(admin, roles)
         group.roles = roles
+    after = {"name": group.name, "roles": sorted(role.slug for role in group.roles)}
+    if changes := diff(before, after):
+        audit(GROUPS_UPDATE, target_id=group.id, target=group.name, changes=changes)
     await session.commit()
     return _group_read(group, (await _user_counts(session)).get(group.id, 0))
 
@@ -316,10 +350,12 @@ async def update_group(
 async def delete_group(
     group_id: uuid.UUID,
     admin: User = manage,
+    audit: Audit = Depends(),
     session: AsyncSession = Depends(get_async_session),
 ) -> Response:
     group = await _editable_group(session, group_id, admin)
     await session.execute(delete(user_groups).where(user_groups.c.group_id == group.id))
     await session.delete(group)
+    audit(GROUPS_DELETE, target_id=group.id, target=group.name)
     await session.commit()
     return Response(status_code=204)

@@ -200,7 +200,7 @@ osnova_backend/
 │   ├── modules/           # optional modules, one folder each
 │   │   ├── db/            # SQLAlchemy (async) sessions       ← DATABASE_URL
 │   │   ├── auth/          # fastapi-users, roles, User model  ← AUTH_ENABLED
-│   │   ├── admin/         # admin area API (root, moderator)  ← ADMIN_ENABLED
+│   │   ├── admin/         # admin area API: users, roles, groups, audit log  ← ADMIN_ENABLED
 │   │   ├── settings/      # settings stored in the database   ← ADMIN_ENABLED
 │   │   ├── entities/      # configurable entities (one table) ← ADMIN_ENABLED
 │   │   ├── leads/         # submissions, delivery channels    ← ADMIN_ENABLED
@@ -345,7 +345,7 @@ listed with comments in [`.env.example`](.env.example).
 | `FILES_STORAGE`, `FILES_DIR`, `FILES_MAX_SIZE_MB`, `FILES_ALLOWED_TYPES` | `local` (folder `FILES_DIR`) or `s3`; size limit; allowed MIME types or prefixes (empty: any) |
 | `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_LINK_SECONDS` | S3-compatible bucket for `FILES_STORAGE=s3`; lifetime of download links |
 | `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Celery (broker required with background tasks) |
-| `NOTIFICATIONS_KEEP_DAYS`, `UNVERIFIED_ACCOUNT_DAYS` | Nightly cleanup: days to keep read notifications (90) and never confirmed accounts (0 = keep) |
+| `NOTIFICATIONS_KEEP_DAYS`, `UNVERIFIED_ACCOUNT_DAYS`, `AUDIT_KEEP_DAYS` | Nightly cleanup: days to keep read notifications (90), never confirmed accounts (0 = keep) and audit log records (365) |
 | `FRONTEND_URL` | Public address of the frontend, for links in emails |
 | `MAIL_BACKEND`, `MAIL_FROM` | `console` (log, default) or `smtp`; sender address |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SECURITY`, `SMTP_TIMEOUT` | SMTP server; `starttls` (default), `ssl` or `none` |
@@ -381,6 +381,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | GET / PATCH | `/admin/users`, `/admin/users/{id}` | Users: search `q`, filters `role` / `status`, `sort`, `page` / `size`; filter `group`; block / unblock (`users.block`), give a role and groups (`users.roles`, also needed to block someone with a role other than `user` or in a group) | `ADMIN_ENABLED` |
 | GET / POST / PUT / DELETE | `/admin/roles`, `/admin/roles/{slug}`, `/admin/groups`, `/admin/groups/{id}`, `/admin/permissions` | Roles (sets of permissions), groups (roles for several users) and the list of permissions with texts; changes need `roles.manage` | `ADMIN_ENABLED` |
 | GET / PUT | `/admin/settings`, `/admin/settings/{group}` | Settings groups with form descriptions; changes need `settings.manage` | `ADMIN_ENABLED` |
+| GET | `/admin/audit`, `/admin/audit/actions` | Audit log of admin actions (`audit.read`): search `q` (who / target), filters `action`, `actor`, `since` / `until` (days, UTC), `sort`, pages; the actions with texts | `ADMIN_ENABLED` |
 | GET / POST / DELETE | `/notifications`, `/notifications/unread`, `/notifications/read`, `/notifications/{id}/read`, `/notifications/{id}` | The user's notifications in the request language, unread count, mark read, delete | `NOTIFICATIONS_ENABLED` |
 | POST / GET / DELETE | `/files`, `/files/{id}` | The user's files: upload (size / type limits), list with search, download (owner and `files.manage`; S3: redirect to a short-lived link), delete | `FILES_ENABLED` |
 
@@ -422,6 +423,7 @@ permission goes to the `permissions` and `permission_areas` sections of
 | `entities.manage` | create and change entities (lead channels), send a test message | |
 | `settings.manage` | change the settings | |
 | `files.manage` | open and delete files of other users | yes |
+| `audit.read` | read the audit log | |
 
 ## Development
 
@@ -477,11 +479,19 @@ permission goes to the `permissions` and `permission_areas` sections of
   Examples: `export_users` (`app/modules/admin/users.py`), `export_leads`
   (`app/modules/leads/routes.py`).
 - **Clean old data:** every night at 03:30 UTC the `maintenance.cleanup` task removes read
-  notifications older than `NOTIFICATIONS_KEEP_DAYS` (90) and, when
+  notifications older than `NOTIFICATIONS_KEEP_DAYS` (90), audit log records older than
+  `AUDIT_KEEP_DAYS` (365) and, when
   `UNVERIFIED_ACCOUNT_DAYS` is set, accounts that never confirmed the email and never
   signed in. Without Celery run `python manage.py cleanup` from cron (`make cleanup` in
   Docker). Another rule: `cleanup.py` in the module with `async def cleanup(session) -> int`
   and an entry in `JOBS` (`app/modules/db/cleanup.py`).
+- **Audit log:** admin actions are recorded with who, when, from which IP and what changed
+  (`{field: [before, after]}`; secrets only as changed, no data of visitors). A new action:
+  `NAME = audit_action("orders.cancel")`, then `audit: Audit = Depends()` in the endpoint and
+  `audit(NAME, target_id=..., target=..., changes=diff(before, after))` before the commit
+  (`app/modules/admin/audit.py`), and its text in the `audit` section of
+  `app/core/locales/*.json`. Records older than `AUDIT_KEEP_DAYS` (365) go with the nightly
+  cleanup.
 - **Add a form:** a `Form` in `app/forms.py` and its texts in `app/core/locales/*.json`.
 - **Captcha (optional):** set `CAPTCHA_PROVIDER=turnstile` with `CAPTCHA_SITE_KEY` and
   `CAPTCHA_SECRET_KEY` (Cloudflare dashboard → Turnstile; test keys are in `.env.example`).

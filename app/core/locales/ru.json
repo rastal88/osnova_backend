@@ -153,7 +153,8 @@
     "leads": "Заявки",
     "entities": "Каналы",
     "settings": "Настройки",
-    "files": "Файлы"
+    "files": "Файлы",
+    "audit": "Журнал действий"
   },
   "permissions": {
     "admin.access": "Вход в админку",
@@ -167,6 +168,26 @@
     "leads.export": "Экспорт заявок в CSV",
     "entities.manage": "Создание и изменение каналов доставки",
     "settings.manage": "Изменение настроек",
-    "files.manage": "Просмотр и удаление чужих файлов"
+    "files.manage": "Просмотр и удаление чужих файлов",
+    "audit.read": "Просмотр журнала действий"
+  },
+  "audit": {
+    "users.block": "Пользователь заблокирован",
+    "users.unblock": "Пользователь разблокирован",
+    "users.access": "Изменены роль или группы пользователя",
+    "users.export": "Экспорт пользователей в CSV",
+    "roles.create": "Создана роль",
+    "roles.update": "Изменена роль",
+    "roles.delete": "Удалена роль",
+    "groups.create": "Создана группа",
+    "groups.update": "Изменена группа",
+    "groups.delete": "Удалена группа",
+    "settings.update": "Изменены настройки",
+    "entities.create": "Создан канал",
+    "entities.update": "Изменён канал",
+    "entities.delete": "Удалён канал",
+    "leads.update": "Изменён статус заявки",
+    "leads.delete": "Удалена заявка",
+    "leads.export": "Экспорт заявок в CSV"
   }
 }

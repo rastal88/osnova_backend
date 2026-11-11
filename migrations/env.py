@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from app.config import config
 
 # Import every model module so Alembic sees its tables.
+from app.modules.admin import models as _admin_models  # noqa: F401
 from app.modules.auth import models as _auth_models  # noqa: F401
 from app.modules.db import Base
 from app.modules.entities import models as _entities_models  # noqa: F401

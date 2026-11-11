@@ -12,7 +12,9 @@ from app.core.entities import EntityType, entity_types
 from app.core.errors import AppError
 from app.core.forms.schema import FormFieldDescription
 from app.core.i18n import translate
+from app.core.settings import secret_fields
 from app.core.settings.schema import describe_field
+from app.modules.admin.audit import Audit, audit_action, diff
 from app.modules.auth.dependencies import require, require_admin
 from app.modules.db import get_async_session
 from app.modules.entities.models import Entity
@@ -21,6 +23,24 @@ from app.modules.entities.service import ENTITIES_MANAGE, masked, validate_param
 # Everyone in the admin area sees the entities; changing them is a permission.
 entities_router = APIRouter(dependencies=[Depends(require_admin)])
 manage = [Depends(require(ENTITIES_MANAGE))]
+
+ENTITIES_CREATE = audit_action("entities.create")
+ENTITIES_UPDATE = audit_action("entities.update")
+ENTITIES_DELETE = audit_action("entities.delete")
+
+
+def _state(entity: Entity) -> dict[str, Any]:
+    """What the audit log compares: the name, the switch and each parameter."""
+    return {
+        "name": entity.name,
+        "enabled": entity.enabled,
+        **{f"params.{key}": value for key, value in (entity.params or {}).items()},
+    }
+
+
+def _changes(entity: Entity, before: dict[str, Any]) -> dict[str, list[Any]]:
+    secret = {f"params.{name}" for name in secret_fields(entity_types[entity.type])}
+    return diff(before, _state(entity), secret)
 
 
 class EntityTypeDescription(BaseModel):
@@ -110,7 +130,9 @@ async def list_entities(
 
 @entities_router.post("", status_code=201, dependencies=manage)
 async def create_entity(
-    data: EntityCreate, session: AsyncSession = Depends(get_async_session)
+    data: EntityCreate,
+    audit: Audit = Depends(),
+    session: AsyncSession = Depends(get_async_session),
 ) -> EntityRead:
     model = entity_types.get(data.type)
     if model is None:
@@ -119,6 +141,8 @@ async def create_entity(
         type=data.type, name=data.name, enabled=data.enabled, params=_params(model, data.params)
     )
     session.add(entity)
+    await session.flush()
+    audit(ENTITIES_CREATE, target_id=entity.id, target=entity.name, changes=_changes(entity, {}))
     await session.commit()
     return read(entity)
 
@@ -132,23 +156,33 @@ async def _get(session: AsyncSession, entity_id: uuid.UUID) -> Entity:
 
 @entities_router.put("/{entity_id}", dependencies=manage)
 async def update_entity(
-    entity_id: uuid.UUID, data: EntityUpdate, session: AsyncSession = Depends(get_async_session)
+    entity_id: uuid.UUID,
+    data: EntityUpdate,
+    audit: Audit = Depends(),
+    session: AsyncSession = Depends(get_async_session),
 ) -> EntityRead:
     entity = await _get(session, entity_id)
+    before = _state(entity)
     if data.name is not None:
         entity.name = data.name
     if data.enabled is not None:
         entity.enabled = data.enabled
     if data.params is not None:
         entity.params = _params(entity_types[entity.type], data.params, entity.params)
+    if changes := _changes(entity, before):
+        audit(ENTITIES_UPDATE, target_id=entity.id, target=entity.name, changes=changes)
     await session.commit()
     return read(entity)
 
 
 @entities_router.delete("/{entity_id}", status_code=204, dependencies=manage)
 async def delete_entity(
-    entity_id: uuid.UUID, session: AsyncSession = Depends(get_async_session)
+    entity_id: uuid.UUID,
+    audit: Audit = Depends(),
+    session: AsyncSession = Depends(get_async_session),
 ) -> Response:
-    await session.delete(await _get(session, entity_id))
+    entity = await _get(session, entity_id)
+    await session.delete(entity)
+    audit(ENTITIES_DELETE, target_id=entity.id, target=entity.name)
     await session.commit()
     return Response(status_code=204)
