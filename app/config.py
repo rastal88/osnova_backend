@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str | None = None
 
     REDIS_URL: str | None = None
+    # Where rate limits count the hits: in each process, or in Redis (REDIS_URL), shared by
+    # every replica (app/core/rate_limit.py)
+    RATE_LIMIT_STORAGE: Literal["memory", "redis"] = "memory"
 
     # Public address of the frontend: links in emails (verification, password reset)
     FRONTEND_URL: str = "http://localhost:5173"

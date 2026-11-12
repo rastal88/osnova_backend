@@ -7,6 +7,11 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Rate limits in Redis: `RATE_LIMIT_STORAGE=redis` (with `REDIS_URL`; Docker Compose sets
+  it for standard and scalable) counts the form and sign-in hits in Redis, shared by every
+  replica — one atomic Lua script, the same sliding window as in memory. When Redis cannot
+  be reached the request is let through (fail-open): the process counts in memory, asks
+  Redis again after 30 seconds and warns at most once a minute.
 - JSON logs: `LOG_FORMAT=json` writes one object per line (time in UTC, level, logger,
   message, `request_id`, fields passed with `extra`, the traceback of an exception) for log
   collectors; `LOG_LEVEL` sets the level. Request lines carry `method`, `path`, `status`,
@@ -15,6 +20,11 @@ All notable changes are documented here. The format follows
   and beat start with `--quiet`, so the start banner, printed outside the logs, is gone).
 - Docker Compose passes `CSP_EXTRA_ORIGINS` from `.env` to the frontend build (origins its
   Content Security Policy allows besides the analytics script, e.g. Google Analytics).
+
+### Changed
+- `APP_PROFILE=scalable` refuses `FILES_STORAGE=local` at start (each replica would keep
+  its own files) and warns when rate limits count in each replica.
+- `check_limit` is async (`await check_limit(limiter, key)`).
 
 ## [0.4.0] - 2026-11-11
 

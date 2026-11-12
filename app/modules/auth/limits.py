@@ -7,12 +7,12 @@ from app.core.settings import settings
 
 # A wrong value in .env stops the start; later the limit comes from the admin
 parse_limit(config.AUTH_RATE_LIMIT)
-limiter = LimitFromSetting(lambda: settings.get(ProtectionSettings).auth_rate_limit)
+limiter = LimitFromSetting(lambda: settings.get(ProtectionSettings).auth_rate_limit, "auth")
 
 
 async def limit_by_ip(request: Request) -> None:
     """Slows down password guessing and sending emails to someone else's address."""
-    check_limit(limiter, f"{request.url.path}:{client_address(request)}")
+    await check_limit(limiter, f"{request.url.path}:{client_address(request)}")
 
 
 limited = [Depends(limit_by_ip)]
