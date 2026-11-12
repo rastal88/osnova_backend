@@ -119,3 +119,5 @@ wbma_python.tar
 uploads/
 # Form submissions (FORMS_DELIVERY=file)
 data/
+# Database and file backups (make backup)
+backups/
