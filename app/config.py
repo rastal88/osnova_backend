@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     APP_PORT: int = 8000
     # Development mode: serves /docs, /redoc and /openapi.json
     DEBUG: bool = False
+    # Logs: "text" to read, "json" (one object per line) for log collectors
+    LOG_FORMAT: Literal["text", "json"] = "text"
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     # Capabilities: each flag turns on a module from app/modules (see app/core/modules.py)
     AUTH_ENABLED: bool = False

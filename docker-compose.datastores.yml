@@ -56,7 +56,7 @@ services:
         REQUIREMENTS: standard
     profiles: ["standard", "scalable"]
     restart: unless-stopped
-    command: ["celery", "-A", "app.modules.tasks.celery_app", "worker", "-l", "info"]
+    command: ["celery", "-A", "app.modules.tasks.celery_app", "--quiet", "worker", "-l", "info"]
     env_file:
       - path: .env
         required: false
@@ -85,7 +85,7 @@ services:
         REQUIREMENTS: standard
     profiles: ["standard", "scalable"]
     restart: unless-stopped
-    command: ["celery", "-A", "app.modules.tasks.celery_app", "beat", "-l", "info", "-s", "/tmp/celerybeat-schedule"]
+    command: ["celery", "-A", "app.modules.tasks.celery_app", "--quiet", "beat", "-l", "info", "-s", "/tmp/celerybeat-schedule"]
     env_file:
       - path: .env
         required: false

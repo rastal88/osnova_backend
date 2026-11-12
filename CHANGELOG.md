@@ -6,6 +6,16 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- JSON logs: `LOG_FORMAT=json` writes one object per line (time in UTC, level, logger,
+  message, `request_id`, fields passed with `extra`, the traceback of an exception) for log
+  collectors; `LOG_LEVEL` sets the level. Request lines carry `method`, `path`, `status`,
+  `duration_ms`. uvicorn, the Celery worker and beat write through the same handler, so all
+  lines share the format (Celery's own log setup is replaced; in Docker Compose the worker
+  and beat start with `--quiet`, so the start banner, printed outside the logs, is gone).
+- Docker Compose passes `CSP_EXTRA_ORIGINS` from `.env` to the frontend build (origins its
+  Content Security Policy allows besides the analytics script, e.g. Google Analytics).
+
 ## [0.4.0] - 2026-11-11
 
 Permissions and control: permissions as named actions, roles and groups edited in the
