@@ -7,6 +7,13 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Optional error tracking: with `SENTRY_DSN` (Sentry or GlitchTip) unhandled errors of the
+  API and Celery tasks and `ERROR` log lines are sent, with the release and
+  `SENTRY_ENVIRONMENT`; `SENTRY_TRACES_SAMPLE_RATE` turns on traces. No personal data:
+  no request bodies, cookies, auth headers, user IPs or local variables, no `INFO` lines as
+  breadcrumbs. The package is in its own `requirements/sentry.txt`, not imported without
+  a DSN; Docker images get it with `EXTRA_REQUIREMENTS=sentry` in `.env` (a new build
+  argument for optional requirements files).
 - Backups: `make backup` writes a `pg_dump` of the Docker Compose database to
   `backups/osnova-<date>.dump` (git-ignored) and, with local files or form submissions on
   disk, `osnova-<date>-files.tar.gz`; `KEEP_DAYS=N` deletes older backups.

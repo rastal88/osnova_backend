@@ -1,0 +1,2 @@
+# Error tracking (SENTRY_DSN, app/core/error_tracking.py); in Docker EXTRA_REQUIREMENTS=sentry
+sentry-sdk[fastapi,celery]==2.75.0

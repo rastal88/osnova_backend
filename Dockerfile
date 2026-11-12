@@ -13,7 +13,10 @@ RUN groupadd --system app && useradd --system --gid app --create-home app
 # Install only the modules this image needs: base (minimal) or standard.
 ARG REQUIREMENTS=base
 COPY requirements/ requirements/
-RUN pip install --upgrade pip && pip install -r requirements/${REQUIREMENTS}.txt
+# Optional integrations on top, space-separated names of requirements files (e.g. sentry)
+ARG EXTRA_REQUIREMENTS=""
+RUN pip install --upgrade pip && pip install -r requirements/${REQUIREMENTS}.txt \
+    && for name in ${EXTRA_REQUIREMENTS}; do pip install -r requirements/${name}.txt; done
 
 COPY . .
 RUN chmod +x /app/docker-entrypoint.sh \

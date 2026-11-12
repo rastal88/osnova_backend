@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     # Logs: "text" to read, "json" (one object per line) for log collectors
     LOG_FORMAT: Literal["text", "json"] = "text"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    # Error tracking (app/core/error_tracking.py): empty DSN = off
+    SENTRY_DSN: str = ""
+    SENTRY_ENVIRONMENT: str = "production"
+    # Share of requests and tasks traced for performance, 0..1 (0: errors only)
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.0
 
     # Capabilities: each flag turns on a module from app/modules (see app/core/modules.py)
     AUTH_ENABLED: bool = False
