@@ -127,9 +127,9 @@ what to watch:
 | Settings | each replica reloads them every `SETTINGS_REFRESH_SECONDS` (30 s) |
 | Background work | the Celery worker is a separate service; tasks go through Redis |
 | Readiness | `GET /api/v1/ready` checks the database, Redis sessions and the task broker of the enabled modules: route traffic by it |
+| Rate limits | forms and sign-in count in Redis with `RATE_LIMIT_STORAGE=redis` (set by Docker Compose), shared by every replica; when Redis is down requests are let through and each replica counts on its own until it is back |
 | **Migrations** | run them once (`make migrate`), not with `RUN_MIGRATIONS=true` on every replica |
-| **Files** | `FILES_STORAGE=s3` for several machines; local files work only on one host (shared Docker volume) |
-| **Form rate limit** | counted in each replica's memory: with N replicas a client may send up to N × `FORMS_RATE_LIMIT` (a Redis store is planned) |
+| **Files** | `FILES_STORAGE=s3`: with `APP_PROFILE=scalable` local files are refused at start (each replica would keep its own) |
 | **Lead delivery without tasks** | runs in the replica that got the form; turn background tasks on for retries |
 
 ---
@@ -341,7 +341,8 @@ listed with comments in [`.env.example`](.env.example).
 | `AUTH_RATE_LIMIT` | Requests per client IP to each of sign-in, sign-up, password reset and email confirmation, e.g. `10/minute`; empty disables. Admin → Settings → Protection |
 | `AUTH_STRATEGY`, `COOKIE_SECURE` | `jwt` (default) or `redis` sessions; `Secure` cookie (HTTPS only) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (both set turns it on) |
-| `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis`) |
+| `REDIS_URL` | Redis (for `AUTH_STRATEGY=redis` and `RATE_LIMIT_STORAGE=redis`) |
+| `RATE_LIMIT_STORAGE` | Where the form and sign-in limits count: `memory` (each process, default) or `redis` (shared by every replica; Docker Compose sets it); if Redis is down requests are let through |
 | `NOTIFICATIONS_CHANNELS` | Where notifications go besides the bell: `in_app` (default), `in_app,email`. Admin → Settings → Notifications |
 | `SETTINGS_REFRESH_SECONDS` | How often each process reloads settings changed in the admin (default `30`) |
 | `FILES_STORAGE`, `FILES_DIR`, `FILES_MAX_SIZE_MB`, `FILES_ALLOWED_TYPES` | `local` (folder `FILES_DIR`) or `s3`; size limit and allowed MIME types or prefixes (empty: any): Admin → Settings → Files |

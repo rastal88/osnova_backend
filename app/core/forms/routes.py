@@ -29,7 +29,7 @@ forms_by_name: dict[str, Form] = {form.name: form for form in FORMS}
 
 # A wrong value in .env stops the start; later the limit comes from the admin
 parse_limit(config.FORMS_RATE_LIMIT)
-limiter = LimitFromSetting(lambda: settings.get(ProtectionSettings).forms_rate_limit)
+limiter = LimitFromSetting(lambda: settings.get(ProtectionSettings).forms_rate_limit, "forms")
 
 forms_router = APIRouter(prefix="/forms", tags=["Forms"])
 
@@ -51,7 +51,7 @@ async def submit_form(
     request: Request, name: str, payload: dict[str, Any] = Body(...)
 ) -> FormSubmitResponse:
     form = _get_form(name)
-    check_limit(limiter, f"{form.name}:{client_address(request)}")
+    await check_limit(limiter, f"{form.name}:{client_address(request)}")
     success = FormSubmitResponse(message=translate(f"forms.{form.name}.success"))
 
     if payload.pop(HONEYPOT_FIELD, None):

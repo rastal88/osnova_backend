@@ -15,7 +15,7 @@ from app.core.profile import profile_warnings
     ],
 )
 def test_matching_profile_has_no_warnings(profile, modules):
-    assert profile_warnings(profile, modules) == []
+    assert profile_warnings(profile, modules, "redis") == []
 
 
 def test_minimal_with_modules_warns():
@@ -26,9 +26,15 @@ def test_minimal_with_modules_warns():
 
 @pytest.mark.parametrize("profile", ["standard", "scalable"])
 def test_profile_without_database_warns(profile):
-    (warning,) = profile_warnings(profile, ["tasks"])
+    (warning,) = profile_warnings(profile, ["tasks"], "redis")
     assert f"APP_PROFILE={profile}" in warning
     assert "DATABASE_URL" in warning
+
+
+def test_scalable_with_limits_in_each_replica_warns():
+    (warning,) = profile_warnings("scalable", ["db"], "memory")
+    assert "RATE_LIMIT_STORAGE=redis" in warning
+    assert profile_warnings("standard", ["db"], "memory") == []
 
 
 def test_app_start_logs_no_warning_for_matching_setup(caplog):

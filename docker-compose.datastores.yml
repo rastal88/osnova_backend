@@ -39,6 +39,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-osnova}:${POSTGRES_PASSWORD:-osnova}@postgres:5432/${POSTGRES_DB:-osnova}
       REDIS_URL: redis://redis:6379/0
+      # Rate limits shared by every replica (RATE_LIMIT_STORAGE=memory in .env to keep
+      # them in each process)
+      RATE_LIMIT_STORAGE: ${RATE_LIMIT_STORAGE:-redis}
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
     depends_on:
