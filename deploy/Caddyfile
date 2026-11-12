@@ -1,0 +1,43 @@
+# HTTPS in front of the stack (docker-compose.https.yml, DEPLOY.md). Caddy gets a
+# certificate from Let's Encrypt for the host of SITE_URL, renews it on its own and
+# redirects http:// to https://.
+
+{$SITE_URL} {
+	encode zstd gzip
+	header -Server
+
+	# The API goes straight to the backend, not through the frontend's nginx: Caddy
+	# sets X-Forwarded-For to the visitor's address (a value sent by the client is not
+	# trusted), so rate limits count per visitor. Every replica gets requests (scalable).
+	handle /api/* {
+		header {
+			Strict-Transport-Security "max-age=31536000"
+			X-Content-Type-Options nosniff
+		}
+		# Body limits as in the frontend's nginx: keep the files one in step with
+		# FILES_MAX_SIZE_MB (default 10)
+		@files path /api/v1/files*
+		request_body @files {
+			max_size 11MB
+		}
+		@other not path /api/v1/files*
+		request_body @other {
+			max_size 1MB
+		}
+		reverse_proxy {
+			dynamic a {
+				name backend
+				port 8000
+				refresh 5s
+			}
+			# A replica that is restarting: try another one
+			lb_try_duration 5s
+		}
+	}
+
+	# The site, /docs and /redoc: the frontend's nginx (it sends the security headers,
+	# HSTS since Caddy reports X-Forwarded-Proto: https)
+	handle {
+		reverse_proxy frontend:80
+	}
+}

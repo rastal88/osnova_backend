@@ -2,8 +2,10 @@ COMPOSE ?= docker compose
 PYTHON ?= venv/bin/python
 FRONTEND ?= ../osnova_frontend
 
-BASE := -f docker-compose.yml
-DATA := -f docker-compose.yml -f docker-compose.datastores.yml
+# HTTPS=1: Caddy in front with Let's Encrypt certificates (docker-compose.https.yml, DEPLOY.md)
+HTTPS_FILE := $(if $(HTTPS),-f docker-compose.https.yml)
+BASE := -f docker-compose.yml $(HTTPS_FILE)
+DATA := -f docker-compose.yml -f docker-compose.datastores.yml $(HTTPS_FILE)
 
 .PHONY: help install dev dev-all test lint format openapi up-minimal up-standard up-scalable migrate createroot cleanup backup restore down down-volumes logs ps build
 
@@ -63,11 +65,11 @@ backup:  ## Docker: database (and local files) into backups/ with the date; KEEP
 restore:  ## Docker: restore FILE=backups/... (asks first; CONFIRM=yes skips the question)
 	@COMPOSE="$(COMPOSE) $(DATA)" CONFIRM="$(CONFIRM)" sh scripts/restore.sh "$(FILE)"
 
-down:  ## Stop containers
-	$(COMPOSE) $(DATA) down
+down:  ## Stop containers (Caddy too)
+	$(COMPOSE) $(DATA) down --remove-orphans
 
-down-volumes:  ## Stop containers and delete data volumes
-	$(COMPOSE) $(DATA) down -v
+down-volumes:  ## Stop containers and delete data volumes (with HTTPS=1 the certificates too)
+	$(COMPOSE) $(DATA) down -v --remove-orphans
 
 logs:  ## Follow logs
 	$(COMPOSE) $(DATA) logs -f

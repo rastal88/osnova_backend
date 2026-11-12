@@ -1,0 +1,35 @@
+# HTTPS override: Caddy in front of the stack with automatic Let's Encrypt certificates
+# for the host of SITE_URL (deploy/Caddyfile). Works with every profile:
+#
+#   make up-standard HTTPS=1
+#
+# The frontend is no longer published on FRONTEND_PORT: Caddy on ports 80 and 443 is
+# the only way in. See DEPLOY.md.
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    profiles: ["minimal", "standard", "scalable"]
+    restart: unless-stopped
+    environment:
+      SITE_URL: ${SITE_URL:?HTTPS=1 needs SITE_URL in .env, e.g. SITE_URL=https://example.com}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      # HTTP/3
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and keys: keep this volume, or Let's Encrypt is asked again
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+  frontend:
+    ports: !reset []
+
+volumes:
+  caddy_data:
+  caddy_config:
