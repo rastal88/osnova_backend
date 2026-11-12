@@ -5,7 +5,7 @@ FRONTEND ?= ../osnova_frontend
 BASE := -f docker-compose.yml
 DATA := -f docker-compose.yml -f docker-compose.datastores.yml
 
-.PHONY: help install dev dev-all test lint format openapi up-minimal up-standard up-scalable migrate createroot cleanup down down-volumes logs ps build
+.PHONY: help install dev dev-all test lint format openapi up-minimal up-standard up-scalable migrate createroot cleanup backup restore down down-volumes logs ps build
 
 help:  ## Show available commands
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-14s %s\n", $$1, $$2}'
@@ -56,6 +56,12 @@ createroot:  ## Docker: create the first root user (asks; or ARGS="--email ... -
 
 cleanup:  ## Docker: remove old rows now (Celery beat does it every night)
 	$(COMPOSE) $(DATA) --profile standard run --rm backend python manage.py cleanup
+
+backup:  ## Docker: database (and local files) into backups/ with the date; KEEP_DAYS=N drops older ones
+	@COMPOSE="$(COMPOSE) $(DATA)" KEEP_DAYS="$(KEEP_DAYS)" sh scripts/backup.sh
+
+restore:  ## Docker: restore FILE=backups/... (asks first; CONFIRM=yes skips the question)
+	@COMPOSE="$(COMPOSE) $(DATA)" CONFIRM="$(CONFIRM)" sh scripts/restore.sh "$(FILE)"
 
 down:  ## Stop containers
 	$(COMPOSE) $(DATA) down

@@ -7,6 +7,12 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Backups: `make backup` writes a `pg_dump` of the Docker Compose database to
+  `backups/osnova-<date>.dump` (git-ignored) and, with local files or form submissions on
+  disk, `osnova-<date>-files.tar.gz`; `KEEP_DAYS=N` deletes older backups.
+  `make restore FILE=...` asks first (`CONFIRM=yes` skips it), stops the backend, worker
+  and beat, recreates the database from the dump (or replaces the folders from the
+  archive) and starts them again. README → Backups has a cron line.
 - Rate limits in Redis: `RATE_LIMIT_STORAGE=redis` (with `REDIS_URL`; Docker Compose sets
   it for standard and scalable) counts the form and sign-in hits in Redis, shared by every
   replica — one atomic Lua script, the same sliding window as in memory. When Redis cannot

@@ -168,7 +168,7 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 ## Production and scalable (`v0.5.0`)
 - [ ] Security headers in nginx (HSTS, CSP, X-Frame-Options, Referrer-Policy) *(fe)*
 - [ ] HTTPS and a deployment guide for one server (reverse proxy with certificates)
-- [ ] Database backups: `make backup` / `make restore`
+- [x] Database backups: `make backup` / `make restore`
 - [ ] Optional error tracking: Sentry when `SENTRY_DSN` is set (its own requirements file) *(be, fe)*
 - [ ] JSON logs for log collectors
 - [ ] Form and auth rate limits in Redis for several replicas; local files refused with replicas (use S3)

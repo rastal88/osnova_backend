@@ -216,6 +216,7 @@ osnova_backend/
 ├── requirements/          # per module: base, db, auth, files, tasks, redis;
 │                          # standard (all modules), dev (all + tools)
 ├── scripts/openapi.py     # writes openapi.json for the frontend
+├── scripts/backup.sh      # make backup; restore.sh: make restore
 ├── tests/
 ├── openapi.json           # API schema, committed (the frontend generates types from it)
 ├── Dockerfile             # backend image (ARG REQUIREMENTS=base|standard)
@@ -316,6 +317,34 @@ How it works:
 - **Email links:** `FRONTEND_URL` is set from `SITE_URL` (or `http://localhost:8080`).
 - **Standard:** set `APP_PROFILE=standard` and the flags you need in `.env`.
   `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` default to `osnova`.
+
+### Backups
+
+```bash
+make backup                                       # into backups/ (git-ignored)
+make restore FILE=backups/osnova-2026-11-12_030000.dump
+make restore FILE=backups/osnova-2026-11-12_030000-files.tar.gz
+```
+
+`make backup` writes the database of the running stack (`pg_dump`, custom format) to
+`backups/osnova-<date>.dump`. With local files (`FILES_STORAGE=local`) or form submissions
+on disk (`FORMS_DELIVERY=file`) it also writes `osnova-<date>-files.tar.gz`; files in S3
+are backed up by the bucket's own means. `KEEP_DAYS=14` deletes backups older than 14 days.
+
+`make restore` asks first (`CONFIRM=yes` skips the question), stops the backend, worker
+and beat, replaces the database (it is recreated, so nothing newer stays behind) or the
+folders in the archive, and starts them again. Run `make migrate` after restoring a backup
+older than the code.
+
+Every night from cron (`crontab -e`, the user must be allowed to run `docker`):
+
+```cron
+0 3 * * * cd /srv/osnova_backend && make backup KEEP_DAYS=14 >> backups/backup.log 2>&1
+```
+
+Keep a copy off the server too (e.g. `rsync` or `rclone` of `backups/` to another host
+or bucket): a backup on the same disk is lost with it. With a `COMPOSE="docker compose -p
+<name>"` project pass the same `COMPOSE` to `make backup`.
 
 ---
 
