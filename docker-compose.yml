@@ -56,6 +56,8 @@ services:
         VITE_APP_NAME: ${APP_NAME:-Osnova Application}
         # Empty: no analytics and no cookie banner
         VITE_ANALYTICS_SCRIPT: ${ANALYTICS_SCRIPT:-}
+        # More origins the Content Security Policy of the site allows (space-separated)
+        CSP_EXTRA_ORIGINS: ${CSP_EXTRA_ORIGINS:-}
     profiles: ["minimal", "standard", "scalable"]
     restart: unless-stopped
     depends_on:

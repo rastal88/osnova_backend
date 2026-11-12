@@ -328,6 +328,7 @@ listed with comments in [`.env.example`](.env.example).
 |---|---|
 | `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version (defaults to the release of the code; leave it out of `.env`), profile (`minimal` / `standard` / `scalable`); a mismatch with the setup is logged as a warning at start |
 | `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address; `DEBUG=true` serves `/docs`, `/redoc` and `/openapi.json` (off in production) |
+| `LOG_FORMAT`, `LOG_LEVEL` | Logs to stdout: `text` (default) or `json`, one object per line for log collectors (time, level, logger, message, `request_id`, request fields, traceback); the worker and beat log the same way |
 | `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
 | `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`); initial values, changed later in Admin → Settings |
 | `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
@@ -483,6 +484,9 @@ permission goes to the `permissions` and `permission_areas` sections of
   an async iterator; read it with `session.stream_scalars(...)` in a session of its own.
   Examples: `export_users` (`app/modules/admin/users.py`), `export_leads`
   (`app/modules/leads/routes.py`).
+- **Logs:** `logger.info("...", extra={"order_id": order.id})` adds fields that become
+  keys with `LOG_FORMAT=json` (`app/core/logging_config.py`); every line carries the
+  request id, which the frontend shows with an error and the response has in `X-Request-ID`.
 - **Clean old data:** every night at 03:30 UTC the `maintenance.cleanup` task removes read
   notifications, audit log records and (when set) accounts that never confirmed the email
   and never signed in, after the days set in Admin → Settings → Data retention (90, 365 and

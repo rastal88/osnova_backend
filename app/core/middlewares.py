@@ -26,7 +26,18 @@ def add_middlewares(app: FastAPI):
             response = error_response(500, "internal_error", request_id=current_request_id.get())
         duration_ms = (time.perf_counter() - started) * 1000
         logger.info(
-            "%s %s %s %.0fms", request.method, request.url.path, response.status_code, duration_ms
+            "%s %s %s %.0fms",
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration_ms,
+            # Separate fields in JSON logs (LOG_FORMAT=json)
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "duration_ms": round(duration_ms),
+            },
         )
         return response
 

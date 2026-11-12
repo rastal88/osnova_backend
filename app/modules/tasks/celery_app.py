@@ -2,7 +2,7 @@ from importlib.util import find_spec
 
 from celery import Celery
 from celery.schedules import crontab
-from celery.signals import task_prerun
+from celery.signals import setup_logging, task_prerun
 
 from app.config import config
 
@@ -28,8 +28,20 @@ celery_app.conf.update(
     # When the broker is down, sending a task fails in a fraction of a second instead of
     # blocking the request for many seconds (the worker reconnects on its own settings)
     broker_transport_options={"max_retries": 0},
+    # The worker keeps trying to reach the broker at start (the default, said explicitly
+    # to keep Celery from warning about a coming change)
+    broker_connection_retry_on_startup=True,
     task_publish_retry_policy={"max_retries": 2, "interval_start": 0, "interval_step": 0.2},
 )
+
+
+@setup_logging.connect
+def use_app_logging(**_) -> None:
+    """The worker and beat log like the web process (text or JSON, LOG_FORMAT) instead
+    of Celery's own format."""
+    from app.core.logging_config import setup_logging as setup
+
+    setup()
 
 
 @task_prerun.connect
