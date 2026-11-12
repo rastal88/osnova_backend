@@ -38,13 +38,18 @@ if [ -n "$RUNNING" ]; then
 fi
 
 if [ "$WHAT" = "the database" ]; then
-  # A fresh database, so tables added after the backup do not stay behind
+  # The dump is read in full before anything is dropped, then a fresh database is
+  # created, so tables added after the backup do not stay behind
   # shellcheck disable=SC2016  # expanded inside the container
   $COMPOSE exec -T postgres sh -c '
     set -e
+    dump=$(mktemp)
+    trap "rm -f $dump" EXIT
+    cat > "$dump"
+    pg_restore --list "$dump" > /dev/null
     dropdb -U "$POSTGRES_USER" --if-exists --force "$POSTGRES_DB"
     createdb -U "$POSTGRES_USER" "$POSTGRES_DB"
-    pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --exit-on-error
+    pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --exit-on-error "$dump"
   ' < "$FILE"
   echo "Database restored from $FILE (run make migrate if the backup is older than the code)"
 else
