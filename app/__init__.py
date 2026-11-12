@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from .config import config
 from .core.captcha import check_captcha_config
+from .core.error_tracking import setup_error_tracking
 from .core.errors import add_exception_handlers, use_error_schema
 from .core.logging_config import setup_logging
 from .core.middlewares import add_middlewares
@@ -15,6 +16,7 @@ from .core.routes import core_router
 
 def create_app() -> FastAPI:
     setup_logging()
+    setup_error_tracking()
     shutdown_hooks: list[ShutdownHook] = []
 
     @asynccontextmanager

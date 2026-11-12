@@ -17,6 +17,8 @@ services:
       context: .
       args:
         REQUIREMENTS: base
+        # Optional integrations from requirements/, e.g. "sentry" for SENTRY_DSN
+        EXTRA_REQUIREMENTS: ${EXTRA_REQUIREMENTS:-}
     profiles: ["minimal", "standard", "scalable"]
     restart: unless-stopped
     env_file:

@@ -17,7 +17,7 @@ FLAGS = [
     "NOTIFICATIONS_ENABLED",
     "BACKGROUND_TASKS_ENABLED",
 ]
-HEAVY = ["fastapi_users", "sqlalchemy", "celery", "redis", "asyncpg", "cryptography"]
+HEAVY = ["fastapi_users", "sqlalchemy", "celery", "redis", "asyncpg", "cryptography", "sentry_sdk"]
 
 MINIMAL_SCRIPT = f"""
 import json, sys

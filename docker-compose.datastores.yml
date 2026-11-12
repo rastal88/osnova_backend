@@ -57,6 +57,7 @@ services:
       context: .
       args:
         REQUIREMENTS: standard
+        EXTRA_REQUIREMENTS: ${EXTRA_REQUIREMENTS:-}
     profiles: ["standard", "scalable"]
     restart: unless-stopped
     command: ["celery", "-A", "app.modules.tasks.celery_app", "--quiet", "worker", "-l", "info"]
@@ -86,6 +87,7 @@ services:
       context: .
       args:
         REQUIREMENTS: standard
+        EXTRA_REQUIREMENTS: ${EXTRA_REQUIREMENTS:-}
     profiles: ["standard", "scalable"]
     restart: unless-stopped
     command: ["celery", "-A", "app.modules.tasks.celery_app", "--quiet", "beat", "-l", "info", "-s", "/tmp/celerybeat-schedule"]

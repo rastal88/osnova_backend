@@ -214,7 +214,7 @@ osnova_backend/
 │   └── __init__.py        # application factory
 ├── migrations/            # Alembic migrations
 ├── requirements/          # per module: base, db, auth, files, tasks, redis;
-│                          # standard (all modules), dev (all + tools)
+│                          # standard (all modules), sentry (optional), dev (all + tools)
 ├── scripts/openapi.py     # writes openapi.json for the frontend
 ├── scripts/backup.sh      # make backup; restore.sh: make restore
 ├── tests/
@@ -303,7 +303,8 @@ How it works:
 - **Backend image:** `python:3.13-slim`, non-root, `uvicorn`, with a health check.
   `REQUIREMENTS=base` for minimal,
   `standard` with the datastore override. Port `8000` is exposed only inside the compose
-  network, so replicas do not clash.
+  network, so replicas do not clash. `EXTRA_REQUIREMENTS` in `.env` adds optional
+  requirements files to the backend, worker and beat images (`sentry`).
 - **Datastores and worker:** `postgres`, `redis`, the Celery `worker` and `beat` (same image
   as the backend; `beat` sends scheduled tasks and always runs as one instance) live in `docker-compose.datastores.yml` and run only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
   from `.env` are ignored. In `minimal` `DATABASE_URL` and `REDIS_URL` are forced empty.
@@ -358,6 +359,7 @@ listed with comments in [`.env.example`](.env.example).
 | `APP_NAME`, `APP_VERSION`, `APP_PROFILE` | Name, version (defaults to the release of the code; leave it out of `.env`), profile (`minimal` / `standard` / `scalable`); a mismatch with the setup is logged as a warning at start |
 | `APP_HOST`, `APP_PORT`, `DEBUG` | Local server address; `DEBUG=true` serves `/docs`, `/redoc` and `/openapi.json` (off in production) |
 | `LOG_FORMAT`, `LOG_LEVEL` | Logs to stdout: `text` (default) or `json`, one object per line for log collectors (time, level, logger, message, `request_id`, request fields, traceback); the worker and beat log the same way |
+| `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE` | Error tracking in Sentry or GlitchTip: off while the DSN is empty (see Development → Error tracking); traces off at `0` |
 | `AUTH_ENABLED`, `ADMIN_ENABLED`, `FILES_ENABLED`, `NOTIFICATIONS_ENABLED`, `BACKGROUND_TASKS_ENABLED` | Capabilities (see above) |
 | `LANGUAGES`, `DEFAULT_LANGUAGE` | Enabled interface languages and the default (`app/core/languages.py`); initial values, changed later in Admin → Settings |
 | `CORS_ORIGINS` | Allowed origins for local development, comma-separated |
@@ -557,6 +559,15 @@ permission goes to the `permissions` and `permission_areas` sections of
   through with a warning in the log. Protect another endpoint with
   `Depends(require_captcha)`; another provider is a function in `PROVIDERS`
   (`app/core/captcha.py`).
+- **Error tracking (optional):** set `SENTRY_DSN` (Sentry or a compatible GlitchTip) and
+  install `requirements/sentry.txt`; in Docker set `EXTRA_REQUIREMENTS=sentry` in `.env`
+  and rebuild. A DSN without the package stops the app at start with a message. Unhandled
+  errors of the API and Celery tasks and `ERROR` log lines become events, tagged with the
+  release `osnova-backend@<version>` and `SENTRY_ENVIRONMENT`. Nothing personal is sent:
+  no request bodies, cookies, auth headers, user IPs or local variables, and `INFO` lines
+  (form submissions with `FORMS_DELIVERY=log`) are not kept as breadcrumbs
+  (`app/core/error_tracking.py`). `SENTRY_TRACES_SAMPLE_RATE=0.1` also traces 10% of
+  requests for performance.
 - **Add a setting the owner can change:** a field (with a default) in a group in
   `app/settings.py`, or a new `SettingsGroup` added to `GROUPS`; labels in the `settings`
   section of `app/core/locales/*.json`. No migration and no frontend code: the admin form
