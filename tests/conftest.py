@@ -100,6 +100,19 @@ def eager_tasks(monkeypatch):
         monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
 
 
+@pytest.fixture(autouse=True)
+def mail_at_once(monkeypatch):
+    """Without background tasks an email goes out in a thread after the response, which a
+    test does not wait for: in tests it is sent at once."""
+    if "tasks" not in PRESENT:
+        from app.core.mail import sending
+
+        async def at_once(message):
+            sending.deliver(message)
+
+        monkeypatch.setattr(sending, "_dispatcher", at_once)
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -160,6 +173,13 @@ async def auth_client(database):
         base_url="http://test",
     ) as ac:
         yield ac, database
+
+
+def declared(permissions) -> list[str]:
+    """The permissions of the list that the modules of the project declare, sorted."""
+    from app.modules.auth.permissions import all_permissions
+
+    return sorted(set(permissions) & all_permissions())
 
 
 async def register(client, email: str, password: str = "password123"):

@@ -8,7 +8,7 @@ from app.modules.auth import permissions
 from app.modules.auth.dependencies import users_with_permission
 from app.modules.auth.models import RoleRecord, User
 from app.modules.auth.permissions import all_permissions
-from tests.conftest import MODERATOR_PERMISSIONS, create_user, login
+from tests.conftest import MODERATOR_PERMISSIONS, create_user, declared, login
 
 pytestmark = [pytest.mark.anyio, pytest.mark.modules("admin")]
 
@@ -64,7 +64,7 @@ async def test_role_lifecycle(auth_client):
     assert list(roles) == ["moderator", "root", "user"]
     assert roles["root"]["permissions"] == sorted(all_permissions())
     assert roles["root"]["users"] == 1
-    assert roles["moderator"]["permissions"] == sorted(MODERATOR_PERMISSIONS)
+    assert roles["moderator"]["permissions"] == declared(MODERATOR_PERMISSIONS)
 
     response = await client.post(
         ROLES, json={"name": "Sales team", "permissions": ["leads.read", "admin.access"]}

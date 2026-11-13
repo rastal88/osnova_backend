@@ -55,6 +55,7 @@ async def test_not_found_in_request_language(client):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("auth")
 async def test_validation_error_lists_fields(auth_client):
     client, _ = auth_client
     response = await client.post("/api/v1/auth/register", json={"email": "a@b.com"}, headers=RU)
@@ -67,6 +68,7 @@ async def test_validation_error_lists_fields(auth_client):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("auth")
 async def test_auth_errors_use_codes(auth_client):
     client, _ = auth_client
 
@@ -99,6 +101,12 @@ async def test_auth_errors_use_codes(auth_client):
         "message": "Неверный email или пароль.",
     }
 
+
+@pytest.mark.anyio
+@pytest.mark.modules("files")
+async def test_module_errors_use_codes(auth_client):
+    client, _ = auth_client
+    await register(client, "user@example.com")
     await login(client, "user@example.com")
     response = await client.get("/api/v1/files/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 404

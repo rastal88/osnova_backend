@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.conftest import PRESENT
+
 
 @pytest.mark.anyio
 async def test_health(client):
@@ -18,7 +20,7 @@ async def test_bootstrap(client):
     assert response.status_code == 200
     data = response.json()
     assert data["profile"] == "standard"
-    assert data["features"]["authentication"] is True
+    assert data["features"]["authentication"] is ("auth" in PRESENT)
     assert data["i18n"] == {
         "languages": [
             {"code": "en", "name": "English"},

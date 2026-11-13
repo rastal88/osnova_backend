@@ -117,6 +117,7 @@ def test_redis_storage_needs_its_address(monkeypatch):
     check_rate_limit_config()
 
 
+@pytest.mark.modules("files")
 def test_scalable_refuses_local_files(monkeypatch):
     from fastapi import FastAPI
 

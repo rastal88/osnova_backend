@@ -79,6 +79,7 @@ async def test_provider_outage_lets_requests_through(client, turnstile, caplog):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("auth")
 async def test_sign_up_needs_a_token_and_sign_in_does_not(auth_client, turnstile):
     client, session_factory = auth_client
     user = {"email": "new@example.com", "password": "password123"}
@@ -91,6 +92,7 @@ async def test_sign_up_needs_a_token_and_sign_in_does_not(auth_client, turnstile
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_root_switches_it_off_and_on_in_the_admin(auth_client, turnstile):
     client, session_factory = auth_client
     await create_user(session_factory, "root@example.com", "root")
@@ -123,6 +125,7 @@ async def test_root_switches_it_off_and_on_in_the_admin(auth_client, turnstile):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_switching_on_without_keys_says_so(auth_client, monkeypatch):
     client, session_factory = auth_client
     await create_user(session_factory, "root@example.com", "root")

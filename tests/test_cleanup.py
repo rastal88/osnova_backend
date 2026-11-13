@@ -6,6 +6,7 @@ from sqlalchemy import select, update
 from typer.testing import CliRunner
 
 from app.config import config
+from app.core.settings import settings
 from app.modules.db import cleanup
 from tests.conftest import create_user
 
@@ -69,6 +70,7 @@ async def test_old_read_notifications_are_removed(cleanup_session, monkeypatch):
 
     # 0 keeps everything
     monkeypatch.setattr(config, "NOTIFICATIONS_KEEP_DAYS", 0)
+    settings.reset()  # the retention settings are read from config again
     async with cleanup_session() as session:
         await session.execute(update(Notification).values(read_at=_ago(99), created_at=_ago(99)))
         await session.commit()
@@ -91,6 +93,7 @@ async def test_never_confirmed_accounts_are_removed_when_asked(cleanup_session, 
     assert (await cleanup.run_cleanup())["auth"] == 0
 
     monkeypatch.setattr(config, "UNVERIFIED_ACCOUNT_DAYS", 7)
+    settings.reset()  # the retention settings are read from config again
     assert (await cleanup.run_cleanup())["auth"] == 1
     async with cleanup_session() as session:
         emails = set(await session.scalars(select(User.email)))
@@ -122,6 +125,7 @@ async def test_old_audit_records_are_removed(cleanup_session, monkeypatch):
 
     # 0 keeps everything
     monkeypatch.setattr(config, "AUDIT_KEEP_DAYS", 0)
+    settings.reset()  # the retention settings are read from config again
     async with cleanup_session() as session:
         await session.execute(update(AuditRecord).values(created_at=_ago(1000)))
         await session.commit()
@@ -161,9 +165,7 @@ async def test_failed_job_does_not_stop_the_others(cleanup_session, monkeypatch,
 
 @pytest.mark.modules("tasks")
 def test_cleanup_is_scheduled_every_night():
-    from celery.schedules import crontab
-
-    from app.modules.tasks.celery_app import celery_app
+    from app.modules.tasks.celery_app import celery_app, crontab
     from app.modules.tasks.tasks import cleanup_task
 
     entry = celery_app.conf.beat_schedule["cleanup"]

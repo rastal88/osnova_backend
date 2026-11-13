@@ -8,7 +8,7 @@ from app.core.settings import settings
 from app.core.settings.schema import describe_group
 from app.modules.settings.models import SettingsRecord
 from app.settings import SiteSettings
-from tests.conftest import create_user, login
+from tests.conftest import PRESENT, create_user, login
 
 pytestmark = pytest.mark.modules("admin")
 
@@ -70,13 +70,8 @@ async def test_moderator_reads_but_cannot_change(auth_client):
     assert response.status_code == 200, response.text
     groups = response.json()
     # Groups with secrets (mail, protection) only for those who may change them
-    assert [group["name"] for group in groups] == [
-        "site",
-        "languages",
-        "retention",
-        "files",
-        "notifications",
-    ]
+    optional = [name for name in ("files", "notifications") if name in PRESENT]
+    assert [group["name"] for group in groups] == ["site", "languages", "retention", *optional]
     assert not any(group["editable"] for group in groups)
 
     response = await client.put("/api/v1/admin/settings/site", json={"name": "New"})

@@ -7,7 +7,7 @@ import pytest
 from app.modules.auth.dependencies import require, users_with_permission
 from app.modules.auth.models import RoleRecord
 from app.modules.auth.permissions import all_permissions, permission
-from tests.conftest import MODERATOR_PERMISSIONS, create_user, login
+from tests.conftest import MODERATOR_PERMISSIONS, PRESENT, create_user, declared, login
 
 pytestmark = [pytest.mark.anyio, pytest.mark.modules("admin")]
 
@@ -40,14 +40,16 @@ def test_moderator_seed_matches_the_migration():
     migration = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(migration)
     assert migration.MODERATOR == MODERATOR_PERMISSIONS
-    assert set(MODERATOR_PERMISSIONS) <= all_permissions()
+    # Declared by their modules (a project without files has no files.manage)
+    if {"admin", "files"} <= PRESENT:
+        assert set(MODERATOR_PERMISSIONS) <= all_permissions()
 
 
 @pytest.mark.parametrize(
     ("role", "expected"),
     [
         ("user", []),
-        ("moderator", sorted(MODERATOR_PERMISSIONS)),
+        ("moderator", declared(MODERATOR_PERMISSIONS)),
         ("root", sorted(all_permissions())),
     ],
 )

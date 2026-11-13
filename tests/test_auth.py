@@ -5,6 +5,7 @@ from app.modules.auth.manager import UserManager
 from app.modules.auth.models import User
 from app.modules.auth.roles import Role
 from app.modules.auth.schemas import UserCreate
+from tests.conftest import PRESENT
 
 pytestmark = pytest.mark.modules("auth")
 
@@ -76,17 +77,26 @@ async def test_areas_by_role(auth_client, role, areas, admin_status):
     await _create(session_factory, "someone@example.com", role)
     await _login(client, "someone@example.com", "password123")
 
+    # The admin area comes with the admin module
+    if "admin" not in PRESENT:
+        areas = [area for area in areas if area != "admin"]
     me = await client.get("/api/v1/auth/users/me")
     assert me.json()["areas"] == areas
 
     assert (await client.get("/api/v1/user/summary")).status_code == 200
-    for path in ("/api/v1/admin/overview", "/api/v1/admin/users"):
-        assert (await client.get(path)).status_code == admin_status
+    if "admin" in PRESENT:
+        for path in ("/api/v1/admin/overview", "/api/v1/admin/users"):
+            assert (await client.get(path)).status_code == admin_status
 
 
 @pytest.mark.anyio
 @pytest.mark.parametrize(
-    "path", ["/api/v1/admin/overview", "/api/v1/admin/users", "/api/v1/user/summary"]
+    "path",
+    [
+        pytest.param("/api/v1/admin/overview", marks=pytest.mark.modules("admin")),
+        pytest.param("/api/v1/admin/users", marks=pytest.mark.modules("admin")),
+        "/api/v1/user/summary",
+    ],
 )
 async def test_guest_gets_401(auth_client, path):
     client, _ = auth_client
@@ -94,6 +104,7 @@ async def test_guest_gets_401(auth_client, path):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_admin_overview_counts_users(auth_client):
     client, session_factory = auth_client
     await _create(session_factory, "root@example.com", Role.ROOT)
