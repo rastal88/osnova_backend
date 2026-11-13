@@ -50,6 +50,10 @@ All notable changes are documented here. The format follows
   its own files) and warns when rate limits count in each replica.
 - `check_limit` is async (`await check_limit(limiter, key)`).
 
+### Fixed
+- `make down-volumes` now deletes the data volumes: without a profile Compose did not
+  count the volumes of the profile services as the project's.
+
 ## [0.4.0] - 2026-11-11
 
 Permissions and control: permissions as named actions, roles and groups edited in the

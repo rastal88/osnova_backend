@@ -65,11 +65,12 @@ backup:  ## Docker: database (and local files) into backups/ with the date; KEEP
 restore:  ## Docker: restore FILE=backups/... (asks first; CONFIRM=yes skips the question)
 	@COMPOSE="$(COMPOSE) $(DATA)" CONFIRM="$(CONFIRM)" sh scripts/restore.sh "$(FILE)"
 
+# --profile scalable names every service, so their volumes count as the project's too
 down:  ## Stop containers (Caddy too)
-	$(COMPOSE) $(DATA) down --remove-orphans
+	$(COMPOSE) $(DATA) --profile scalable down --remove-orphans
 
 down-volumes:  ## Stop containers and delete data volumes (with HTTPS=1 the certificates too)
-	$(COMPOSE) $(DATA) down -v --remove-orphans
+	$(COMPOSE) $(DATA) --profile scalable down -v --remove-orphans
 
 logs:  ## Follow logs
 	$(COMPOSE) $(DATA) logs -f
