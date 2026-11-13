@@ -171,7 +171,7 @@ def head_revision() -> str:
 
 def migration(head: str, names: set[str], tables: list[str]) -> tuple[str, str]:
     number = f"{int(head) + 1:04d}" if head.isdigit() else datetime.now().strftime("%Y%m%d%H%M")
-    label = "_".join(sorted(names))
+    label = "_".join(sorted(names)) if len(names) <= 3 else f"{len(names)}_modules"
     drops = "\n".join(f'    op.drop_table("{table}")' for table in tables)
     text = f'''"""strip: drop the tables of the removed modules ({", ".join(sorted(names))})
 

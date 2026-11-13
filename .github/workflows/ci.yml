@@ -69,7 +69,9 @@ jobs:
         run: |
           alembic upgrade head
           alembic check
+          # strip:begin any — the migration of `make strip` cannot be undone
           alembic downgrade base
+          # strip:end
 
   minimal:
     name: Minimal profile (base requirements only)
@@ -100,6 +102,64 @@ jobs:
       - name: Build
         run: docker build --build-arg REQUIREMENTS=${{ matrix.requirements }} -t osnova-backend:${{ matrix.requirements }} .
 
+  # strip:begin any — a project that ran `make strip` keeps the modules it uses
+  strip:
+    name: make strip ${{ matrix.modules }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each flag's modules; auth takes everything that needs it
+        modules: [files, notifications, tasks, admin, auth]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: osnova
+          POSTGRES_PASSWORD: osnova
+          POSTGRES_DB: osnova
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements/dev.txt
+
+      - name: Strip
+        run: |
+          python -m scripts.strip ${{ matrix.modules }} --apply --yes
+          git status --short
+
+      - name: Ruff
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Tests
+        run: python -m pytest
+
+      - name: Migrations match the models
+        env:
+          DATABASE_URL: postgresql+asyncpg://osnova:osnova@localhost:5432/osnova
+        run: |
+          alembic upgrade head
+          alembic check
+
+      - name: Requirements and compose files still resolve
+        run: |
+          pip install --dry-run -q -r requirements/standard.txt
+          docker compose -f docker-compose.yml -f docker-compose.datastores.yml --profile standard config -q
+  # strip:end
+
+  # strip:begin auth admin files — the check signs in, sends a form and uploads a file
   stack:
     name: Scalable stack (3 replicas)
     runs-on: ubuntu-latest
@@ -176,3 +236,4 @@ jobs:
       - name: Logs
         if: failure()
         run: $STACK logs --tail 80
+  # strip:end

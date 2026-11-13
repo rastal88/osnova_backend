@@ -219,6 +219,7 @@ osnova_backend/
 ├── scripts/backup.sh      # make backup; restore.sh: make restore
 ├── scripts/check_stack.py # checks a running stack with replicas (CI)
 ├── scripts/init_env.py    # make init: .env for the quick start
+├── scripts/strip.py       # make strip: remove the modules a project does not use
 ├── deploy/Caddyfile       # HTTPS proxy (docker-compose.https.yml, DEPLOY.md)
 ├── tests/
 ├── openapi.json           # API schema, committed (the frontend generates types from it)
@@ -505,8 +506,19 @@ permission goes to the `permissions` and `permission_areas` sections of
 - **Module = folder.** Each capability is a package `app/modules/<name>/` with
   `register(app)`. The registry `app/core/modules.py` imports it only when it is enabled
   and checks module dependencies (`requires`). The core never imports modules.
-- **Remove a module:** delete its folder, its entry in `MODULES` and
-  `requirements/<name>.txt`.
+- **Remove the modules you do not use:** turn their flags off in `.env`, then `make strip`
+  lists what goes and `make strip ARGS=--apply` removes it (asks first; only on a clean
+  git working tree, so `git checkout . && git clean -fd` undoes it). Or name them:
+  `make strip ARGS="files tasks --apply"`. A module goes with the modules that need it
+  (`auth` takes everything but `db`, which always stays). Removed: the packages, their
+  entries in `MODULES`, their requirements files, the test files marked with them, the
+  `strip:begin` / `strip:end` blocks of compose and CI (the worker and beat go with
+  `tasks`); a new migration drops their tables with the data, and `openapi.json` is
+  written again. Settings in `app/config.py` and `.env.example` and the docs stay. CI strips
+  a copy for each flag and runs the lint, the tests, the migrations and the compose config.
+- **Tests and modules:** a test file of a module has `pytestmark =
+  pytest.mark.modules("<name>")`; a test that also needs another module has its own
+  `@pytest.mark.modules(...)` and imports it inside, so it is skipped once the module is gone.
 - **New endpoints for signed-in users:** add them to `user_router` (`app/user/routes.py`);
   admin ones to `admin_router` (`app/modules/admin/routes.py`). Both routers check access
   for every endpoint. A new domain: a package like `app/user/` and an entry in `MODULES`.

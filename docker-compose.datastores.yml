@@ -50,6 +50,7 @@ services:
       redis:
         condition: service_healthy
 
+  # strip:begin tasks — `make strip` removes the worker and beat with the tasks module
   # Runs background tasks (app/modules/tasks), e.g. sending email when
   # BACKGROUND_TASKS_ENABLED=true. Same image as the backend.
   worker:
@@ -111,6 +112,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+  # strip:end
 
 volumes:
   postgres_data:
