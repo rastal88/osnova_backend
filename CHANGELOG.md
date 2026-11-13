@@ -7,6 +7,11 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- CI starts the scalable stack (`make up-scalable`, 3 backend replicas, the frontend from
+  its repository, an S3 bucket from SeaweedFS) and checks it through the frontend with
+  `scripts/check_stack.py` (standard library only, for a local or deployed stack too):
+  readiness, the sign-in on every replica, a file served from the bucket by every replica,
+  the sign-in rate limit shared by the replicas, requests reaching all three.
 - HTTPS for one server: `make up-standard HTTPS=1` (any profile) adds
   `docker-compose.https.yml` with Caddy (`deploy/Caddyfile`), which gets and renews a
   Let's Encrypt certificate for the host of `SITE_URL`, redirects HTTP, sends `/api/*`
@@ -51,6 +56,8 @@ All notable changes are documented here. The format follows
 - `check_limit` is async (`await check_limit(limiter, key)`).
 
 ### Fixed
+- `RUN_MIGRATIONS=true` runs the migrations in the backend only: the worker and beat ran
+  them too, at the same time, and a fresh database could fail to start.
 - `make down-volumes` now deletes the data volumes: without a profile Compose did not
   count the volumes of the profile services as the project's.
 

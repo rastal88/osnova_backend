@@ -14,6 +14,8 @@ standard library, so it runs without the project's requirements. What it proves:
 Requests go through the frontend's nginx, which spreads them over the replicas.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -62,7 +64,7 @@ def main() -> int:
     )
     check("sign in", status in (200, 204), str(status))
 
-    statuses = [call("GET", "/auth/me")[0] for _ in range(ROUNDS)]
+    statuses = [call("GET", "/auth/users/me")[0] for _ in range(ROUNDS)]
     check("the session works on every replica", set(statuses) == {200}, str(statuses))
 
     boundary = uuid.uuid4().hex

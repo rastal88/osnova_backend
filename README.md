@@ -217,6 +217,7 @@ osnova_backend/
 │                          # standard (all modules), sentry (optional), dev (all + tools)
 ├── scripts/openapi.py     # writes openapi.json for the frontend
 ├── scripts/backup.sh      # make backup; restore.sh: make restore
+├── scripts/check_stack.py # checks a running stack with replicas (CI)
 ├── deploy/Caddyfile       # HTTPS proxy (docker-compose.https.yml, DEPLOY.md)
 ├── tests/
 ├── openapi.json           # API schema, committed (the frontend generates types from it)
@@ -318,8 +319,9 @@ How it works:
   as the backend; `beat` sends scheduled tasks and always runs as one instance) live in `docker-compose.datastores.yml` and run only for `standard` / `scalable`. Their addresses are set by compose; `localhost` values
   from `.env` are ignored. In `minimal` `DATABASE_URL` and `REDIS_URL` are forced empty.
 - **Migrations:** `make migrate` runs `alembic upgrade head` once in a one-off container;
-  `make createroot` creates the first root user. With `RUN_MIGRATIONS=true` the entrypoint
-  runs migrations on every start — fine for one backend, not for replicas.
+  `make createroot` creates the first root user. With `RUN_MIGRATIONS=true` the backend's
+  entrypoint runs migrations on every start (never the worker and beat) — fine for one
+  backend, not for replicas.
 - **Readiness:** `GET /api/v1/ready` answers 503 while the database (or Redis sessions) is
   unreachable; `GET /api/v1/health` only says the process runs.
 - **Health checks:** `GET /api/v1/health` for the backend; `celery inspect ping` for the
@@ -591,6 +593,12 @@ permission goes to the `permissions` and `permission_areas` sections of
 
 CI (GitHub Actions) runs ruff and the tests, checks that the migrations match the models on
 PostgreSQL, starts the app with base requirements only, and builds the Docker image with base and with standard requirements.
+It also starts the whole scalable stack with both repositories (`make up-scalable`: 3
+backend replicas, files in an S3 bucket from SeaweedFS, `.github/ci/`) and runs
+`scripts/check_stack.py` through the frontend: the sign-in works on every replica, a file
+uploaded through one is served by the others from the bucket, the sign-in rate limit is
+shared, and every replica got requests. The script needs only the standard library, so it
+checks a local or a deployed stack too (`python3 scripts/check_stack.py --help`).
 
 ---
 
