@@ -595,9 +595,10 @@ CI (GitHub Actions) runs ruff and the tests, checks that the migrations match th
 PostgreSQL, starts the app with base requirements only, and builds the Docker image with base and with standard requirements.
 It also starts the whole scalable stack with both repositories (`make up-scalable`: 3
 backend replicas, files in an S3 bucket from SeaweedFS, `.github/ci/`) and runs
-`scripts/check_stack.py` through the frontend: the sign-in works on every replica, a file
-uploaded through one is served by the others from the bucket, the sign-in rate limit is
-shared, and every replica got requests. The script needs only the standard library, so it
+`scripts/check_stack.py` through the frontend: the sign-in works on every replica, a sent
+form is stored as a lead and found in the admin, a file uploaded through one replica is
+served by the others from the bucket, the sign-in rate limit is shared, and every replica
+got requests. The script needs only the standard library, so it
 checks a local or a deployed stack too (`python3 scripts/check_stack.py --help`).
 
 ---

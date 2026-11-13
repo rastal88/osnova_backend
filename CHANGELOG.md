@@ -6,6 +6,10 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- The CI stack check (`scripts/check_stack.py`) also sends the contact form and finds the
+  lead in the admin, so the whole way of a visitor's form through the stack is checked.
+
 ## [0.5.0] - 2026-11-13
 
 Production and scalable: HTTPS with Caddy and a deployment guide, backups, optional error
