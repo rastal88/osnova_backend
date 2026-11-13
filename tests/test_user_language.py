@@ -12,7 +12,7 @@ from app.modules.auth.models import User
 from app.modules.tasks.celery_app import celery_app
 from tests.conftest import create_user, login
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.modules("auth")]
 
 REGISTER = "/api/v1/auth/register"
 USERS_ME = "/api/v1/auth/users/me"

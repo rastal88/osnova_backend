@@ -10,6 +10,8 @@ from app.modules.settings.models import SettingsRecord
 from app.settings import SiteSettings
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("admin")
+
 
 def test_defaults_come_from_env():
     assert settings.get(SiteSettings).name == "TestApp"

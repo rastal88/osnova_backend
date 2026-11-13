@@ -15,6 +15,8 @@ from app.modules.notifications.service import notify
 from app.modules.tasks.celery_app import celery_app
 from tests.conftest import _app_with, create_user, login
 
+pytestmark = pytest.mark.modules("auth")
+
 ME = "/api/v1/auth/me"
 USERS_ME = "/api/v1/auth/users/me"
 

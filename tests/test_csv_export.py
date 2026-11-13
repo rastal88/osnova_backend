@@ -10,6 +10,8 @@ from app.core.csv_export import cell, csv_response
 from app.modules.leads.models import Lead
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("admin")
+
 USERS = "/api/v1/admin/users/export"
 LEADS = "/api/v1/admin/leads/export"
 CONTACT = {

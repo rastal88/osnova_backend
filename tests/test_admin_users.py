@@ -4,6 +4,8 @@ from sqlalchemy import select
 from app.modules.auth.models import User
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("admin")
+
 USERS = "/api/v1/admin/users"
 
 

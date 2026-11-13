@@ -36,7 +36,7 @@ EXTRA_FILES = {"tasks": ["app/modules/leads/tasks.py"]}
 KEEP = {"db"}
 
 MARKER = re.compile(r"strip:begin\s+(?P<names>[\w ]+)")
-TEST_MARK = re.compile(r"^pytestmark = pytest\.mark\.modules\((?P<names>[^)]*)\)", re.M)
+TEST_MARK = re.compile(r"^pytestmark = .*?pytest\.mark\.modules\((?P<names>[^)]*)\)", re.M)
 
 # Tables of the models of the given modules, in creation order; run in a separate
 # process with fixed settings (importing models cannot be undone, and the local .env

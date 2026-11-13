@@ -14,7 +14,7 @@ from app.modules.auth.models import RoleRecord
 from app.modules.settings import service
 from tests.conftest import create_user, login
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.modules("admin")]
 
 SETTINGS = "/api/v1/admin/settings"
 FORM = "/api/v1/forms/contact"

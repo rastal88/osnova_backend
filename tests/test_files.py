@@ -8,6 +8,8 @@ from app.modules.files import routes as file_routes
 from app.modules.files.settings import FilesSettings
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("files")
+
 FILES = "/api/v1/files"
 
 

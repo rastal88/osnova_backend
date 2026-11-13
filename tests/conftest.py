@@ -1,8 +1,16 @@
 import os
+from pathlib import Path
 
-# The test session runs with every module enabled. Minimal-profile behaviour is
-# checked in a separate process (see test_modules.py), because settings are
-# read once at import time.
+# The test session runs with every module of the project enabled (`make strip` may have
+# removed some: their flags stay off). Minimal-profile behaviour is checked in a separate
+# process (see test_modules.py), because settings are read once at import time.
+_MODULES_DIR = Path(__file__).resolve().parent.parent / "app" / "modules"
+
+
+def _flag(module: str) -> str:
+    return "true" if (_MODULES_DIR / module).is_dir() else "false"
+
+
 os.environ.update(
     {
         "APP_NAME": "TestApp",
@@ -12,11 +20,11 @@ os.environ.update(
         "DATABASE_URL": "postgresql+asyncpg://user:pass@localhost/db",
         "SECRET_KEY": "test-secret-key-at-least-32-bytes-long",
         "AUTH_STRATEGY": "jwt",
-        "AUTH_ENABLED": "true",
-        "ADMIN_ENABLED": "true",
-        "FILES_ENABLED": "true",
-        "NOTIFICATIONS_ENABLED": "true",
-        "BACKGROUND_TASKS_ENABLED": "true",
+        "AUTH_ENABLED": _flag("auth"),
+        "ADMIN_ENABLED": _flag("admin"),
+        "FILES_ENABLED": _flag("files"),
+        "NOTIFICATIONS_ENABLED": _flag("notifications"),
+        "BACKGROUND_TASKS_ENABLED": _flag("tasks"),
         "CELERY_BROKER_URL": "memory://",
         "CORS_ORIGINS": "http://localhost:5173",
         "GOOGLE_CLIENT_ID": "test-client-id",

@@ -10,7 +10,7 @@ from app.modules.auth.models import RoleRecord, User
 from app.modules.auth.permissions import all_permissions
 from tests.conftest import MODERATOR_PERMISSIONS, create_user, login
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.modules("admin")]
 
 ADMIN = "/api/v1/admin"
 ROLES = f"{ADMIN}/roles"

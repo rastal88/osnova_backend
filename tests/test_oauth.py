@@ -11,6 +11,8 @@ from app.modules.auth.models import OAuthAccount, User
 from app.modules.auth.oauth import GoogleOpenID
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("auth")
+
 GOOGLE = "/api/v1/auth/google"
 
 

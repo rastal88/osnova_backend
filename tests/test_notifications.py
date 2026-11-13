@@ -9,6 +9,8 @@ from app.modules.notifications.service import notify
 from app.modules.tasks.celery_app import celery_app
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("notifications")
+
 API = "/api/v1/notifications"
 RU = {"Accept-Language": "ru"}
 

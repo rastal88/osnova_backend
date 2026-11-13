@@ -5,6 +5,8 @@ from app.modules.auth.encryption import decrypt
 from app.modules.entities.models import Entity
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("admin")
+
 ENTITIES = "/api/v1/admin/entities"
 TELEGRAM = {
     "type": "lead_telegram",

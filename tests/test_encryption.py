@@ -16,6 +16,8 @@ from app.modules.settings.models import SettingsRecord
 from manage import rotate_secrets
 from tests.conftest import create_user
 
+pytestmark = pytest.mark.modules("auth")
+
 OTHER_KEY = "another-secret-key-for-tests-0123456789abcdef"
 
 

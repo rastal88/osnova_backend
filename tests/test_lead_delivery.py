@@ -15,6 +15,8 @@ from app.modules.leads.models import Lead
 from app.modules.tasks.celery_app import celery_app
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("admin")
+
 CONTACT = {
     "name": "Анна",
     "email": "anna@example.com",

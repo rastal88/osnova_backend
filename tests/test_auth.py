@@ -6,6 +6,8 @@ from app.modules.auth.models import User
 from app.modules.auth.roles import Role
 from app.modules.auth.schemas import UserCreate
 
+pytestmark = pytest.mark.modules("auth")
+
 
 async def _register(client, email: str, password: str):
     return await client.post(
