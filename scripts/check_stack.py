@@ -3,11 +3,12 @@
     python scripts/check_stack.py http://localhost:8080 --email root@example.com \\
         --password ... [--link-file link.txt]
 
-Needs AUTH_ENABLED, FILES_ENABLED with FILES_STORAGE=s3 and the root user; only the
-standard library, so it runs without the project's requirements. What it proves:
+Needs AUTH_ENABLED, ADMIN_ENABLED, FILES_ENABLED with FILES_STORAGE=s3 and the root user;
+only the standard library, so it runs without the project's requirements. What it proves:
 
 - the API is ready (database, Redis, broker);
 - the sign-in cookie works on every replica (one SECRET_KEY, shared sessions);
+- a form sent by a visitor is stored as a lead and found in the admin;
 - a file uploaded through one replica is served by the others, from the bucket;
 - the sign-in rate limit counts once for all replicas (Redis), not per replica.
 
@@ -22,6 +23,7 @@ import sys
 import uuid
 from http.cookiejar import CookieJar
 from urllib.error import HTTPError
+from urllib.parse import urlencode
 from urllib.request import HTTPCookieProcessor, HTTPRedirectHandler, Request, build_opener
 
 ROUNDS = 9  # requests per check: with 3 replicas each one gets some
@@ -66,6 +68,28 @@ def main() -> int:
 
     statuses = [call("GET", "/auth/users/me")[0] for _ in range(ROUNDS)]
     check("the session works on every replica", set(statuses) == {200}, str(statuses))
+
+    # A visitor's form, then the lead in the admin (any replica: one database)
+    marker = f"stack check {uuid.uuid4().hex}"
+    status, _, body = call("GET", "/forms/contact")
+    check("the contact form is described", status == 200, str(status))
+    lead = {
+        "name": "Stack Check",
+        "email": "stack-check@example.com",
+        "message": marker,
+        "consent": True,
+    }
+    status, _, body = call(
+        "POST", "/forms/contact", json.dumps(lead).encode(), {"Content-Type": "application/json"}
+    )
+    check("send the form", status == 200, body.decode()[:200])
+    status, _, body = call("GET", "/admin/leads?" + urlencode({"q": marker}))
+    found = json.loads(body).get("items", []) if status == 200 else []
+    check(
+        "the lead is in the admin",
+        len(found) == 1 and found[0]["data"].get("message") == marker,
+        f"{status}, {len(found)} found",
+    )
 
     boundary = uuid.uuid4().hex
     content = f"stack check {uuid.uuid4()}".encode()
