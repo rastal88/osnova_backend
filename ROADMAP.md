@@ -177,7 +177,7 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 
 ## Publication (`v1.0.0`)
 - [ ] All documentation in English (done for the backend) *(fe)*
-- [ ] Quick start: from clone to a running standard stack in 10 minutes
+- [x] Quick start: from clone to a running standard stack in 10 minutes (`make init`, `make up-standard`, `make createroot`)
 - [ ] `make strip`: physically remove unused modules from a project *(be, fe)*
 - [ ] Demo: screenshots in the README or a demo stand
 - [x] CI: Docker smoke test of the whole stack (sign-in, form, upload): the scalable job

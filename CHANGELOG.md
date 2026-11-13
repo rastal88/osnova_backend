@@ -7,6 +7,12 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `make init` (`scripts/init_env.py`, standard library only) writes `.env` for the quick
+  start: the standard profile with every capability on, random `SECRET_KEY` and
+  `POSTGRES_PASSWORD`, migrations on start; readable by its owner only, and an existing
+  `.env` is never overwritten. The README quick start is now three commands after the
+  clone: `make init`, `make up-standard`, `make createroot`.
+### Added
 - The CI stack check (`scripts/check_stack.py`) also sends the contact form and finds the
   lead in the admin, so the whole way of a visitor's form through the stack is checked.
 
