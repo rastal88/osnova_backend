@@ -88,6 +88,7 @@ async def test_mail_password_is_never_sent_back(auth_client):
 
 async def test_test_email_goes_to_the_admin(auth_client, outbox, monkeypatch):
     client = await _root(auth_client)
+    outbox.clear()  # emails of the sign-up
 
     # In the admin's own language, like every email to a user
     response = await client.post(f"{SETTINGS}/mail/test", headers={"Accept-Language": "ru"})
