@@ -88,7 +88,8 @@ def package_dir(path: str) -> Path:
 
 def remove_registry_entries(text: str, names: set[str]) -> str:
     for name in names:
-        block = re.compile(r'\n    ModuleSpec\(\n        name="%s",\n.*?\n    \),' % re.escape(name), re.S)
+        start = rf'\n    ModuleSpec\(\n        name="{re.escape(name)}",\n'
+        block = re.compile(start + r".*?\n    \),", re.S)
         text, count = block.subn("", text)
         if count != 1:
             raise SystemExit(f"app/core/modules.py: no single ModuleSpec for {name!r}")
@@ -220,11 +221,12 @@ def plan(names: set[str]) -> dict:
         and path.suffix in {".yml", ".yaml"}
         and MARKER.search(path.read_text())
     ]
+    gone = sorted(removed)
     return {
-        "removed": sorted(removed),
-        "packages": [str(package_dir(paths[n]).relative_to(ROOT)) for n in sorted(removed)],
-        "requirements": [f"requirements/{REQUIREMENTS[n]}" for n in sorted(removed) if n in REQUIREMENTS],
-        "files": [f for n in sorted(removed) for f in EXTRA_FILES.get(n, []) if (ROOT / f).exists()],
+        "removed": gone,
+        "packages": [str(package_dir(paths[n]).relative_to(ROOT)) for n in gone],
+        "requirements": [f"requirements/{REQUIREMENTS[n]}" for n in gone if n in REQUIREMENTS],
+        "files": [f for n in gone for f in EXTRA_FILES.get(n, []) if (ROOT / f).exists()],
         "tests": [str(p.relative_to(ROOT)) for p in marked_tests(removed)],
         "marked": marked,
         # Dropped children first
