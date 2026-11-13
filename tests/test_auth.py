@@ -113,11 +113,46 @@ async def test_admin_overview_counts_users(auth_client):
     await _login(client, "root@example.com", "password123")
 
     overview = (await client.get("/api/v1/admin/overview")).json()
-    assert overview == {
+    assert {key: overview[key] for key in ("users", "active_users", "users_by_role")} == {
         "users": 3,
         "active_users": 3,
         "users_by_role": {"root": 1, "moderator": 1, "user": 1},
     }
+
+
+@pytest.mark.anyio
+@pytest.mark.modules("admin")
+async def test_admin_overview_shows_the_setup(auth_client, monkeypatch):
+    from app.config import config
+    from app.core.mail.settings import MailSettings
+    from app.core.settings import settings
+
+    client, session_factory = auth_client
+    await _create(session_factory, "root@example.com", Role.ROOT)
+    await _login(client, "root@example.com", "password123")
+
+    system = (await client.get("/api/v1/admin/overview")).json()["system"]
+    assert system == {
+        "rate_limit_storage": "memory",
+        "files_storage": "local" if "files" in PRESENT else None,
+        "mail_backend": "console",
+        "auth_strategy": "jwt",
+        "error_tracking": False,
+        "log_format": "text",
+    }
+
+    monkeypatch.setattr(config, "RATE_LIMIT_STORAGE", "redis")
+    monkeypatch.setattr(config, "FILES_STORAGE", "s3")
+    monkeypatch.setattr(config, "SENTRY_DSN", "https://public@sentry.example.invalid/1")
+    monkeypatch.setattr(config, "LOG_FORMAT", "json")
+    # The mail backend saved in Admin → Settings → Mail, not the .env one
+    settings.set(MailSettings(backend="smtp"))
+    system = (await client.get("/api/v1/admin/overview")).json()["system"]
+    assert system["rate_limit_storage"] == "redis"
+    assert system["files_storage"] == ("s3" if "files" in PRESENT else None)
+    assert system["mail_backend"] == "smtp"
+    assert system["error_tracking"] is True
+    assert system["log_format"] == "json"
 
 
 @pytest.mark.anyio

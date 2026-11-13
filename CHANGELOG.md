@@ -7,6 +7,11 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `GET /admin/overview` has `system`: how the installation is set up, for the dashboard —
+  where the rate limits count (`memory` / `redis`), where files are kept (`local` / `s3`,
+  none without the files module), the mail backend saved in the admin (`console` only
+  writes emails to the log), the session strategy, whether errors go to Sentry, the log
+  format. No secrets; the `admin.access` permission as before.
 - `make strip` (`scripts/strip.py`) removes the modules a project does not use: those with
   their flag off in `.env` (or named), with the modules that need them; `db` stays. It
   lists what goes, and with `ARGS=--apply` (asks first, only on a clean git working tree)
