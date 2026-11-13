@@ -437,7 +437,7 @@ user's language (`Accept-Language`). Every response carries `X-Request-ID`.
 | — | `/auth/me/*` | The user's own account, each with the current password: `POST password` (other sessions end), `POST email` (confirmed again, the old address is told), `POST sign-out-everywhere`, `DELETE` (with files and notifications; root cannot) | `AUTH_ENABLED` |
 | GET | `/auth/google/authorize`, `/auth/google/callback` | Sign-in with Google (`authorization_url`, then the callback signs in) | `GOOGLE_CLIENT_*` set |
 | GET | `/user/*` | User area: any signed-in user (example: `/user/summary`) | `AUTH_ENABLED` |
-| GET | `/admin/*` | Admin area: the `admin.access` permission (`/admin/overview`); its sections ask for their own permissions, see [Permissions](#permissions) | `ADMIN_ENABLED` |
+| GET | `/admin/*` | Admin area: the `admin.access` permission (`/admin/overview`: user counters and `system`, how the installation is set up — rate limit storage, file storage, mail backend, sessions, error tracking, log format; no secrets); its sections ask for their own permissions, see [Permissions](#permissions) | `ADMIN_ENABLED` |
 | GET / PATCH / DELETE | `/admin/leads`, `/admin/leads/{id}`, `/admin/leads/forms` | Form submissions: search `q` in the data, filters `form` / `status`, `sort`, pages; mark `new` / `done`; delete | `ADMIN_ENABLED` |
 | GET / POST / PUT / DELETE | `/admin/entities`, `/admin/entities/{id}`, `/admin/entities/types` | Configurable entities (e.g. lead channels) with form descriptions; secrets masked; changes need `entities.manage` | `ADMIN_ENABLED` |
 | POST | `/admin/leads/channels/{id}/test` | Send a test message through a channel (`entities.manage`) | `ADMIN_ENABLED` |

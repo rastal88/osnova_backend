@@ -1079,7 +1079,7 @@
           "Admin"
         ],
         "summary": "Admin Overview",
-        "description": "Counters for the admin dashboard.",
+        "description": "Counters and the setup of the installation for the admin dashboard.",
         "operationId": "admin_overview_api_v1_admin_overview_get",
         "responses": {
           "200": {
@@ -3343,15 +3343,85 @@
             },
             "type": "object",
             "title": "Users By Role"
+          },
+          "system": {
+            "$ref": "#/components/schemas/AdminSystem"
           }
         },
         "type": "object",
         "required": [
           "users",
           "active_users",
-          "users_by_role"
+          "users_by_role",
+          "system"
         ],
         "title": "AdminOverview"
+      },
+      "AdminSystem": {
+        "properties": {
+          "rate_limit_storage": {
+            "type": "string",
+            "enum": [
+              "memory",
+              "redis"
+            ],
+            "title": "Rate Limit Storage"
+          },
+          "files_storage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "s3"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Files Storage"
+          },
+          "mail_backend": {
+            "type": "string",
+            "enum": [
+              "console",
+              "smtp"
+            ],
+            "title": "Mail Backend"
+          },
+          "auth_strategy": {
+            "type": "string",
+            "enum": [
+              "jwt",
+              "redis"
+            ],
+            "title": "Auth Strategy"
+          },
+          "error_tracking": {
+            "type": "boolean",
+            "title": "Error Tracking"
+          },
+          "log_format": {
+            "type": "string",
+            "enum": [
+              "text",
+              "json"
+            ],
+            "title": "Log Format"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rate_limit_storage",
+          "files_storage",
+          "mail_backend",
+          "auth_strategy",
+          "error_tracking",
+          "log_format"
+        ],
+        "title": "AdminSystem",
+        "description": "How this installation is set up, for the dashboard; no secrets."
       },
       "AdminUser": {
         "properties": {
