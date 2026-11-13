@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "osnova",
+      "credentials": [{ "accessKey": "ci-access-key", "secretKey": "ci-secret-key" }],
+      "actions": ["Admin", "Read", "Write", "List"]
+    }
+  ]
+}
