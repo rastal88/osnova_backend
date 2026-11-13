@@ -92,6 +92,15 @@ def pytest_collection_modifyitems(items):
 
 
 @pytest.fixture
+def eager_tasks(monkeypatch):
+    """Celery runs the tasks inline (nothing to do in a project without background tasks)."""
+    if "tasks" in PRESENT:
+        from app.modules.tasks.celery_app import celery_app
+
+        monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
+
+
+@pytest.fixture
 def anyio_backend():
     return "asyncio"
 

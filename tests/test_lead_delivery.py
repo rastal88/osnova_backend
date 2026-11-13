@@ -10,9 +10,8 @@ from sqlalchemy import select
 from app.config import config
 from app.core.mail import sending
 from app.modules.entities.models import Entity
-from app.modules.leads import channels, delivery, tasks
+from app.modules.leads import channels, delivery
 from app.modules.leads.models import Lead
-from app.modules.tasks.celery_app import celery_app
 from tests.conftest import create_user, login
 
 pytestmark = pytest.mark.modules("admin")
@@ -165,7 +164,10 @@ async def test_email_channel(auth_client, monkeypatch, in_process):
 
 
 @pytest.mark.anyio
-async def test_celery_task_and_queue_fallback(auth_client, posts, monkeypatch, database):
+@pytest.mark.modules("tasks")
+async def test_celery_task_and_queue_fallback(auth_client, posts, monkeypatch, eager_tasks):
+    from app.modules.leads import tasks
+
     client, session_factory = auth_client
     await _add_channel(session_factory, "lead_webhook", {"url": "https://example.com/hook"})
 
@@ -175,7 +177,6 @@ async def test_celery_task_and_queue_fallback(auth_client, posts, monkeypatch, d
             yield session
 
     monkeypatch.setattr(tasks, "standalone_session", test_session)
-    monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
     await _submit(client)
     assert len(posts) == 1
 

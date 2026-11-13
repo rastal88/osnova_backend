@@ -10,9 +10,6 @@ from app.core.settings import Secret, SettingsGroup, settings
 from app.core.settings.schema import describe_group
 from app.modules.auth.encryption import decrypt, encrypt, is_encrypted, rotate
 from app.modules.auth.models import OAuthAccount, User
-from app.modules.entities.models import Entity
-from app.modules.settings import service as settings_service
-from app.modules.settings.models import SettingsRecord
 from manage import rotate_secrets
 from tests.conftest import create_user
 
@@ -30,6 +27,8 @@ class MailSettings(SettingsGroup):
 
 @pytest.fixture
 def mail_group(monkeypatch):
+    from app.modules.settings import service as settings_service
+
     monkeypatch.setitem(settings_service.groups_by_name, MailSettings.group, MailSettings)
     return MailSettings
 
@@ -71,8 +70,13 @@ def test_a_lost_key_reads_as_empty(monkeypatch, caplog):
     assert rotate(stored) == stored
 
 
+# Settings and channels are stored by the admin module
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_secret_settings_are_stored_encrypted_and_masked(database, mail_group):
+    from app.modules.settings import service as settings_service
+    from app.modules.settings.models import SettingsRecord
+
     async with database() as session:
         await settings_service.save_settings(session, mail_group, {"password": "s3cret"})
         record = await session.get(SettingsRecord, mail_group.group)
@@ -123,10 +127,13 @@ async def test_oauth_tokens_are_stored_encrypted(database):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_rotate_secrets_moves_everything_to_the_current_key(
     database, mail_group, monkeypatch
 ):
     import app as application
+    from app.modules.entities.models import Entity
+    from app.modules.settings.models import SettingsRecord
 
     monkeypatch.setattr(application.app.state, "modules", ["entities", "settings"])
     async with database() as session:
@@ -156,6 +163,7 @@ async def test_rotate_secrets_moves_everything_to_the_current_key(
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_saving_a_channel_unchanged_records_no_secret_change(auth_client):
     from tests.conftest import login
 

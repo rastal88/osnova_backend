@@ -4,9 +4,7 @@ from sqlalchemy import select
 from app.config import config
 from app.core.mail import sending
 from app.modules.auth.models import User
-from app.modules.leads import service as lead_service
 from app.modules.notifications.service import notify
-from app.modules.tasks.celery_app import celery_app
 from tests.conftest import create_user, login
 
 pytestmark = pytest.mark.modules("notifications")
@@ -94,11 +92,10 @@ async def test_blocked_users_are_skipped(auth_client):
 
 
 @pytest.mark.anyio
-async def test_email_channel(auth_client, monkeypatch):
+async def test_email_channel(auth_client, monkeypatch, eager_tasks):
     _, session_factory = auth_client
     sent = []
     monkeypatch.setitem(sending.BACKENDS, "console", sent.append)
-    monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
     monkeypatch.setattr(config, "NOTIFICATIONS_CHANNELS", "in_app,email,pigeon")
     await create_user(session_factory, "ann@example.com", "user")
     sent.clear()  # the sign-up confirmation
@@ -119,7 +116,9 @@ CONTACT = {
 }
 
 
+# Leads come from the admin module
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_admins_are_notified_of_new_leads(auth_client):
     client, session_factory = auth_client
     await create_user(session_factory, "mod@example.com", "moderator")
@@ -139,7 +138,10 @@ async def test_admins_are_notified_of_new_leads(auth_client):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_notification_failure_does_not_fail_the_form(auth_client, monkeypatch):
+    from app.modules.leads import service as lead_service
+
     client, _ = auth_client
 
     async def broken(*args, **kwargs):
