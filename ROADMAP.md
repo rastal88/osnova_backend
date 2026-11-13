@@ -1,8 +1,9 @@
 # Roadmap
 
 Osnova was released in two steps, **minimal** (`v0.1.0`) and **standard** (`v0.2.0`, MVP);
-`v0.3.0` added account self-service and everyday tools, `v0.4.0` permissions. The road to
-the finished template (`v1.0.0`) is in [VISION.md](VISION.md#8-road-to-v100-agreed-2026-11-10).
+`v0.3.0` added account self-service and everyday tools, `v0.4.0` permissions, `v0.5.0`
+production and scalable. The road to the finished template (`v1.0.0`) is in
+[VISION.md](VISION.md#8-road-to-v100-agreed-2026-11-10).
 
 Legend: `[x]` done · `[~]` partly done · `[ ]` not started.
 Items marked *(fe)* live in [osnova_frontend](https://github.com/rastal88/osnova_frontend),
@@ -165,7 +166,7 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
   the settings by permission: mail, captcha keys, rate limits, data retention, files and
   notifications moved to the admin, each group with `settings.<group>` *(be, fe)*
 
-## Production and scalable (`v0.5.0`)
+## Production and scalable (`v0.5.0`, released 2026-11-13)
 - [x] Security headers in nginx (HSTS, CSP, X-Frame-Options, Referrer-Policy) *(fe)*
 - [x] HTTPS and a deployment guide for one server (reverse proxy with certificates)
 - [x] Database backups: `make backup` / `make restore`

@@ -6,6 +6,12 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-13
+
+Production and scalable: HTTPS with Caddy and a deployment guide, backups, optional error
+tracking, JSON logs, rate limits shared by the replicas, and a CI check of the stack on
+3 replicas.
+
 ### Added
 - CI starts the scalable stack (`make up-scalable`, 3 backend replicas, the frontend from
   its repository, an S3 bucket from SeaweedFS) and checks it through the frontend with
@@ -418,7 +424,8 @@ First release: the `minimal` profile.
 - Fixed path traversal in file download/upload.
 - Password reset tokens are no longer logged outside `DEBUG`.
 
-[Unreleased]: https://github.com/rastal88/osnova_backend/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/rastal88/osnova_backend/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/rastal88/osnova_backend/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rastal88/osnova_backend/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rastal88/osnova_backend/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rastal88/osnova_backend/compare/v0.1.0...v0.2.0
