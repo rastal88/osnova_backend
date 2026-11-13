@@ -7,6 +7,17 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- HTTPS for one server: `make up-standard HTTPS=1` (any profile) adds
+  `docker-compose.https.yml` with Caddy (`deploy/Caddyfile`), which gets and renews a
+  Let's Encrypt certificate for the host of `SITE_URL`, redirects HTTP, sends `/api/*`
+  straight to the backend replicas with the visitor's address in `X-Forwarded-For` (rate
+  limits per visitor) and the same body limits as nginx, and the rest to the frontend,
+  which is then not published. Ports `HTTP_PORT` / `HTTPS_PORT`. `make down` also removes
+  the Caddy container (`--remove-orphans`).
+- DEPLOY.md: from a fresh server to a running site (DNS, firewall, production `.env`,
+  first start, backups by cron, updates, error tracking, troubleshooting).
+- Docker Compose passes `FRONTEND_SENTRY_DSN` and `SENTRY_ENVIRONMENT` to the frontend
+  build (its optional error tracking).
 - Optional error tracking: with `SENTRY_DSN` (Sentry or GlitchTip) unhandled errors of the
   API and Celery tasks and `ERROR` log lines are sent, with the release and
   `SENTRY_ENVIRONMENT`; `SENTRY_TRACES_SAMPLE_RATE` turns on traces. No personal data:
@@ -38,6 +49,10 @@ All notable changes are documented here. The format follows
 - `APP_PROFILE=scalable` refuses `FILES_STORAGE=local` at start (each replica would keep
   its own files) and warns when rate limits count in each replica.
 - `check_limit` is async (`await check_limit(limiter, key)`).
+
+### Fixed
+- `make down-volumes` now deletes the data volumes: without a profile Compose did not
+  count the volumes of the profile services as the project's.
 
 ## [0.4.0] - 2026-11-11
 

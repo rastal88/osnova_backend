@@ -60,6 +60,9 @@ services:
         VITE_ANALYTICS_SCRIPT: ${ANALYTICS_SCRIPT:-}
         # More origins the Content Security Policy of the site allows (space-separated)
         CSP_EXTRA_ORIGINS: ${CSP_EXTRA_ORIGINS:-}
+        # Error tracking of the frontend (usually its own Sentry project); empty = off
+        VITE_SENTRY_DSN: ${FRONTEND_SENTRY_DSN:-}
+        VITE_SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
     profiles: ["minimal", "standard", "scalable"]
     restart: unless-stopped
     depends_on:

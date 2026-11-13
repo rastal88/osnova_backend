@@ -217,6 +217,7 @@ osnova_backend/
 │                          # standard (all modules), sentry (optional), dev (all + tools)
 ├── scripts/openapi.py     # writes openapi.json for the frontend
 ├── scripts/backup.sh      # make backup; restore.sh: make restore
+├── deploy/Caddyfile       # HTTPS proxy (docker-compose.https.yml, DEPLOY.md)
 ├── tests/
 ├── openapi.json           # API schema, committed (the frontend generates types from it)
 ├── Dockerfile             # backend image (ARG REQUIREMENTS=base|standard)
@@ -290,6 +291,7 @@ cp .env.example .env
 make up-minimal       # backend + frontend
 make up-standard      # + PostgreSQL + Redis + Celery worker and beat
 make up-scalable      # standard with 3 backend replicas
+make up-standard HTTPS=1   # + Caddy with Let's Encrypt certificates for SITE_URL
 make logs             # follow logs
 make down             # stop (make down-volumes also deletes data)
 ```
@@ -297,6 +299,13 @@ make down             # stop (make down-volumes also deletes data)
 Only the frontend is published: `http://localhost:8080` (`FRONTEND_PORT`). nginx proxies
 `/api`, `/docs`, `/redoc` and `/openapi.json` to the backend, so there is one origin and
 no CORS.
+
+**HTTPS on a server:** `HTTPS=1` adds `docker-compose.https.yml`: Caddy on ports 80 and
+443 (`HTTP_PORT`, `HTTPS_PORT`) gets and renews a Let's Encrypt certificate for the host of
+`SITE_URL`, sends `/api/*` straight to the backend replicas (with the visitor's address in
+`X-Forwarded-For`, so rate limits count per visitor) and the rest to the frontend, which
+is then not published itself (`deploy/Caddyfile`). The whole way from a fresh server:
+[DEPLOY.md](DEPLOY.md).
 
 How it works:
 
@@ -385,8 +394,10 @@ listed with comments in [`.env.example`](.env.example).
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SECURITY`, `SMTP_TIMEOUT` | SMTP server; `starttls` (default), `ssl` or `none`. Admin → Settings → Mail (the password stored encrypted) |
 
 Docker Compose only: `FRONTEND_PORT`, `SITE_URL` (public origin for canonical links,
-link previews and `sitemap.xml`), `ANALYTICS_SCRIPT` (frontend analytics, loaded only after
-cookie consent), `POSTGRES_*`, `RUN_MIGRATIONS`, `FORWARDED_ALLOW_IPS`.
+link previews and `sitemap.xml`; with `HTTPS=1` the certificate's host), `ANALYTICS_SCRIPT`
+(frontend analytics, loaded only after cookie consent), `FRONTEND_SENTRY_DSN` (frontend
+error tracking), `EXTRA_REQUIREMENTS`, `HTTP_PORT` / `HTTPS_PORT`, `POSTGRES_*`,
+`RUN_MIGRATIONS`, `FORWARDED_ALLOW_IPS`.
 
 ---
 
