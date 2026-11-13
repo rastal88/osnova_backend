@@ -7,10 +7,13 @@ HTTPS_FILE := $(if $(HTTPS),-f docker-compose.https.yml)
 BASE := -f docker-compose.yml $(HTTPS_FILE)
 DATA := -f docker-compose.yml -f docker-compose.datastores.yml $(HTTPS_FILE)
 
-.PHONY: help install dev dev-all test lint format openapi up-minimal up-standard up-scalable migrate createroot cleanup backup restore down down-volumes logs ps build
+.PHONY: help init install dev dev-all test lint format openapi up-minimal up-standard up-scalable migrate createroot cleanup backup restore down down-volumes logs ps build
 
 help:  ## Show available commands
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-14s %s\n", $$1, $$2}'
+
+init:  ## Write .env for the quick start: standard profile in Docker, random secrets (never overwrites)
+	@python3 scripts/init_env.py
 
 install:  ## Create venv and install all modules + dev tools
 	python3.13 -m venv venv

@@ -218,6 +218,7 @@ osnova_backend/
 ├── scripts/openapi.py     # writes openapi.json for the frontend
 ├── scripts/backup.sh      # make backup; restore.sh: make restore
 ├── scripts/check_stack.py # checks a running stack with replicas (CI)
+├── scripts/init_env.py    # make init: .env for the quick start
 ├── deploy/Caddyfile       # HTTPS proxy (docker-compose.https.yml, DEPLOY.md)
 ├── tests/
 ├── openapi.json           # API schema, committed (the frontend generates types from it)
@@ -232,13 +233,28 @@ osnova_backend/
 
 ## Quick start
 
+The whole standard stack in Docker (PostgreSQL, Redis, the worker, the site with its
+admin). Requirements: Docker with the Compose plugin, `git`, `make`, `python3`.
+
+```bash
+git clone https://github.com/rastal88/osnova_backend.git
+git clone https://github.com/rastal88/osnova_frontend.git   # next to it
+cd osnova_backend
+make init          # .env: standard profile, every capability on, random secrets
+make up-standard   # builds and starts everything, applies the migrations
+make createroot    # the first user (asks for an email and a password)
+```
+
+Open `http://localhost:8080`, sign in, and the admin is at `/admin`. `make init` never
+overwrites an existing `.env`; edit it to turn capabilities off (README → Configuration).
+`make down` stops the stack. A server with HTTPS: [DEPLOY.md](DEPLOY.md).
+
+### Local development
+
 Requirements: Python 3.13; Node.js 24 for the frontend; PostgreSQL only for modules that
 need a database.
 
 ```bash
-git clone https://github.com/rastal88/osnova_backend.git
-git clone https://github.com/rastal88/osnova_frontend.git   # next to it, for make dev-all
-cd osnova_backend
 make install              # venv + requirements/dev.txt (all modules + tools)
 cp .env.example .env      # optional: an empty .env runs the minimal profile
 make dev-all              # API + frontend dev server; Ctrl+C stops both
@@ -250,7 +266,7 @@ make dev-all              # API + frontend dev server; Ctrl+C stops both
 `make dev` starts only the API (host and port from `APP_HOST` / `APP_PORT`). For the
 minimal profile alone `pip install -r requirements/base.txt` is enough.
 
-### With a database and users
+#### With a database and users
 
 ```bash
 # .env: DATABASE_URL=postgresql+asyncpg://osnova:osnova@localhost:5432/osnova
