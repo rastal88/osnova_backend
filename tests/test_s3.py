@@ -1,6 +1,10 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from app.modules.files.s3 import UNSIGNED, signature
+
+pytestmark = pytest.mark.modules("files")
 
 EMPTY = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 # AWS documentation example: presigned GET of examplebucket/test.txt (Signature Version 4)

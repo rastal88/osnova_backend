@@ -1,5 +1,9 @@
+import pytest
+
 from app.modules.auth.permissions import ADMIN_ACCESS
 from app.modules.auth.roles import Area, user_areas
+
+pytestmark = pytest.mark.modules("auth")
 
 
 def test_admin_access_lands_in_admin():

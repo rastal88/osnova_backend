@@ -1,5 +1,7 @@
 import asyncio
 import sys
+from importlib import import_module
+from importlib.util import find_spec
 from logging.config import fileConfig
 from pathlib import Path
 
@@ -10,16 +12,16 @@ from sqlalchemy.ext.asyncio import create_async_engine
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from app.config import config
-
-# Import every model module so Alembic sees its tables.
-from app.modules.admin import models as _admin_models  # noqa: F401
-from app.modules.auth import models as _auth_models  # noqa: F401
+from app.core.modules import MODULES
 from app.modules.db import Base
-from app.modules.entities import models as _entities_models  # noqa: F401
-from app.modules.files import models as _files_models  # noqa: F401
-from app.modules.leads import models as _leads_models  # noqa: F401
-from app.modules.notifications import models as _notifications_models  # noqa: F401
-from app.modules.settings import models as _settings_models  # noqa: F401
+
+# Import the models of every module in the registry, enabled or not, so Alembic sees
+# all their tables (a module removed with `make strip` is not in the registry)
+# (checked by file, so the package of a module without models is not imported)
+for _spec in MODULES:
+    _found = find_spec(_spec.path)
+    if _found and _found.origin and (Path(_found.origin).parent / "models.py").exists():
+        import_module(f"{_spec.path}.models")
 
 al_config = context.config
 if al_config.config_file_name is not None:

@@ -14,16 +14,14 @@ from app.core.mail import (
     sending,
     use_dispatcher,
 )
-from app.modules.tasks.celery_app import celery_app
 from tests.conftest import login, register
 
 
 @pytest.fixture
-def outbox(monkeypatch):
+def outbox(monkeypatch, eager_tasks):
     """Messages "sent" by the console backend; Celery runs tasks inline."""
     sent: list[EmailMessage] = []
     monkeypatch.setitem(sending.BACKENDS, "console", sent.append)
-    monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
     yield sent
 
 
@@ -126,6 +124,7 @@ async def test_without_queue_mail_is_sent_after_returning(monkeypatch, caplog):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("auth")
 async def test_sign_up_sends_confirmation(auth_client, outbox):
     client, _ = auth_client
 
@@ -147,6 +146,7 @@ async def test_sign_up_sends_confirmation(auth_client, outbox):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("auth")
 async def test_password_reset_by_email(auth_client, outbox):
     client, _ = auth_client
     await register(client, "user@example.com")

@@ -1,4 +1,5 @@
 # Everything used by the standard / scalable profiles
+-r db.txt
 -r auth.txt
 -r files.txt
 -r redis.txt

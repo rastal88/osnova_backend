@@ -9,21 +9,18 @@ from sqlalchemy import func, select
 from app.core.mail import EmailMessage, sending
 from app.modules.auth import sessions
 from app.modules.auth.models import OAuthAccount, User
-from app.modules.files.models import FileRecord
-from app.modules.notifications.models import Notification
-from app.modules.notifications.service import notify
-from app.modules.tasks.celery_app import celery_app
 from tests.conftest import _app_with, create_user, login
+
+pytestmark = pytest.mark.modules("auth")
 
 ME = "/api/v1/auth/me"
 USERS_ME = "/api/v1/auth/users/me"
 
 
 @pytest.fixture
-def outbox(monkeypatch):
+def outbox(monkeypatch, eager_tasks):
     sent: list[EmailMessage] = []
     monkeypatch.setitem(sending.BACKENDS, "console", sent.append)
-    monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
     return sent
 
 
@@ -163,15 +160,14 @@ async def test_password_reset_ends_sessions(auth_client, outbox, monkeypatch):
         assert (await device.get(USERS_ME)).status_code == 401
 
 
+async def _delete_own_account(client):
+    response = await client.request("DELETE", ME, json={"password": "password123"})
+    assert response.status_code == 204, response.text
+
+
 @pytest.mark.anyio
-async def test_delete_account_with_its_data(auth_client, tmp_path):
+async def test_delete_account(auth_client):
     client, session_factory = await _signed_in(auth_client)
-    upload = await client.post("/api/v1/files", files={"file": ("a.txt", b"hi", "text/plain")})
-    assert upload.status_code == 201
-    async with session_factory() as session:
-        ann = await session.scalar(select(User).where(User.email == "ann@example.com"))
-        await notify(session, [ann], "lead_new", {"summary": "x"})
-    assert any(tmp_path.iterdir())
 
     response = await client.request("DELETE", ME, json={"password": "wrong"})
     assert response.json()["code"] == "account_delete_not_confirmed"
@@ -179,13 +175,39 @@ async def test_delete_account_with_its_data(auth_client, tmp_path):
     response = await client.request("DELETE", ME, json={"email": "ann@example.com"})
     assert response.status_code == 400
 
-    response = await client.request("DELETE", ME, json={"password": "password123"})
-    assert response.status_code == 204, response.text
+    await _delete_own_account(client)
     assert await _count(session_factory, User, User.email == "ann@example.com") == 0
-    assert await _count(session_factory, FileRecord) == 0
-    assert await _count(session_factory, Notification) == 0
-    assert not any(tmp_path.iterdir())
     assert (await client.get(USERS_ME)).status_code == 401
+
+
+@pytest.mark.anyio
+@pytest.mark.modules("files")
+async def test_delete_account_with_its_files(auth_client, tmp_path):
+    from app.modules.files.models import FileRecord
+
+    client, session_factory = await _signed_in(auth_client)
+    upload = await client.post("/api/v1/files", files={"file": ("a.txt", b"hi", "text/plain")})
+    assert upload.status_code == 201
+    assert any(tmp_path.iterdir())
+
+    await _delete_own_account(client)
+    assert await _count(session_factory, FileRecord) == 0
+    assert not any(tmp_path.iterdir())
+
+
+@pytest.mark.anyio
+@pytest.mark.modules("notifications")
+async def test_delete_account_with_its_notifications(auth_client):
+    from app.modules.notifications.models import Notification
+    from app.modules.notifications.service import notify
+
+    client, session_factory = await _signed_in(auth_client)
+    async with session_factory() as session:
+        ann = await session.scalar(select(User).where(User.email == "ann@example.com"))
+        await notify(session, [ann], "lead_new", {"summary": "x"})
+
+    await _delete_own_account(client)
+    assert await _count(session_factory, Notification) == 0
 
 
 @pytest.mark.anyio

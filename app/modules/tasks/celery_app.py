@@ -12,11 +12,20 @@ if not config.CELERY_BROKER_URL:
 # Task modules of the optional packages that are present (a deleted module is skipped)
 TASK_MODULES = ("app.modules.tasks.tasks", "app.modules.leads.tasks")
 
+
+def _exists(name: str) -> bool:
+    # find_spec raises, not answers None, when the parent package is gone too
+    try:
+        return find_spec(name) is not None
+    except ModuleNotFoundError:
+        return False
+
+
 celery_app = Celery(
     "osnova",
     broker=config.CELERY_BROKER_URL,
     backend=config.CELERY_RESULT_BACKEND or config.CELERY_BROKER_URL,
-    include=[name for name in TASK_MODULES if find_spec(name)],
+    include=[name for name in TASK_MODULES if _exists(name)],
 )
 
 celery_app.conf.update(

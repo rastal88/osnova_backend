@@ -3,13 +3,16 @@ import asyncio
 import pytest
 
 from app.core import readiness
+from tests.conftest import PRESENT
 
 
 @pytest.mark.anyio
 async def test_ready_checks_the_database(client):
     response = await client.get("/api/v1/ready")
     assert response.status_code == 200, response.text
-    assert response.json() == {"status": "ok", "checks": {"database": True, "broker": True}}
+    # The task broker only in a project with background tasks
+    checks = {"database": True} | ({"broker": True} if "tasks" in PRESENT else {})
+    assert response.json() == {"status": "ok", "checks": checks}
 
 
 @pytest.mark.anyio

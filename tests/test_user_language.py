@@ -9,10 +9,9 @@ from app.core import i18n
 from app.core.languages import Language, Languages
 from app.core.mail import EmailMessage, sending
 from app.modules.auth.models import User
-from app.modules.tasks.celery_app import celery_app
 from tests.conftest import create_user, login
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.modules("auth")]
 
 REGISTER = "/api/v1/auth/register"
 USERS_ME = "/api/v1/auth/users/me"
@@ -25,10 +24,9 @@ CONTACT = {
 
 
 @pytest.fixture
-def outbox(monkeypatch):
+def outbox(monkeypatch, eager_tasks):
     sent: list[EmailMessage] = []
     monkeypatch.setitem(sending.BACKENDS, "console", sent.append)
-    monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
     return sent
 
 
@@ -99,6 +97,7 @@ async def test_account_emails_go_in_the_user_language(auth_client, outbox):
     assert 'lang="ru"' in message.html
 
 
+@pytest.mark.modules("notifications", "admin")
 async def test_notification_emails_go_in_each_recipient_language(auth_client, outbox, monkeypatch):
     client, session_factory = auth_client
     monkeypatch.setattr(config, "NOTIFICATIONS_CHANNELS", "in_app,email")

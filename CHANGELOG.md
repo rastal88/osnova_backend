@@ -7,14 +7,33 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `make strip` (`scripts/strip.py`) removes the modules a project does not use: those with
+  their flag off in `.env` (or named), with the modules that need them; `db` stays. It
+  lists what goes, and with `ARGS=--apply` (asks first, only on a clean git working tree)
+  deletes the packages, their registry entries, requirements files and tests, the
+  `strip:begin` / `strip:end` blocks of compose and CI (the worker and beat go with
+  `tasks`), writes a migration that drops their tables and writes `openapi.json` again.
+- CI: a `make strip` job for each flag strips a copy and runs ruff, the tests, the
+  migrations (`alembic check`) and the compose config.
+- `pytest.mark.modules(...)`: a test needs these modules and is skipped without them; test
+  files are marked with their module, cross-module tests import the other module inside.
 - `make init` (`scripts/init_env.py`, standard library only) writes `.env` for the quick
   start: the standard profile with every capability on, random `SECRET_KEY` and
   `POSTGRES_PASSWORD`, migrations on start; readable by its owner only, and an existing
   `.env` is never overwritten. The README quick start is now three commands after the
   clone: `make init`, `make up-standard`, `make createroot`.
-### Added
 - The CI stack check (`scripts/check_stack.py`) also sends the contact form and finds the
   lead in the admin, so the whole way of a visitor's form through the stack is checked.
+
+### Changed
+- `typer` (manage.py) moved from `requirements/auth.txt` to `db.txt`; `standard.txt` names
+  `db.txt` itself. `manage.py` imports the auth module only in `createroot`.
+- `migrations/env.py` imports the models of the modules in the registry instead of a fixed
+  list. The tests enable only the modules the project has.
+
+### Fixed
+- The worker no longer fails to start when the leads module is deleted
+  (`find_spec` of a task module raised when its package was gone).
 
 ## [0.5.0] - 2026-11-13
 

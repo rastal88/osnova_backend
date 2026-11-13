@@ -5,8 +5,7 @@ Every optional capability lives in its own package and exposes
 is enabled, so a disabled module costs nothing at runtime and its
 dependencies (requirements/<module>.txt) do not have to be installed.
 
-To remove a module from a project: delete its package, its entry below and
-its requirements file.
+To remove the modules a project does not use: `make strip` (scripts/strip.py).
 """
 
 import importlib

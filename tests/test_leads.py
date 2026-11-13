@@ -4,6 +4,8 @@ from sqlalchemy import func, select
 from app.modules.leads.models import Lead
 from tests.conftest import create_user, login
 
+pytestmark = pytest.mark.modules("admin")
+
 LEADS = "/api/v1/admin/leads"
 CONTACT = {
     "name": "Ann",

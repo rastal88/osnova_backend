@@ -86,7 +86,9 @@ async def test_submit_valid_form(client, caplog, monkeypatch):
     assert record["data"] == {**VALID, "name": "Ann"}
 
 
+# Stored as a lead by the admin module
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_stored_submission_keeps_personal_data_out_of_the_log(client, caplog):
     caplog.set_level("INFO", logger="app.core.forms.delivery")
     response = await client.post("/api/v1/forms/contact", json=VALID)

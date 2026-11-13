@@ -1,8 +1,16 @@
 import os
+from pathlib import Path
 
-# The test session runs with every module enabled. Minimal-profile behaviour is
-# checked in a separate process (see test_modules.py), because settings are
-# read once at import time.
+# The test session runs with every module of the project enabled (`make strip` may have
+# removed some: their flags stay off). Minimal-profile behaviour is checked in a separate
+# process (see test_modules.py), because settings are read once at import time.
+_MODULES_DIR = Path(__file__).resolve().parent.parent / "app" / "modules"
+
+
+def _flag(module: str) -> str:
+    return "true" if (_MODULES_DIR / module).is_dir() else "false"
+
+
 os.environ.update(
     {
         "APP_NAME": "TestApp",
@@ -12,11 +20,11 @@ os.environ.update(
         "DATABASE_URL": "postgresql+asyncpg://user:pass@localhost/db",
         "SECRET_KEY": "test-secret-key-at-least-32-bytes-long",
         "AUTH_STRATEGY": "jwt",
-        "AUTH_ENABLED": "true",
-        "ADMIN_ENABLED": "true",
-        "FILES_ENABLED": "true",
-        "NOTIFICATIONS_ENABLED": "true",
-        "BACKGROUND_TASKS_ENABLED": "true",
+        "AUTH_ENABLED": _flag("auth"),
+        "ADMIN_ENABLED": _flag("admin"),
+        "FILES_ENABLED": _flag("files"),
+        "NOTIFICATIONS_ENABLED": _flag("notifications"),
+        "BACKGROUND_TASKS_ENABLED": _flag("tasks"),
         "CELERY_BROKER_URL": "memory://",
         "CORS_ORIGINS": "http://localhost:5173",
         "GOOGLE_CLIENT_ID": "test-client-id",
@@ -24,17 +32,26 @@ os.environ.update(
     }
 )
 
+from importlib.util import find_spec  # noqa: E402
+
 import pytest  # noqa: E402
 from fastapi import Depends  # noqa: E402
-from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy import insert  # noqa: E402
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from app import create_app  # noqa: E402
-from app.modules.auth.models import OAuthAccount, RoleRecord, User, get_user_db  # noqa: E402
+from app.core.modules import MODULES  # noqa: E402
 from app.modules.db import Base, get_async_session  # noqa: E402
+
+# Modules of the registry that are in the project (`make strip` removes the others)
+PRESENT = {spec.name for spec in MODULES if find_spec(spec.path)}
+
+if "auth" in PRESENT:
+    from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+
+    from app.modules.auth.models import OAuthAccount, RoleRecord, User, get_user_db
 
 # The rows migration 0009 creates (tests build the tables from the models)
 MODERATOR_PERMISSIONS = [
@@ -59,6 +76,43 @@ SYSTEM_ROLES = [
 ]
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "modules(*names): the test needs these modules (app/core/modules.py); `make strip` "
+        "deletes a test file marked with a module it removes, other tests are skipped",
+    )
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        needed = {name for mark in item.iter_markers("modules") for name in mark.args}
+        if missing := sorted(needed - PRESENT):
+            item.add_marker(pytest.mark.skip(reason=f"no module {', '.join(missing)}"))
+
+
+@pytest.fixture
+def eager_tasks(monkeypatch):
+    """Celery runs the tasks inline (nothing to do in a project without background tasks)."""
+    if "tasks" in PRESENT:
+        from app.modules.tasks.celery_app import celery_app
+
+        monkeypatch.setattr(celery_app.conf, "task_always_eager", True)
+
+
+@pytest.fixture(autouse=True)
+def mail_at_once(monkeypatch):
+    """Without background tasks an email goes out in a thread after the response, which a
+    test does not wait for: in tests it is sent at once."""
+    if "tasks" not in PRESENT:
+        from app.core.mail import sending
+
+        async def at_once(message):
+            sending.deliver(message)
+
+        monkeypatch.setattr(sending, "_dispatcher", at_once)
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -67,10 +121,11 @@ def anyio_backend():
 @pytest.fixture
 async def database(tmp_path, monkeypatch):
     """An in-memory SQLite database with every table; returns the session factory."""
-    from app.modules.files import routes as file_routes
-    from app.modules.files.storage import LocalStorage
+    if "files" in PRESENT:
+        from app.modules.files import routes as file_routes
+        from app.modules.files.storage import LocalStorage
 
-    monkeypatch.setattr(file_routes, "get_storage", lambda: LocalStorage(tmp_path))
+        monkeypatch.setattr(file_routes, "get_storage", lambda: LocalStorage(tmp_path))
 
     engine = create_async_engine(
         "sqlite+aiosqlite://",
@@ -79,7 +134,8 @@ async def database(tmp_path, monkeypatch):
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        await conn.execute(insert(RoleRecord), SYSTEM_ROLES)
+        if "auth" in PRESENT:
+            await conn.execute(insert(RoleRecord), SYSTEM_ROLES)
 
     yield async_sessionmaker(engine, expire_on_commit=False)
     await engine.dispose()
@@ -90,12 +146,14 @@ def _app_with(session_factory):
         async with session_factory() as session:
             yield session
 
-    async def override_user_db(session=Depends(override_session)):
-        yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
-
     app = create_app()
     app.dependency_overrides[get_async_session] = override_session
-    app.dependency_overrides[get_user_db] = override_user_db
+    if "auth" in PRESENT:
+
+        async def override_user_db(session=Depends(override_session)):
+            yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
+
+        app.dependency_overrides[get_user_db] = override_user_db
     return app
 
 
@@ -115,6 +173,13 @@ async def auth_client(database):
         base_url="http://test",
     ) as ac:
         yield ac, database
+
+
+def declared(permissions) -> list[str]:
+    """The permissions of the list that the modules of the project declare, sorted."""
+    from app.modules.auth.permissions import all_permissions
+
+    return sorted(set(permissions) & all_permissions())
 
 
 async def register(client, email: str, password: str = "password123"):
@@ -153,8 +218,12 @@ def reset_settings():
 @pytest.fixture(autouse=True)
 def reset_rate_limits():
     from app.core.forms.routes import limiter
-    from app.modules.auth.routes import limiter as auth_limiter
 
-    for item in (limiter, auth_limiter):
+    limiters = [limiter]
+    if "auth" in PRESENT:
+        from app.modules.auth.routes import limiter as auth_limiter
+
+        limiters.append(auth_limiter)
+    for item in limiters:
         if item is not None:
             item.hits.clear()

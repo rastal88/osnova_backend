@@ -71,11 +71,13 @@ def _settings(**overrides) -> Settings:
     return Settings(_env_file=None, **values)
 
 
+@pytest.mark.modules("auth")
 def test_auth_requires_database():
     with pytest.raises(ModuleConfigError, match="db"):
         resolve_enabled(_settings(AUTH_ENABLED=True))
 
 
+@pytest.mark.modules("admin")
 def test_admin_requires_auth():
     with pytest.raises(ModuleConfigError, match="auth"):
         resolve_enabled(_settings(DATABASE_URL="sqlite+aiosqlite://", ADMIN_ENABLED=True))

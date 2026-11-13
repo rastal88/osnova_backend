@@ -2,19 +2,15 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from celery.schedules import crontab
 from sqlalchemy import select, update
 from typer.testing import CliRunner
 
 from app.config import config
-from app.modules.admin.models import AuditRecord
-from app.modules.auth.models import User
+from app.core.settings import settings
 from app.modules.db import cleanup
-from app.modules.notifications.models import Notification
-from app.modules.settings.models import SettingsRecord
-from app.modules.tasks.celery_app import celery_app
-from app.modules.tasks.tasks import cleanup_task
 from tests.conftest import create_user
+
+# The jobs come from the modules: each test needs the modules whose rows it removes
 
 
 def _ago(days: int) -> datetime:
@@ -34,7 +30,9 @@ def cleanup_session(database, monkeypatch):
     return database
 
 
-async def _user(session_factory, email: str, **values) -> User:
+async def _user(session_factory, email: str, **values):
+    from app.modules.auth.models import User
+
     await create_user(session_factory, email, values.pop("role", "user"))
     async with session_factory() as session:
         if values:
@@ -44,7 +42,10 @@ async def _user(session_factory, email: str, **values) -> User:
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("notifications")
 async def test_old_read_notifications_are_removed(cleanup_session, monkeypatch):
+    from app.modules.notifications.models import Notification
+
     user = await _user(cleanup_session, "ann@example.com")
     async with cleanup_session() as session:
         session.add_all(
@@ -61,7 +62,7 @@ async def test_old_read_notifications_are_removed(cleanup_session, monkeypatch):
         )
         await session.commit()
 
-    assert await cleanup.run_cleanup() == {"notifications": 1, "auth": 0, "admin": 0}
+    assert (await cleanup.run_cleanup())["notifications"] == 1
 
     async with cleanup_session() as session:
         kinds = set(await session.scalars(select(Notification.kind)))
@@ -69,6 +70,7 @@ async def test_old_read_notifications_are_removed(cleanup_session, monkeypatch):
 
     # 0 keeps everything
     monkeypatch.setattr(config, "NOTIFICATIONS_KEEP_DAYS", 0)
+    settings.reset()  # the retention settings are read from config again
     async with cleanup_session() as session:
         await session.execute(update(Notification).values(read_at=_ago(99), created_at=_ago(99)))
         await session.commit()
@@ -76,7 +78,10 @@ async def test_old_read_notifications_are_removed(cleanup_session, monkeypatch):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("auth")
 async def test_never_confirmed_accounts_are_removed_when_asked(cleanup_session, monkeypatch):
+    from app.modules.auth.models import User
+
     old = {"is_verified": False, "date_created": _ago(30)}
     await _user(cleanup_session, "gone@example.com", **old)
     await _user(cleanup_session, "fresh@example.com", is_verified=False, date_created=_ago(1))
@@ -88,6 +93,7 @@ async def test_never_confirmed_accounts_are_removed_when_asked(cleanup_session, 
     assert (await cleanup.run_cleanup())["auth"] == 0
 
     monkeypatch.setattr(config, "UNVERIFIED_ACCOUNT_DAYS", 7)
+    settings.reset()  # the retention settings are read from config again
     assert (await cleanup.run_cleanup())["auth"] == 1
     async with cleanup_session() as session:
         emails = set(await session.scalars(select(User.email)))
@@ -100,7 +106,10 @@ async def test_never_confirmed_accounts_are_removed_when_asked(cleanup_session, 
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_old_audit_records_are_removed(cleanup_session, monkeypatch):
+    from app.modules.admin.models import AuditRecord
+
     async with cleanup_session() as session:
         session.add_all(
             [
@@ -116,6 +125,7 @@ async def test_old_audit_records_are_removed(cleanup_session, monkeypatch):
 
     # 0 keeps everything
     monkeypatch.setattr(config, "AUDIT_KEEP_DAYS", 0)
+    settings.reset()  # the retention settings are read from config again
     async with cleanup_session() as session:
         await session.execute(update(AuditRecord).values(created_at=_ago(1000)))
         await session.commit()
@@ -123,8 +133,12 @@ async def test_old_audit_records_are_removed(cleanup_session, monkeypatch):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("admin")
 async def test_periods_come_from_the_admin(cleanup_session):
     """Cron and the worker have no web middleware: the cleanup loads the settings itself."""
+    from app.modules.admin.models import AuditRecord
+    from app.modules.settings.models import SettingsRecord
+
     async with cleanup_session() as session:
         session.add(SettingsRecord(group="retention", values={"audit_days": 1}))
         old = AuditRecord(actor_email="root@example.com", action="roles.create", created_at=_ago(2))
@@ -135,6 +149,7 @@ async def test_periods_come_from_the_admin(cleanup_session):
 
 
 @pytest.mark.anyio
+@pytest.mark.modules("notifications", "auth")
 async def test_failed_job_does_not_stop_the_others(cleanup_session, monkeypatch, caplog):
     from app.modules.notifications import cleanup as notifications_cleanup
 
@@ -142,20 +157,24 @@ async def test_failed_job_does_not_stop_the_others(cleanup_session, monkeypatch,
         raise RuntimeError("boom")
 
     monkeypatch.setattr(notifications_cleanup, "cleanup", broken)
-    assert await cleanup.run_cleanup() == {"auth": 0, "admin": 0}
+    result = await cleanup.run_cleanup()
+    assert "notifications" not in result
+    assert result["auth"] == 0
     assert "Cleanup of notifications failed" in caplog.text
 
 
+@pytest.mark.modules("tasks")
 def test_cleanup_is_scheduled_every_night():
+    from app.modules.tasks.celery_app import celery_app, crontab
+    from app.modules.tasks.tasks import cleanup_task
+
     entry = celery_app.conf.beat_schedule["cleanup"]
     assert entry["task"] == cleanup_task.name == "maintenance.cleanup"
     assert entry["schedule"] == crontab(hour=3, minute=30)
     assert entry["task"] in celery_app.tasks
 
 
-def test_task_and_command_run_the_cleanup(monkeypatch):
-    import manage
-
+def _fake_cleanup(monkeypatch) -> list[int]:
     calls = []
 
     async def fake_cleanup():
@@ -163,8 +182,23 @@ def test_task_and_command_run_the_cleanup(monkeypatch):
         return {"notifications": 3}
 
     monkeypatch.setattr(cleanup, "run_cleanup", fake_cleanup)
-    cleanup_task()
+    return calls
+
+
+def test_command_runs_the_cleanup(monkeypatch):
+    import manage
+
+    calls = _fake_cleanup(monkeypatch)
     result = CliRunner().invoke(manage.app, ["cleanup"])
     assert result.exit_code == 0, result.output
     assert "notifications: 3" in result.output
-    assert len(calls) == 2
+    assert len(calls) == 1
+
+
+@pytest.mark.modules("tasks")
+def test_task_runs_the_cleanup(monkeypatch):
+    from app.modules.tasks.tasks import cleanup_task
+
+    calls = _fake_cleanup(monkeypatch)
+    cleanup_task()
+    assert len(calls) == 1

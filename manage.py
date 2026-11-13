@@ -1,10 +1,6 @@
 import asyncio
 
 import typer
-from fastapi_users import exceptions as fastapi_users_exceptions
-
-from app.modules.auth.manager import UserManager, get_user_db
-from app.modules.db import get_async_session
 
 # No local variables in tracebacks: they would print the password
 app = typer.Typer(pretty_exceptions_show_locals=False)
@@ -23,6 +19,11 @@ def createroot(
     ),
 ):
     """Creates a superuser in the database."""
+    # Imported here: the other commands work in a project without the auth module
+    from fastapi_users import exceptions as fastapi_users_exceptions
+
+    from app.modules.auth.manager import UserManager, get_user_db
+    from app.modules.db import get_async_session
 
     async def _create_superuser():
         async for session in get_async_session():

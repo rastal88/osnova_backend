@@ -10,7 +10,7 @@ from app.modules.auth.models import User
 from app.modules.leads.models import Lead
 from tests.conftest import create_user, login
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.modules("admin")]
 
 ADMIN = "/api/v1/admin"
 AUDIT = f"{ADMIN}/audit"
