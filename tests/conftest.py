@@ -24,17 +24,26 @@ os.environ.update(
     }
 )
 
+from importlib.util import find_spec  # noqa: E402
+
 import pytest  # noqa: E402
 from fastapi import Depends  # noqa: E402
-from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy import insert  # noqa: E402
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from app import create_app  # noqa: E402
-from app.modules.auth.models import OAuthAccount, RoleRecord, User, get_user_db  # noqa: E402
+from app.core.modules import MODULES  # noqa: E402
 from app.modules.db import Base, get_async_session  # noqa: E402
+
+# Modules of the registry that are in the project (`make strip` removes the others)
+PRESENT = {spec.name for spec in MODULES if find_spec(spec.path)}
+
+if "auth" in PRESENT:
+    from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+
+    from app.modules.auth.models import OAuthAccount, RoleRecord, User, get_user_db
 
 # The rows migration 0009 creates (tests build the tables from the models)
 MODERATOR_PERMISSIONS = [
@@ -59,6 +68,21 @@ SYSTEM_ROLES = [
 ]
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "modules(*names): the test needs these modules (app/core/modules.py); `make strip` "
+        "deletes a test file marked with a module it removes, other tests are skipped",
+    )
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        needed = {name for mark in item.iter_markers("modules") for name in mark.args}
+        if missing := sorted(needed - PRESENT):
+            item.add_marker(pytest.mark.skip(reason=f"no module {', '.join(missing)}"))
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -67,10 +91,11 @@ def anyio_backend():
 @pytest.fixture
 async def database(tmp_path, monkeypatch):
     """An in-memory SQLite database with every table; returns the session factory."""
-    from app.modules.files import routes as file_routes
-    from app.modules.files.storage import LocalStorage
+    if "files" in PRESENT:
+        from app.modules.files import routes as file_routes
+        from app.modules.files.storage import LocalStorage
 
-    monkeypatch.setattr(file_routes, "get_storage", lambda: LocalStorage(tmp_path))
+        monkeypatch.setattr(file_routes, "get_storage", lambda: LocalStorage(tmp_path))
 
     engine = create_async_engine(
         "sqlite+aiosqlite://",
@@ -79,7 +104,8 @@ async def database(tmp_path, monkeypatch):
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        await conn.execute(insert(RoleRecord), SYSTEM_ROLES)
+        if "auth" in PRESENT:
+            await conn.execute(insert(RoleRecord), SYSTEM_ROLES)
 
     yield async_sessionmaker(engine, expire_on_commit=False)
     await engine.dispose()
@@ -90,12 +116,14 @@ def _app_with(session_factory):
         async with session_factory() as session:
             yield session
 
-    async def override_user_db(session=Depends(override_session)):
-        yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
-
     app = create_app()
     app.dependency_overrides[get_async_session] = override_session
-    app.dependency_overrides[get_user_db] = override_user_db
+    if "auth" in PRESENT:
+
+        async def override_user_db(session=Depends(override_session)):
+            yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
+
+        app.dependency_overrides[get_user_db] = override_user_db
     return app
 
 
@@ -153,8 +181,12 @@ def reset_settings():
 @pytest.fixture(autouse=True)
 def reset_rate_limits():
     from app.core.forms.routes import limiter
-    from app.modules.auth.routes import limiter as auth_limiter
 
-    for item in (limiter, auth_limiter):
+    limiters = [limiter]
+    if "auth" in PRESENT:
+        from app.modules.auth.routes import limiter as auth_limiter
+
+        limiters.append(auth_limiter)
+    for item in limiters:
         if item is not None:
             item.hits.clear()
