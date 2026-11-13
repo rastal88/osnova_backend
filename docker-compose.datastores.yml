@@ -69,6 +69,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      # Migrations are the backend's job (RUN_MIGRATIONS in .env, or make migrate):
+      # several processes migrating one fresh database at once fail
+      RUN_MIGRATIONS: "false"
     # The image health check calls the HTTP API, which the worker does not serve
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.modules.tasks.celery_app inspect ping -d celery@$$HOSTNAME"]
@@ -99,6 +102,9 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      # Migrations are the backend's job (RUN_MIGRATIONS in .env, or make migrate):
+      # several processes migrating one fresh database at once fail
+      RUN_MIGRATIONS: "false"
     # The image health check calls the HTTP API, which beat does not serve
     healthcheck:
       disable: true

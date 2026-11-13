@@ -99,3 +99,80 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build
         run: docker build --build-arg REQUIREMENTS=${{ matrix.requirements }} -t osnova-backend:${{ matrix.requirements }} .
+
+  stack:
+    name: Scalable stack (3 replicas)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: osnova_backend
+    env:
+      # The S3 bucket of the CI (local files are refused with replicas); make adds the
+      # project's compose files after it
+      COMPOSE: docker compose -p osnova-ci --project-directory . -f .github/ci/docker-compose.s3.yml
+      STACK: docker compose -p osnova-ci --project-directory . -f .github/ci/docker-compose.s3.yml -f docker-compose.yml -f docker-compose.datastores.yml --profile scalable
+      ROOT_EMAIL: root@example.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: osnova_backend
+      - uses: actions/checkout@v4
+        with:
+          repository: rastal88/osnova_frontend
+          path: osnova_frontend
+
+      - name: Settings
+        run: |
+          password=$(python3 -c 'import secrets; print(secrets.token_urlsafe(18))')
+          echo "::add-mask::$password"
+          echo "ROOT_PASSWORD=$password" >> "$GITHUB_ENV"
+          cat > .env <<EOF
+          APP_PROFILE=scalable
+          DEBUG=false
+          AUTH_ENABLED=true
+          ADMIN_ENABLED=true
+          FILES_ENABLED=true
+          NOTIFICATIONS_ENABLED=true
+          BACKGROUND_TASKS_ENABLED=true
+          FILES_STORAGE=s3
+          S3_ENDPOINT_URL=http://seaweedfs:8333
+          S3_BUCKET=osnova
+          S3_ACCESS_KEY=ci-access-key
+          S3_SECRET_KEY=ci-secret-key
+          SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')
+          EOF
+
+      - name: Start (make up-scalable)
+        run: make up-scalable
+
+      - name: Migrate, root user, bucket
+        run: |
+          make migrate
+          make createroot ARGS="--email $ROOT_EMAIL --password $ROOT_PASSWORD"
+          for attempt in $(seq 30); do
+            $STACK exec -T seaweedfs sh -c 'echo "s3.bucket.create -name osnova" | weed shell' >/dev/null 2>&1
+            $STACK exec -T seaweedfs sh -c 'echo s3.bucket.list | weed shell' 2>/dev/null | grep -q osnova && break
+            sleep 2
+          done
+          $STACK ps
+
+      - name: Check through the frontend
+        run: python3 scripts/check_stack.py http://localhost:8080 --email "$ROOT_EMAIL" --password "$ROOT_PASSWORD" --link-file link.txt
+
+      - name: The file is in the bucket, every replica got requests
+        run: |
+          link=$(sed -n 1p link.txt)
+          network=$(docker inspect -f '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}' $($STACK ps -q backend | head -1))
+          test "$(docker run --rm --network "$network" curlimages/curl:8.11.1 -sf "$link")" = "$(sed -n 2p link.txt)"
+          echo "ok   the download link serves the uploaded content"
+          replicas=$($STACK ps -q backend)
+          test "$(echo "$replicas" | wc -l)" -eq 3
+          for container in $replicas; do
+            count=$(docker logs "$container" 2>&1 | grep -c "/api/v1/" || true)
+            echo "$(docker inspect -f '{{.Name}}' "$container"): $count API requests"
+            test "$count" -gt 0
+          done
+
+      - name: Logs
+        if: failure()
+        run: $STACK logs --tail 80

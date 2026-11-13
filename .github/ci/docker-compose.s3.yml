@@ -1,0 +1,9 @@
+# CI only: an S3-compatible bucket for the scalable stack (local files are refused with
+# replicas). SeaweedFS keeps the data in the container; the bucket is created by the
+# workflow. Used with --project-directory pointing at the repository root.
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.97
+    command: ["server", "-s3", "-s3.config=/etc/seaweedfs/s3.json", "-dir=/data"]
+    volumes:
+      - ./.github/ci/s3.json:/etc/seaweedfs/s3.json:ro

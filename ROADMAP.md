@@ -172,7 +172,7 @@ Goal: a working *foundation* for every tool, not a full integration. What and wh
 - [x] Optional error tracking: Sentry when `SENTRY_DSN` is set (its own requirements file) *(be, fe)*
 - [x] JSON logs for log collectors
 - [x] Form and auth rate limits in Redis for several replicas; local files refused with replicas (use S3)
-- [ ] CI: the stack on 3 backend replicas
+- [x] CI: the stack on 3 backend replicas
 
 ## Publication (`v1.0.0`)
 - [ ] All documentation in English (done for the backend) *(fe)*
